@@ -1,0 +1,1 @@
+web: npm run build && npx prisma generate && node dist/server.js

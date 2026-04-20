@@ -9,7 +9,19 @@
       "Bash(npm --version)",
       "Bash(git -C \"C:/Users/inaam aslam/Desktop/msms\" remote -v)",
       "Bash(where eas:*)",
-      "Bash(where netlify:*)"
+      "Bash(where netlify:*)",
+      "Bash(eas --version)",
+      "Bash(netlify --version)",
+      "Bash(eas whoami:*)",
+      "Bash(echo \"wajiha345:*)",
+      "Bash(eas login:*)",
+      "Bash(EXPO_TOKEN=nLgIQsfNva02qn21_LGViVVAl9TdQV1ZpwMw2kTD eas whoami)",
+      "Bash(EXPO_TOKEN=nLgIQsfNva02qn21_LGViVVAl9TdQV1ZpwMw2kTD eas build --platform android --profile production --non-interactive)",
+      "Bash(netlify deploy:*)",
+      "Bash(netlify status:*)",
+      "Bash(EXPO_TOKEN=nLgIQsfNva02qn21_LGViVVAl9TdQV1ZpwMw2kTD eas project:create --non-interactive)",
+      "Bash(EXPO_TOKEN=nLgIQsfNva02qn21_LGViVVAl9TdQV1ZpwMw2kTD eas init --non-interactive)",
+      "Bash(EXPO_TOKEN=nLgIQsfNva02qn21_LGViVVAl9TdQV1ZpwMw2kTD eas build:list --limit 1)"
     ]
   }
 }
