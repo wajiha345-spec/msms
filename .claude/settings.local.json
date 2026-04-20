@@ -21,7 +21,12 @@
       "Bash(netlify status:*)",
       "Bash(EXPO_TOKEN=nLgIQsfNva02qn21_LGViVVAl9TdQV1ZpwMw2kTD eas project:create --non-interactive)",
       "Bash(EXPO_TOKEN=nLgIQsfNva02qn21_LGViVVAl9TdQV1ZpwMw2kTD eas init --non-interactive)",
-      "Bash(EXPO_TOKEN=nLgIQsfNva02qn21_LGViVVAl9TdQV1ZpwMw2kTD eas build:list --limit 1)"
+      "Bash(EXPO_TOKEN=nLgIQsfNva02qn21_LGViVVAl9TdQV1ZpwMw2kTD eas build:list --limit 1)",
+      "Bash(DATABASE_URL=\"postgresql://neondb_owner:npg_oO4gXUW8TJxS@ep-withered-tooth-an26qqrs-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require\" npx prisma migrate deploy)",
+      "Bash(where cloudflared:*)",
+      "Bash(curl -L \"https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe\" -o cloudflared.exe)",
+      "Bash(\"C:/Users/inaam aslam/Desktop/msms/msms-app/.env\")",
+      "Bash(curl -s \"https://walter-build-demographic-was.trycloudflare.com/api/health\")"
     ]
   }
 }
