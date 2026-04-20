@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/**)",
+      "Bash(npm install:*)",
+      "Bash(npx prisma:*)",
+      "Bash(npx tsc:*)",
+      "Bash(git --version)",
+      "Bash(npm --version)",
+      "Bash(git -C \"C:/Users/inaam aslam/Desktop/msms\" remote -v)",
+      "Bash(where eas:*)",
+      "Bash(where netlify:*)"
+    ]
+  }
+}

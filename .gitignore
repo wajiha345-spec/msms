@@ -1,0 +1,19 @@
+# Backend
+msms-backend/node_modules/
+msms-backend/dist/
+msms-backend/.env
+msms-backend/prisma/migrations/
+
+# App
+msms-app/node_modules/
+msms-app/.expo/
+msms-app/android/
+msms-app/ios/
+msms-app/.env
+
+# Website
+msms-website/.env
+
+# OS
+.DS_Store
+Thumbs.db

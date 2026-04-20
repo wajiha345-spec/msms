@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MSMS — Mobile Shop Management System</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:    #2563eb;
+      --blue-d:  #1d4ed8;
+      --green:   #16a34a;
+      --gray-50: #f8fafc;
+      --gray-100:#f1f5f9;
+      --gray-200:#e2e8f0;
+      --gray-400:#94a3b8;
+      --gray-600:#475569;
+      --gray-800:#1e293b;
+      --radius:  12px;
+    }
+
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+           color: var(--gray-800); background: #fff; }
+
+    /* ── Nav ── */
+    nav { display:flex; justify-content:space-between; align-items:center;
+          padding:18px 40px; border-bottom:1px solid var(--gray-200);
+          position:sticky; top:0; background:#fff; z-index:100; }
+    .nav-logo { font-size:20px; font-weight:800; color:var(--blue); letter-spacing:-0.5px; }
+    .nav-logo span { color:var(--gray-800); }
+    .nav-cta { background:var(--blue); color:#fff; border:none; padding:10px 22px;
+               border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;
+               transition:background .2s; }
+    .nav-cta:hover { background:var(--blue-d); }
+
+    /* ── Hero ── */
+    .hero { text-align:center; padding:80px 24px 60px; max-width:700px; margin:0 auto; }
+    .hero-badge { display:inline-block; background:#dbeafe; color:var(--blue);
+                  font-size:13px; font-weight:600; padding:5px 14px; border-radius:20px;
+                  margin-bottom:20px; }
+    .hero h1 { font-size:clamp(32px, 5vw, 54px); font-weight:800; line-height:1.15;
+               letter-spacing:-1px; margin-bottom:20px; }
+    .hero h1 span { color:var(--blue); }
+    .hero p { font-size:18px; color:var(--gray-600); line-height:1.7; margin-bottom:36px; }
+    .hero-btns { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+    .btn-primary { background:var(--blue); color:#fff; border:none; padding:14px 32px;
+                   border-radius:10px; font-size:16px; font-weight:600; cursor:pointer;
+                   transition:background .2s; }
+    .btn-primary:hover { background:var(--blue-d); }
+    .btn-secondary { background:var(--gray-100); color:var(--gray-800); border:none;
+                     padding:14px 32px; border-radius:10px; font-size:16px; font-weight:600;
+                     cursor:pointer; transition:background .2s; }
+    .btn-secondary:hover { background:var(--gray-200); }
+
+    /* ── Section ── */
+    section { padding:72px 24px; }
+    .section-label { text-align:center; font-size:13px; font-weight:700; color:var(--blue);
+                     text-transform:uppercase; letter-spacing:1.5px; margin-bottom:12px; }
+    .section-title { text-align:center; font-size:clamp(24px,4vw,38px); font-weight:800;
+                     letter-spacing:-0.5px; margin-bottom:12px; }
+    .section-sub { text-align:center; color:var(--gray-600); font-size:16px;
+                   max-width:540px; margin:0 auto 52px; line-height:1.6; }
+
+    /* ── How it works ── */
+    .steps { display:flex; gap:24px; max-width:900px; margin:0 auto; flex-wrap:wrap; justify-content:center; }
+    .step { flex:1; min-width:200px; max-width:260px; text-align:center; }
+    .step-num { width:48px; height:48px; border-radius:50%; background:var(--blue);
+                color:#fff; font-size:20px; font-weight:700; display:flex;
+                align-items:center; justify-content:center; margin:0 auto 16px; }
+    .step h3 { font-size:16px; font-weight:700; margin-bottom:8px; }
+    .step p { font-size:14px; color:var(--gray-600); line-height:1.6; }
+    .step-arrow { font-size:24px; color:var(--gray-400); align-self:center; }
+
+    /* ── Plans ── */
+    .plans { display:flex; gap:24px; max-width:860px; margin:0 auto; flex-wrap:wrap; justify-content:center; }
+    .plan-card { flex:1; min-width:280px; max-width:380px; border:2px solid var(--gray-200);
+                 border-radius:var(--radius); padding:32px; position:relative;
+                 transition:border-color .2s, box-shadow .2s; }
+    .plan-card:hover { border-color:var(--blue); box-shadow:0 8px 32px rgba(37,99,235,.12); }
+    .plan-card.popular { border-color:var(--blue); }
+    .popular-badge { position:absolute; top:-14px; left:50%; transform:translateX(-50%);
+                     background:var(--blue); color:#fff; font-size:12px; font-weight:700;
+                     padding:4px 16px; border-radius:20px; white-space:nowrap; }
+    .plan-name { font-size:22px; font-weight:800; margin-bottom:6px; }
+    .plan-price { font-size:40px; font-weight:800; color:var(--blue); margin:16px 0 4px; }
+    .plan-price span { font-size:18px; font-weight:500; color:var(--gray-600); }
+    .plan-once { font-size:13px; color:var(--gray-400); margin-bottom:24px; }
+    .plan-desc { font-size:14px; color:var(--gray-600); line-height:1.6; margin-bottom:24px;
+                 padding-bottom:24px; border-bottom:1px solid var(--gray-200); }
+    .plan-features { list-style:none; margin-bottom:28px; }
+    .plan-features li { display:flex; align-items:flex-start; gap:10px; font-size:14px;
+                        padding:7px 0; color:var(--gray-800); }
+    .plan-features li .icon { color:var(--green); font-size:16px; flex-shrink:0; margin-top:1px; }
+    .plan-features li .icon-no { color:var(--gray-400); }
+    .plan-btn { width:100%; padding:14px; border-radius:10px; font-size:15px;
+                font-weight:700; cursor:pointer; border:none; transition:all .2s; }
+    .plan-btn-primary { background:var(--blue); color:#fff; }
+    .plan-btn-primary:hover { background:var(--blue-d); }
+    .plan-btn-secondary { background:var(--gray-100); color:var(--gray-800); }
+    .plan-btn-secondary:hover { background:var(--gray-200); }
+
+    /* ── FAQ ── */
+    .faq { max-width:680px; margin:0 auto; }
+    .faq-item { border-bottom:1px solid var(--gray-200); padding:20px 0; }
+    .faq-q { font-size:16px; font-weight:600; cursor:pointer; display:flex;
+             justify-content:space-between; align-items:center; gap:12px; }
+    .faq-q .arrow { color:var(--gray-400); font-size:20px; transition:transform .2s; flex-shrink:0; }
+    .faq-q.open .arrow { transform:rotate(180deg); }
+    .faq-a { font-size:14px; color:var(--gray-600); line-height:1.7; margin-top:12px;
+             display:none; }
+    .faq-a.open { display:block; }
+
+    /* ── Footer ── */
+    footer { background:var(--gray-800); color:var(--gray-400); text-align:center;
+             padding:36px 24px; font-size:14px; }
+    footer strong { color:#fff; }
+
+    /* ── Modal ── */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55);
+                     z-index:200; align-items:center; justify-content:center; padding:16px; }
+    .modal-overlay.open { display:flex; }
+    .modal { background:#fff; border-radius:16px; padding:36px 32px; width:100%;
+             max-width:500px; max-height:90vh; overflow-y:auto;
+             box-shadow:0 24px 64px rgba(0,0,0,.25); }
+    .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
+    .modal-title { font-size:20px; font-weight:700; }
+    .modal-close { background:none; border:none; font-size:24px; cursor:pointer;
+                   color:var(--gray-400); line-height:1; }
+    .modal-close:hover { color:var(--gray-800); }
+
+    /* Steps inside modal */
+    .m-steps { display:flex; gap:0; margin-bottom:28px; }
+    .m-step { flex:1; text-align:center; position:relative; }
+    .m-step-dot { width:30px; height:30px; border-radius:50%; background:var(--gray-200);
+                  color:var(--gray-400); font-size:13px; font-weight:700;
+                  display:flex; align-items:center; justify-content:center; margin:0 auto 6px; }
+    .m-step.active .m-step-dot { background:var(--blue); color:#fff; }
+    .m-step.done .m-step-dot { background:var(--green); color:#fff; }
+    .m-step-label { font-size:11px; color:var(--gray-400); font-weight:600; }
+    .m-step.active .m-step-label { color:var(--blue); }
+    .m-step::after { content:''; position:absolute; top:15px; left:calc(50% + 15px);
+                     width:calc(100% - 30px); height:2px; background:var(--gray-200); }
+    .m-step:last-child::after { display:none; }
+
+    /* Form */
+    .form-group { margin-bottom:16px; }
+    .form-label { display:block; font-size:13px; font-weight:600; color:var(--gray-600);
+                  margin-bottom:6px; }
+    .form-input { width:100%; padding:11px 14px; border:1.5px solid var(--gray-200);
+                  border-radius:8px; font-size:15px; color:var(--gray-800);
+                  transition:border-color .2s; outline:none; }
+    .form-input:focus { border-color:var(--blue); }
+    .form-error { font-size:12px; color:#dc2626; margin-top:4px; display:none; }
+
+    /* Plan select */
+    .plan-select-row { display:flex; gap:10px; margin-bottom:16px; }
+    .plan-select-btn { flex:1; padding:12px 8px; border:2px solid var(--gray-200);
+                       border-radius:10px; text-align:center; cursor:pointer;
+                       transition:all .2s; background:#fff; }
+    .plan-select-btn.selected { border-color:var(--blue); background:#eff6ff; }
+    .plan-select-btn .ps-name { font-weight:700; font-size:15px; }
+    .plan-select-btn .ps-price { font-size:13px; color:var(--gray-400); margin-top:2px; }
+    .plan-select-btn.selected .ps-price { color:var(--blue); }
+
+    /* Payment box */
+    .payment-box { background:var(--gray-50); border:1px solid var(--gray-200);
+                   border-radius:10px; padding:20px; margin-bottom:20px; }
+    .payment-box h4 { font-size:14px; font-weight:700; margin-bottom:14px; color:var(--gray-800); }
+    .payment-method-tabs { display:flex; gap:8px; margin-bottom:16px; }
+    .pm-tab { flex:1; padding:8px; border:1.5px solid var(--gray-200); border-radius:8px;
+              text-align:center; font-size:13px; font-weight:600; cursor:pointer;
+              transition:all .15s; background:#fff; }
+    .pm-tab.active { border-color:var(--blue); background:#eff6ff; color:var(--blue); }
+    .pm-detail { font-size:14px; color:var(--gray-600); line-height:1.8; }
+    .pm-detail strong { color:var(--gray-800); }
+    .pm-amount { font-size:22px; font-weight:800; color:var(--blue); margin:12px 0 4px; }
+    .pm-amount-label { font-size:12px; color:var(--gray-400); }
+
+    /* Success */
+    .success-box { text-align:center; padding:20px 0; }
+    .success-icon { font-size:56px; margin-bottom:16px; }
+    .success-box h3 { font-size:22px; font-weight:700; margin-bottom:10px; }
+    .success-box p { color:var(--gray-600); font-size:15px; line-height:1.7; }
+
+    .submit-btn { width:100%; padding:14px; background:var(--blue); color:#fff;
+                  border:none; border-radius:10px; font-size:16px; font-weight:700;
+                  cursor:pointer; transition:background .2s; margin-top:4px; }
+    .submit-btn:hover { background:var(--blue-d); }
+    .submit-btn:disabled { background:var(--gray-400); cursor:not-allowed; }
+
+    .back-link { text-align:center; margin-top:14px; font-size:14px; color:var(--gray-400);
+                 cursor:pointer; }
+    .back-link:hover { color:var(--blue); }
+
+    .error-banner { background:#fef2f2; border:1px solid #fecaca; color:#dc2626;
+                    border-radius:8px; padding:12px 16px; font-size:14px;
+                    margin-bottom:16px; display:none; }
+  </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav>
+  <div class="nav-logo">MSMS<span>.</span></div>
+  <button class="nav-cta" onclick="openModal()">Buy Now</button>
+</nav>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-badge">📱 Mobile Shop Management System</div>
+  <h1>Run Your Mobile Shop <span>Smarter</span></h1>
+  <p>From quick invoicing to full inventory management — MSMS is built for mobile phone shops in Pakistan. One-time payment, no subscriptions, ever.</p>
+  <div class="hero-btns">
+    <button class="btn-primary" onclick="openModal('PRO')">Get Pro — Rs 6,000</button>
+    <button class="btn-secondary" onclick="document.getElementById('plans').scrollIntoView({behavior:'smooth'})">Compare Plans</button>
+  </div>
+</div>
+
+<!-- How it works -->
+<section style="background:var(--gray-50)">
+  <div class="section-label">Simple Process</div>
+  <div class="section-title">Up and running in minutes</div>
+  <div class="section-sub">No technical skills needed. Pay once, download, and set up your shop.</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>Choose a Plan</h3>
+      <p>Pick Simple for invoicing only, or Pro for the full shop management suite.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>Make Payment</h3>
+      <p>Pay via JazzCash, Easypaisa, or bank transfer. No card required.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3>Get Your Key</h3>
+      <p>We verify your payment and send a license key + download link to your email.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <h3>Set Up Your Shop</h3>
+      <p>Install the app, enter your key, set your shop name and password. Done.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Plans -->
+<section id="plans">
+  <div class="section-label">Pricing</div>
+  <div class="section-title">One-time payment. No renewals.</div>
+  <div class="section-sub">Pay once and own the software forever. No monthly fees, no hidden charges.</div>
+  <div class="plans">
+
+    <!-- Simple -->
+    <div class="plan-card">
+      <div class="plan-name">Simple</div>
+      <div class="plan-price">Rs 2,500 <span></span></div>
+      <div class="plan-once">One-time payment — no subscription</div>
+      <div class="plan-desc">Perfect for small shop owners who need fast, professional invoicing without the complexity.</div>
+      <ul class="plan-features">
+        <li><span class="icon">✓</span> Professional invoice generation</li>
+        <li><span class="icon">✓</span> Customer records</li>
+        <li><span class="icon">✓</span> PDF invoices</li>
+        <li><span class="icon">✓</span> Custom shop name &amp; branding</li>
+        <li><span class="icon icon-no">✗</span> <span style="color:var(--gray-400)">Inventory management</span></li>
+        <li><span class="icon icon-no">✗</span> <span style="color:var(--gray-400)">Secondhand phone tracking</span></li>
+        <li><span class="icon icon-no">✗</span> <span style="color:var(--gray-400)">Purchase recording</span></li>
+        <li><span class="icon icon-no">✗</span> <span style="color:var(--gray-400)">Sales dashboard &amp; reports</span></li>
+      </ul>
+      <button class="plan-btn plan-btn-secondary" onclick="openModal('SIMPLE')">Buy Simple</button>
+    </div>
+
+    <!-- Pro -->
+    <div class="plan-card popular">
+      <div class="popular-badge">⭐ Most Popular</div>
+      <div class="plan-name">Pro</div>
+      <div class="plan-price">Rs 6,000 <span></span></div>
+      <div class="plan-once">One-time payment — no subscription</div>
+      <div class="plan-desc">The complete solution for serious shop owners who want full control over inventory, sales, and reports.</div>
+      <ul class="plan-features">
+        <li><span class="icon">✓</span> Everything in Simple</li>
+        <li><span class="icon">✓</span> Full inventory management</li>
+        <li><span class="icon">✓</span> Secondhand phone intake &amp; tracking</li>
+        <li><span class="icon">✓</span> CNIC &amp; seller photo recording</li>
+        <li><span class="icon">✓</span> Purchase recording</li>
+        <li><span class="icon">✓</span> Sales dashboard with profit reports</li>
+        <li><span class="icon">✓</span> IMEI search &amp; tracking</li>
+        <li><span class="icon">✓</span> Real-time stock updates</li>
+      </ul>
+      <button class="plan-btn plan-btn-primary" onclick="openModal('PRO')">Buy Pro</button>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section style="background:var(--gray-50)">
+  <div class="section-label">FAQ</div>
+  <div class="section-title">Common Questions</div>
+  <div class="section-sub">Everything you need to know before buying.</div>
+  <div class="faq">
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        Is this really a one-time payment? <span class="arrow">▾</span>
+      </div>
+      <div class="faq-a">Yes. You pay once and the app is yours forever. There are no monthly fees, no renewal charges, and no subscriptions of any kind.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        How do I receive the app after payment? <span class="arrow">▾</span>
+      </div>
+      <div class="faq-a">After we verify your payment (usually within a few hours), we email your license key and a download link to the email address you provided. Click the link to download the APK, install it on your Android phone, and follow the setup steps.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        What Android version is required? <span class="arrow">▾</span>
+      </div>
+      <div class="faq-a">The app requires Android 8.0 or higher. It is not currently available for iPhone.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        Can I use it on multiple phones? <span class="arrow">▾</span>
+      </div>
+      <div class="faq-a">Each license key activates one account. If you need the app on multiple devices for staff, contact us for a multi-device arrangement.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        How long does payment verification take? <span class="arrow">▾</span>
+      </div>
+      <div class="faq-a">Typically within 2–4 hours during business hours. In most cases, it's much faster. You will receive an email as soon as your order is approved.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        What payment methods are accepted? <span class="arrow">▾</span>
+      </div>
+      <div class="faq-a">We accept JazzCash, Easypaisa, and direct bank transfer. All are one-time payments.</div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <p><strong>MSMS</strong> — Mobile Shop Management System</p>
+  <p style="margin-top:8px">Questions? Contact us at <strong id="footer-email">support@msms.pk</strong></p>
+  <p style="margin-top:12px;font-size:12px">© 2025 MSMS. All rights reserved.</p>
+</footer>
+
+<!-- ── ORDER MODAL ── -->
+<div class="modal-overlay" id="modal" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Place Your Order</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+
+    <!-- Step indicators -->
+    <div class="m-steps">
+      <div class="m-step active" id="dot-1"><div class="m-step-dot">1</div><div class="m-step-label">Details</div></div>
+      <div class="m-step" id="dot-2"><div class="m-step-dot">2</div><div class="m-step-label">Payment</div></div>
+      <div class="m-step" id="dot-3"><div class="m-step-dot">3</div><div class="m-step-label">Done</div></div>
+    </div>
+
+    <div id="error-banner" class="error-banner"></div>
+
+    <!-- Step 1: Customer details + plan -->
+    <div id="step-1">
+      <div class="plan-select-row">
+        <div class="plan-select-btn" id="ps-SIMPLE" onclick="selectPlan('SIMPLE')">
+          <div class="ps-name">Simple</div>
+          <div class="ps-price">Rs 2,500</div>
+        </div>
+        <div class="plan-select-btn selected" id="ps-PRO" onclick="selectPlan('PRO')">
+          <div class="ps-name">Pro</div>
+          <div class="ps-price">Rs 6,000</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Full Name *</label>
+        <input class="form-input" id="f-name" type="text" placeholder="e.g. Ahmed Khan" />
+        <div class="form-error" id="e-name">Please enter your name</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address *</label>
+        <input class="form-input" id="f-email" type="email" placeholder="you@example.com" />
+        <div class="form-error" id="e-email">Please enter a valid email</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone Number *</label>
+        <input class="form-input" id="f-phone" type="tel" placeholder="03001234567" maxlength="11" />
+        <div class="form-error" id="e-phone">Please enter your phone number</div>
+      </div>
+      <button class="submit-btn" onclick="goToPayment()">Continue to Payment →</button>
+    </div>
+
+    <!-- Step 2: Payment -->
+    <div id="step-2" style="display:none">
+      <div class="payment-box">
+        <div class="pm-amount" id="pay-amount">Rs 6,000</div>
+        <div class="pm-amount-label">One-time payment for <span id="pay-plan">Pro</span> Plan</div>
+        <div class="payment-method-tabs" style="margin-top:16px">
+          <div class="pm-tab active" onclick="setPayMethod('jazzcash',this)">JazzCash</div>
+          <div class="pm-tab" onclick="setPayMethod('easypaisa',this)">Easypaisa</div>
+          <div class="pm-tab" onclick="setPayMethod('bank',this)">Bank Transfer</div>
+        </div>
+        <div class="pm-detail" id="pm-detail-jazzcash">
+          Send <strong id="pmd-jc-amount">Rs 6,000</strong> to:<br/>
+          JazzCash: <strong>0300-0000000</strong><br/>
+          Account Title: <strong>Your Name Here</strong><br/><br/>
+          <em>After sending, enter the JazzCash Transaction ID below.</em>
+        </div>
+        <div class="pm-detail" id="pm-detail-easypaisa" style="display:none">
+          Send <strong id="pmd-ep-amount">Rs 6,000</strong> to:<br/>
+          Easypaisa: <strong>0300-0000000</strong><br/>
+          Account Title: <strong>Your Name Here</strong><br/><br/>
+          <em>After sending, enter the Easypaisa Transaction ID below.</em>
+        </div>
+        <div class="pm-detail" id="pm-detail-bank" style="display:none">
+          Bank: <strong>HBL / Meezan / Any</strong><br/>
+          Account Title: <strong>Your Name Here</strong><br/>
+          IBAN: <strong>PK00XXXX0000000000000000</strong><br/><br/>
+          Transfer <strong id="pmd-bk-amount">Rs 6,000</strong> and enter the transaction reference below.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Transaction ID / Reference Number *</label>
+        <input class="form-input" id="f-txn" type="text" placeholder="e.g. TXN123456789" />
+        <div class="form-error" id="e-txn">Please enter the transaction ID</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes (optional)</label>
+        <input class="form-input" id="f-notes" type="text" placeholder="Any notes for us" />
+      </div>
+
+      <button class="submit-btn" id="submit-btn" onclick="submitOrder()">Submit Order</button>
+      <div class="back-link" onclick="goBack(1)">← Back</div>
+    </div>
+
+    <!-- Step 3: Success -->
+    <div id="step-3" style="display:none">
+      <div class="success-box">
+        <div class="success-icon">🎉</div>
+        <h3>Order Received!</h3>
+        <p>Thank you! We have received your order and will verify your payment within a few hours.</p>
+        <br/>
+        <p>Your <strong>license key and download link</strong> will be sent to:<br/><strong id="success-email"></strong></p>
+        <br/>
+        <p style="font-size:13px;color:var(--gray-400)">Check your spam folder if you don't see the email within 4 hours.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ── Config — update these before going live ──────────────────────────────
+  const API_BASE   = 'https://your-backend-url.com'; // e.g. https://msms-api.railway.app
+  const SUPPORT_EMAIL = 'support@msms.pk';
+
+  document.getElementById('footer-email').textContent = SUPPORT_EMAIL;
+
+  // ── State ────────────────────────────────────────────────────────────────
+  let selectedPlan = 'PRO';
+  let currentPayMethod = 'jazzcash';
+
+  const PRICES = { SIMPLE: 2500, PRO: 6000 };
+
+  // ── Plan selection ───────────────────────────────────────────────────────
+  function selectPlan(plan) {
+    selectedPlan = plan;
+    document.querySelectorAll('.plan-select-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('ps-' + plan).classList.add('selected');
+  }
+
+  function openModal(plan) {
+    if (plan) selectPlan(plan);
+    document.getElementById('modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    showStep(1);
+    hideError();
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('modal')) closeModal();
+  }
+
+  // ── Steps ────────────────────────────────────────────────────────────────
+  function showStep(n) {
+    [1, 2, 3].forEach(i => {
+      document.getElementById('step-' + i).style.display = i === n ? 'block' : 'none';
+      const dot = document.getElementById('dot-' + i);
+      dot.className = 'm-step' + (i < n ? ' done' : i === n ? ' active' : '');
+      dot.querySelector('.m-step-dot').textContent = i < n ? '✓' : i;
+    });
+  }
+
+  function goBack(step) { showStep(step); hideError(); }
+
+  // ── Validation ───────────────────────────────────────────────────────────
+  function showError(id, msg) {
+    const el = document.getElementById('e-' + id);
+    el.textContent = msg; el.style.display = 'block';
+  }
+  function clearErrors() {
+    document.querySelectorAll('.form-error').forEach(e => e.style.display = 'none');
+  }
+  function showBanner(msg) {
+    const b = document.getElementById('error-banner');
+    b.textContent = msg; b.style.display = 'block';
+  }
+  function hideError() {
+    document.getElementById('error-banner').style.display = 'none';
+    clearErrors();
+  }
+
+  function goToPayment() {
+    clearErrors(); hideError();
+    let ok = true;
+    const name  = document.getElementById('f-name').value.trim();
+    const email = document.getElementById('f-email').value.trim();
+    const phone = document.getElementById('f-phone').value.trim();
+    if (!name)                        { showError('name', 'Please enter your name'); ok = false; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError('email', 'Please enter a valid email'); ok = false; }
+    if (phone.length < 10)            { showError('phone', 'Please enter your phone number'); ok = false; }
+    if (!ok) return;
+
+    const price = PRICES[selectedPlan];
+    document.getElementById('pay-amount').textContent = 'Rs ' + price.toLocaleString();
+    document.getElementById('pay-plan').textContent = selectedPlan === 'PRO' ? 'Pro' : 'Simple';
+    ['pmd-jc-amount','pmd-ep-amount','pmd-bk-amount'].forEach(id =>
+      document.getElementById(id).textContent = 'Rs ' + price.toLocaleString()
+    );
+    showStep(2);
+  }
+
+  // ── Payment method tabs ──────────────────────────────────────────────────
+  function setPayMethod(method, el) {
+    currentPayMethod = method;
+    document.querySelectorAll('.pm-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    ['jazzcash','easypaisa','bank'].forEach(m =>
+      document.getElementById('pm-detail-' + m).style.display = m === method ? 'block' : 'none'
+    );
+  }
+
+  // ── Submit ───────────────────────────────────────────────────────────────
+  async function submitOrder() {
+    clearErrors(); hideError();
+    const txn = document.getElementById('f-txn').value.trim();
+    if (!txn) { showError('txn', 'Please enter the transaction ID'); return; }
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Submitting…';
+
+    try {
+      const res = await fetch(API_BASE + '/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerName:  document.getElementById('f-name').value.trim(),
+          customerEmail: document.getElementById('f-email').value.trim(),
+          customerPhone: document.getElementById('f-phone').value.trim(),
+          plan:          selectedPlan,
+          transactionId: txn,
+          notes:         document.getElementById('f-notes').value.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        showBanner(data.error || 'Something went wrong. Please try again.');
+        return;
+      }
+
+      document.getElementById('success-email').textContent =
+        document.getElementById('f-email').value.trim();
+      showStep(3);
+    } catch {
+      showBanner('Network error. Please check your connection and try again.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Submit Order';
+    }
+  }
+
+  // ── FAQ ──────────────────────────────────────────────────────────────────
+  function toggleFaq(el) {
+    const a = el.nextElementSibling;
+    const open = a.classList.contains('open');
+    document.querySelectorAll('.faq-a').forEach(x => x.classList.remove('open'));
+    document.querySelectorAll('.faq-q').forEach(x => x.classList.remove('open'));
+    if (!open) { a.classList.add('open'); el.classList.add('open'); }
+  }
+</script>
+</body>
+</html>
