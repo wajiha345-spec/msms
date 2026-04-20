@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String     @id @default(cuid())
+  username     String     @unique
+  passwordHash String
+  role         String     @default("staff")
+  shopName     String     @default("My Shop")
+  plan         String     @default("PRO")
+  createdAt    DateTime   @default(now())
+  sales        Sale[]
+  purchases    Purchase[]
+}
+
+model Product {
+  id            String            @id @default(cuid())
+  name          String
+  brand         String
+  category      String            @default("phone")
+  condition     String            @default("new")
+  imei          String?
+  purchasePrice Float
+  salePrice     Float
+  stock         Int               @default(0)
+  isSecondhand  Boolean           @default(false)
+  isDeleted     Boolean           @default(false)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  sales         Sale[]
+  purchases     Purchase[]
+  secondhand    SecondhandRecord?
+}
+
+model Sale {
+  id            String            @id @default(cuid())
+  invoiceNo     String            @unique
+  product       Product           @relation(fields: [productId], references: [id])
+  productId     String
+  recordedBy    User              @relation(fields: [userId], references: [id])
+  userId        String
+  secondhand    SecondhandRecord? @relation(fields: [secondhandId], references: [id])
+  secondhandId  String?
+  quantity      Int
+  salePrice     Float
+  totalAmount   Float
+  profit        Float
+  customerName  String?
+  customerPhone String?
+  imei          String?
+  createdAt     DateTime          @default(now())
+}
+
+model Purchase {
+  id            String   @id @default(cuid())
+  product       Product  @relation(fields: [productId], references: [id])
+  productId     String
+  recordedBy    User     @relation(fields: [userId], references: [id])
+  userId        String
+  quantity      Int
+  purchasePrice Float
+  supplierName  String?
+  supplierPhone String?
+  createdAt     DateTime @default(now())
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  customerName  String
+  customerEmail String
+  customerPhone String
+  plan          String      // "SIMPLE" | "PRO"
+  amount        Int
+  status        String      @default("PENDING") // "PENDING" | "PAID" | "CANCELLED"
+  transactionId String?
+  notes         String?
+  licenseKey    LicenseKey?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model LicenseKey {
+  key           String    @id @default(uuid())
+  order         Order     @relation(fields: [orderId], references: [id])
+  orderId       String    @unique
+  plan          String
+  isActivated   Boolean   @default(false)
+  activatedAt   DateTime?
+  shopName      String?
+  createdAt     DateTime  @default(now())
+}
+
+model SecondhandRecord {
+  id             String   @id @default(cuid())
+  product        Product  @relation(fields: [productId], references: [id])
+  productId      String   @unique
+  mobileName     String
+  brand          String
+  imei           String?
+  sellerName     String
+  sellerCnic     String
+  sellerPhone    String
+  purchasePrice  Float
+  notes          String?
+  sellerPhotoUrl String?
+  cnicPhotoUrl   String?
+  isSold         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  sales          Sale[]
+}
