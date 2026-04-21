@@ -11,11 +11,10 @@ start "MSMS Backend" cmd /k "cd /d C:\Users\inaam aslam\Desktop\msms\msms-backen
 echo Waiting for backend to start...
 timeout /t 5 /nobreak > nul
 
-:: Start Cloudflare tunnel - prints a public URL
+:: Start permanent Cloudflare tunnel
 echo.
-echo Starting Cloudflare Tunnel...
-echo YOUR PUBLIC URL WILL APPEAR BELOW - COPY IT
+echo Starting Cloudflare Tunnel (api.msms-app.site)...
 echo ==========================================
-"C:\Users\inaam aslam\Desktop\msms\cloudflared.exe" tunnel --url http://localhost:4000
+"C:\Users\inaam aslam\Desktop\msms\cloudflared.exe" tunnel run msms
 
 pause
