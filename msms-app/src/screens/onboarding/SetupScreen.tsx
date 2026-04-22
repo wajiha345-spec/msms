@@ -36,7 +36,8 @@ export default function SetupScreen() {
       setPlanInfo(res.data.data);
       setStep(2);
     } catch (e: any) {
-      const msg = e?.response?.data?.error ?? 'Invalid or already-used license key.';
+      const msg = e?.response?.data?.error
+        ?? (e?.message ? `Network error: ${e.message}` : 'Invalid or already-used license key.');
       setErrors({ key: msg });
     } finally {
       setValidating(false);

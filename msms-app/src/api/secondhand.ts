@@ -31,11 +31,12 @@ export const secondhandApi = {
     apiClient.get<{ success: boolean; data: SecondhandRecord }>(`/secondhand/${id}`),
 
   // FormData because we're uploading images
+  // Do NOT hardcode Content-Type — axios must auto-set it with the multipart boundary
   create: (formData: FormData) =>
     apiClient.post<{ success: boolean; data: SecondhandRecord }>(
       '/secondhand',
       formData,
-      { headers: { 'Content-Type': 'multipart/form-data' } }
+      { headers: { 'Content-Type': undefined } }
     ),
 
   update: (id: string, data: { notes?: string; salePrice?: number }) =>

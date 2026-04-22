@@ -75,13 +75,21 @@ export default function NewSaleScreen() {
         secondhandId:  secondhandId  || undefined,
       });
 
-      // Open the invoice PDF automatically in the browser
-      Linking.openURL(invoicesApi.getUrl(sale.data.data.id)).catch(() => {});
+      const invoiceUrl = invoicesApi.getUrl(sale.data.data.id);
 
       Alert.alert(
         'Sale Recorded ✓',
         `Invoice: ${sale.data.data.invoiceNo}\nTotal: Rs ${sale.data.data.totalAmount.toLocaleString()}`,
-        [{ text: 'OK', onPress: () => navigation.goBack() }]
+        [
+          {
+            text: 'View Invoice',
+            onPress: () => {
+              navigation.goBack();
+              setTimeout(() => Linking.openURL(invoiceUrl).catch(() => {}), 300);
+            },
+          },
+          { text: 'Close', onPress: () => navigation.goBack() },
+        ]
       );
     } catch (e: any) {
       Alert.alert('Sale Failed', e?.response?.data?.error || 'Something went wrong');
