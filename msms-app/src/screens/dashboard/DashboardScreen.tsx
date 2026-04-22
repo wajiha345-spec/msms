@@ -20,20 +20,23 @@ export default function DashboardScreen() {
   const [loading,    setLoading]    = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  async function fetchData() {
+  async function fetchData(showSpinner = false) {
+    if (showSpinner) setLoading(true);
     try {
       const res = await dashboardApi.summary();
       setData(res.data.data);
-    } catch (e: any) {
-      Alert.alert('Error', 'Failed to load dashboard');
+    } catch {
+      // Silently fail on focus refresh — only show error on manual pull-to-refresh
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   }
 
-  // Reload when screen comes into focus
-  useFocusEffect(useCallback(() => { fetchData(); }, []));
+  // On first mount: show spinner. On focus return: refresh silently in background
+  useFocusEffect(useCallback(() => {
+    fetchData(data === null); // spinner only if no data yet
+  }, []));
 
   // Realtime: refresh when backend emits dashboard:refresh
   useEffect(() => {

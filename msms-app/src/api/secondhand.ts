@@ -30,19 +30,25 @@ export const secondhandApi = {
   getOne: (id: string) =>
     apiClient.get<{ success: boolean; data: SecondhandRecord }>(`/secondhand/${id}`),
 
-  // FormData because we're uploading images
-  // Use fetch directly — axios+FormData in React Native has Content-Type header issues
+  // FormData — use fetch with 45s timeout for image uploads to Cloudinary
   create: async (formData: FormData) => {
     const baseURL = apiClient.defaults.baseURL;
     const token   = (apiClient.defaults.headers.common as any)['Authorization'];
-    const res = await fetch(`${baseURL}/secondhand`, {
-      method:  'POST',
-      headers: token ? { Authorization: token } : {},
-      body:    formData,
-    });
-    const json = await res.json();
-    if (!res.ok) throw { response: { data: json } };
-    return { data: json };
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 45000);
+    try {
+      const res = await fetch(`${baseURL}/secondhand`, {
+        method:  'POST',
+        headers: token ? { Authorization: token } : {},
+        body:    formData,
+        signal:  controller.signal,
+      });
+      const json = await res.json();
+      if (!res.ok) throw { response: { data: json } };
+      return { data: json };
+    } finally {
+      clearTimeout(timer);
+    }
   },
 
   update: (id: string, data: { notes?: string; salePrice?: number }) =>
