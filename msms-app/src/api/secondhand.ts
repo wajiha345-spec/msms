@@ -31,13 +31,19 @@ export const secondhandApi = {
     apiClient.get<{ success: boolean; data: SecondhandRecord }>(`/secondhand/${id}`),
 
   // FormData because we're uploading images
-  // Do NOT hardcode Content-Type — axios must auto-set it with the multipart boundary
-  create: (formData: FormData) =>
-    apiClient.post<{ success: boolean; data: SecondhandRecord }>(
-      '/secondhand',
-      formData,
-      { headers: { 'Content-Type': undefined } }
-    ),
+  // Use fetch directly — axios+FormData in React Native has Content-Type header issues
+  create: async (formData: FormData) => {
+    const baseURL = apiClient.defaults.baseURL;
+    const token   = (apiClient.defaults.headers.common as any)['Authorization'];
+    const res = await fetch(`${baseURL}/secondhand`, {
+      method:  'POST',
+      headers: token ? { Authorization: token } : {},
+      body:    formData,
+    });
+    const json = await res.json();
+    if (!res.ok) throw { response: { data: json } };
+    return { data: json };
+  },
 
   update: (id: string, data: { notes?: string; salePrice?: number }) =>
     apiClient.put(`/secondhand/${id}`, data),
