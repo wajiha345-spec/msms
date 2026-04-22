@@ -232,7 +232,7 @@ export default function DashboardScreen() {
           icon="📱"
           label="Add 2nd Hand"
           color="#8B5CF6"
-          onPress={() => navigation.navigate('MoreTab', { screen: 'AddSecondhand' })}
+          onPress={() => navigation.navigate('MoreTab', { screen: 'SecondhandList' })}
         />
         <QuickBtn
           icon="🔍"
