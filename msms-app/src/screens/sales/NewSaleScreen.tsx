@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, Alert, Linking
+  TouchableOpacity, Alert,
 } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Input }           from '../../components/Inputs';
 import { Button }          from '../../components/Buttons';
@@ -83,9 +84,10 @@ export default function NewSaleScreen() {
         [
           {
             text: 'View Invoice',
-            onPress: () => {
+            onPress: async () => {
+              // Opens as in-app browser overlay — app stays in foreground, no reload
+              await WebBrowser.openBrowserAsync(invoiceUrl);
               navigation.goBack();
-              setTimeout(() => Linking.openURL(invoiceUrl).catch(() => {}), 300);
             },
           },
           { text: 'Close', onPress: () => navigation.goBack() },

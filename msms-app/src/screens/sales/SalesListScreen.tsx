@@ -8,8 +8,8 @@ import {
   ActivityIndicator,
   Alert,
   TouchableOpacity,
-  Linking,
 } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { salesApi, Sale } from '../../api/sales';
 import { Button } from '../../components/Buttons';
@@ -64,7 +64,7 @@ export default function SalesListScreen() {
 
     function openInvoice() {
       const url = invoicesApi.getUrl(item.id);
-      Linking.openURL(url).catch(() =>
+      WebBrowser.openBrowserAsync(url).catch(() =>
         Alert.alert('Error', 'Could not open invoice. Make sure you are connected.')
       );
     }
