@@ -1,20 +1,13 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-function createTransport() {
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS, // Gmail App Password (not your login password)
-    },
-    // Hard timeouts so a bad Gmail SMTP connection never hangs the HTTP request
-    connectionTimeout: 8000,   // 8s to establish TCP connection
-    greetingTimeout:   8000,   // 8s to receive SMTP greeting
-    socketTimeout:     10000,  // 10s of inactivity before giving up
-  });
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY);
 }
 
-const PRICES = { SIMPLE: 2500, PRO: 6000 };
+// From address — uses your verified domain once DNS records are added to Resend
+const FROM_ORDERS  = `"MSMS Orders" <noreply@msms-app.site>`;
+const FROM_SUPPORT = `"MSMS" <noreply@msms-app.site>`;
+const FROM_ALERTS  = `"MSMS Alert" <noreply@msms-app.site>`;
 
 // ── Notify admin of a new order ──────────────────────────────────────────────
 export async function sendAdminNewOrderEmail(order: {
@@ -31,9 +24,9 @@ export async function sendAdminNewOrderEmail(order: {
   const approveUrl = `${process.env.BACKEND_URL}/api/admin/orders/${order.id}/approve?secret=${secret}`;
   const listUrl    = `${process.env.BACKEND_URL}/api/admin/orders?secret=${secret}&status=PENDING`;
 
-  await createTransport().sendMail({
-    from:    `"MSMS Orders" <${process.env.EMAIL_USER}>`,
-    to:      process.env.ADMIN_EMAIL,
+  await getResend().emails.send({
+    from:    FROM_ORDERS,
+    to:      process.env.ADMIN_EMAIL!,
     subject: `New Order — ${order.plan} Plan — Rs ${order.amount.toLocaleString()} — ${order.customerName}`,
     html: `
       <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
@@ -111,8 +104,7 @@ export async function sendAdminNewOrderEmail(order: {
 
         <p style="color:#94a3b8;font-size:12px;margin-top:20px;line-height:1.6">
           Clicking Approve will mark the order as paid, generate a license key,
-          and email it to the customer automatically.<br/>
-          If the email fails for any reason, a Resend button will appear on the approval page.
+          and email it to the customer automatically.
         </p>
       </div>
     `,
@@ -128,9 +120,9 @@ export async function sendLicenseEmail(customer: {
 }) {
   const downloadUrl = `${process.env.BACKEND_URL}/api/download/${customer.licenseKey}`;
 
-  await createTransport().sendMail({
-    from: `"MSMS" <${process.env.EMAIL_USER}>`,
-    to: customer.email,
+  await getResend().emails.send({
+    from: FROM_SUPPORT,
+    to:   customer.email,
     subject: '🎉 Your MSMS License Key & Download Link',
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto">
@@ -155,7 +147,7 @@ export async function sendLicenseEmail(customer: {
           📲 Download MSMS App
         </a>
 
-        <p style="color:#64748b;font-size:13px">The download link is tied to your license key. Keep your license key safe — you will need it to set up the app.</p>
+        <p style="color:#64748b;font-size:13px">The download link is tied to your license key. Keep it safe — you'll need it to set up the app.</p>
         <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0"/>
         <p style="color:#94a3b8;font-size:12px">If you have any issues, reply to this email for support.</p>
       </div>
@@ -171,9 +163,9 @@ export async function sendOrderReceivedEmail(customer: {
   amount: number;
   orderId: string;
 }) {
-  await createTransport().sendMail({
-    from: `"MSMS" <${process.env.EMAIL_USER}>`,
-    to: customer.email,
+  await getResend().emails.send({
+    from: FROM_SUPPORT,
+    to:   customer.email,
     subject: 'Order Received — MSMS',
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto">
@@ -194,15 +186,15 @@ export async function sendOrderReceivedEmail(customer: {
 export async function sendImeiLowBalanceEmail(info: {
   balance:  number;
   currency: string;
-  critical: boolean;   // true when ≤ $2
+  critical: boolean;
 }) {
-  const to = process.env.IMEI_ALERT_EMAIL ?? process.env.ADMIN_EMAIL;
+  const to = process.env.IMEI_ALERT_EMAIL ?? process.env.ADMIN_EMAIL!;
   const urgency = info.critical
     ? { color: '#dc2626', bg: '#fef2f2', border: '#fecaca', icon: '🚨', label: 'CRITICAL — Almost Empty' }
     : { color: '#d97706', bg: '#fffbeb', border: '#fde68a', icon: '⚠️', label: 'Low Balance Warning' };
 
-  await createTransport().sendMail({
-    from:    `"MSMS Alert" <${process.env.EMAIL_USER}>`,
+  await getResend().emails.send({
+    from:    FROM_ALERTS,
     to,
     subject: `${urgency.icon} IMEI API Balance ${urgency.label} — ${info.currency} ${info.balance.toFixed(2)} remaining`,
     html: `
@@ -217,38 +209,12 @@ export async function sendImeiLowBalanceEmail(info: {
               : 'Your imeicheck.net balance is getting low. Recharge soon to keep IMEI lookups working.'}
           </p>
         </div>
-
-        <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:20px">
-          <tr style="background:#f8fafc">
-            <td style="padding:10px 12px;color:#64748b;width:40%">Remaining Balance</td>
-            <td style="padding:10px 12px;font-weight:700;font-size:18px;color:${urgency.color}">
-              ${info.currency} ${info.balance.toFixed(2)}
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:10px 12px;color:#64748b">Alert Time</td>
-            <td style="padding:10px 12px">${new Date().toLocaleString('en-PK', { timeZone: 'Asia/Karachi' })} PKT</td>
-          </tr>
-        </table>
-
         <a href="https://imeicheck.net/dashboard"
            style="display:inline-block;background:#2563eb;color:#fff;
                   padding:13px 28px;border-radius:9px;text-decoration:none;
                   font-weight:700;font-size:15px">
           Recharge at imeicheck.net →
         </a>
-
-        <div style="background:#f1f5f9;border-radius:10px;padding:14px 16px;
-                    font-size:13px;color:#475569;line-height:1.7;margin-top:20px">
-          <strong>Reminder:</strong> After recharging, no redeployment or code change is needed.
-          IMEI lookups resume automatically on the next check.
-        </div>
-
-        <p style="color:#94a3b8;font-size:12px;margin-top:16px">
-          ${info.critical
-            ? 'This alert repeats every 6 hours while balance remains critical.'
-            : 'This alert repeats once per day while balance remains below $5.'}
-        </p>
       </div>
     `,
   });
@@ -256,13 +222,13 @@ export async function sendImeiLowBalanceEmail(info: {
 
 // ── Alert admin when IMEI API has a problem ───────────────────────────────────
 export async function sendImeiApiAlertEmail(issue: {
-  reason:   string;   // human-readable cause
+  reason:   string;
   httpCode: number;
   imei:     string;
 }) {
-  await createTransport().sendMail({
-    from:    `"MSMS Alert" <${process.env.EMAIL_USER}>`,
-    to:      process.env.ADMIN_EMAIL,
+  await getResend().emails.send({
+    from:    FROM_ALERTS,
+    to:      process.env.ADMIN_EMAIL!,
     subject: `⚠️ IMEI API Issue — ${issue.reason}`,
     html: `
       <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
@@ -275,7 +241,6 @@ export async function sendImeiApiAlertEmail(issue: {
             to basic TAC prefix detection (brand only, no model).
           </p>
         </div>
-
         <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:20px">
           <tr style="background:#f8fafc">
             <td style="padding:10px 12px;color:#64748b;width:36%">Problem</td>
@@ -289,25 +254,7 @@ export async function sendImeiApiAlertEmail(issue: {
             <td style="padding:10px 12px;color:#64748b">Triggered by IMEI</td>
             <td style="padding:10px 12px;font-family:monospace">${issue.imei}</td>
           </tr>
-          <tr>
-            <td style="padding:10px 12px;color:#64748b">Time</td>
-            <td style="padding:10px 12px">${new Date().toLocaleString('en-PK', { timeZone: 'Asia/Karachi' })} PKT</td>
-          </tr>
         </table>
-
-        <div style="background:#f1f5f9;border-radius:10px;padding:16px;font-size:13px;color:#475569;line-height:1.7">
-          <strong>What to do:</strong><br/>
-          • If credits exhausted — recharge your balance at
-            <a href="https://imeicheck.net/dashboard" style="color:#2563eb">imeicheck.net/dashboard</a>.
-            <strong>No redeployment needed</strong> — the API will resume automatically after recharge.<br/>
-          • If rate limited — wait a few minutes and checks will resume.<br/>
-          • If API key invalid — update <code>IMEI_API_KEY</code> in your server environment variables.
-        </div>
-
-        <p style="color:#94a3b8;font-size:12px;margin-top:16px">
-          This alert is sent once per hour maximum. IMEI checks are still working
-          using the offline TAC prefix fallback.
-        </p>
       </div>
     `,
   });
