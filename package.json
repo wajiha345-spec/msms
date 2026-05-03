@@ -1,0 +1,10 @@
+{
+  "name": "msms",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix msms-backend run build",
+    "start": "npm --prefix msms-backend start",
+    "railway:build": "npm --prefix msms-backend ci && npm --prefix msms-backend run build && npm --prefix msms-backend run prisma:generate",
+    "railway:predeploy": "npm --prefix msms-backend run prisma:migrate"
+  }
+}
