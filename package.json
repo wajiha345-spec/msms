@@ -4,7 +4,7 @@
   "scripts": {
     "build": "npm --prefix msms-backend run build",
     "start": "npm --prefix msms-backend start",
-    "railway:build": "npm --prefix msms-backend ci && npm --prefix msms-backend run prisma:generate && npm --prefix msms-backend run build",
+    "railway:build": "npm --prefix msms-backend ci --include=dev && npm --prefix msms-backend run prisma:generate && npm --prefix msms-backend run build",
     "railway:predeploy": "npm --prefix msms-backend run prisma:migrate"
   }
 }
