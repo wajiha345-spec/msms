@@ -48,4 +48,24 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
+// ── Temporary email diagnostic (remove after confirming emails work) ─────────
+app.get('/api/health/email', async (_req, res) => {
+  try {
+    const { Resend } = await import('resend');
+    const key = process.env.RESEND_API_KEY;
+    if (!key) return res.json({ ok: false, error: 'RESEND_API_KEY is not set in environment' });
+
+    const resend = new Resend(key);
+    const result = await resend.emails.send({
+      from:    'noreply@msms-app.site',
+      to:      process.env.ADMIN_EMAIL!,
+      subject: 'MSMS Email Test',
+      html:    '<p>Test email from MSMS backend. If you see this, Resend is working!</p>',
+    });
+    return res.json({ ok: true, result });
+  } catch (err: any) {
+    return res.json({ ok: false, error: err?.message ?? String(err) });
+  }
+});
+
 export default app;
