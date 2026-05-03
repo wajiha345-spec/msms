@@ -7,6 +7,10 @@ function createTransport() {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS, // Gmail App Password (not your login password)
     },
+    // Hard timeouts so a bad Gmail SMTP connection never hangs the HTTP request
+    connectionTimeout: 8000,   // 8s to establish TCP connection
+    greetingTimeout:   8000,   // 8s to receive SMTP greeting
+    socketTimeout:     10000,  // 10s of inactivity before giving up
   });
 }
 
