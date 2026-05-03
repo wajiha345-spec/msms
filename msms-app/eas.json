@@ -6,6 +6,10 @@
     "production": {
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.msms-app.site/api",
+        "EXPO_PUBLIC_SOCKET_URL": "https://api.msms-app.site"
       }
     }
   }
