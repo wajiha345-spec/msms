@@ -1755,7 +1755,24 @@
       const notes = document.getElementById('f-notes').value.trim();
       if (notes) fd.append('notes', notes);
 
-      const res  = await fetch(API_BASE + '/api/orders', { method: 'POST', body: fd });
+      // 45-second timeout — covers screenshot upload to Cloudinary
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 45000);
+
+      let res;
+      try {
+        res = await fetch(API_BASE + '/api/orders', { method: 'POST', body: fd, signal: controller.signal });
+      } catch (fetchErr) {
+        if (fetchErr.name === 'AbortError') {
+          showBanner('Request timed out. The server is taking too long — please try again.');
+        } else {
+          showBanner('Network error. Please check your connection and try again.');
+        }
+        return;
+      } finally {
+        clearTimeout(timer);
+      }
+
       const data = await res.json();
 
       if (!res.ok || !data.success) {

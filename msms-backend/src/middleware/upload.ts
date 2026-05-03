@@ -24,7 +24,7 @@ export async function uploadToCloudinary(
   folder: string,
   filename: string
 ): Promise<string> {
-  return new Promise((resolve, reject) => {
+  const uploadPromise = new Promise<string>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {
         folder:         `msms/${folder}`,
@@ -39,4 +39,11 @@ export async function uploadToCloudinary(
     );
     stream.end(buffer);
   });
+
+  // 30-second hard timeout so the request never hangs forever
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('Cloudinary upload timed out after 30s')), 30000)
+  );
+
+  return Promise.race([uploadPromise, timeoutPromise]);
 }
