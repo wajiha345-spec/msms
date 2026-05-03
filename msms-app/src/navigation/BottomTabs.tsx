@@ -6,7 +6,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import DashboardScreen        from '../screens/dashboard/DashboardScreen';
 import ProductListScreen      from '../screens/products/ProductListScreen';
 import AddProductScreen       from '../screens/products/AddProductScreen';
+import ImportProductsScreen   from '../screens/products/ImportProductsScreen';
 import ProductDetailScreen    from '../screens/products/ProductDetailScreen';
+import CatalogScreen          from '../screens/catalog/CatalogScreen';
 import SalesListScreen        from '../screens/sales/SalesListScreen';
 import NewSaleScreen          from '../screens/sales/NewSaleScreen';
 import PurchasesListScreen    from '../screens/purchases/PurchasesListScreen';
@@ -28,9 +30,10 @@ const MStack = createNativeStackNavigator();
 function ProductsStack() {
   return (
     <PStack.Navigator screenOptions={{ headerShown: false }}>
-      <PStack.Screen name="ProductList"   component={ProductListScreen} />
-      <PStack.Screen name="AddProduct"    component={AddProductScreen} />
-      <PStack.Screen name="ProductDetail" component={ProductDetailScreen} />
+      <PStack.Screen name="ProductList"     component={ProductListScreen} />
+      <PStack.Screen name="AddProduct"      component={AddProductScreen} />
+      <PStack.Screen name="ImportProducts"  component={ImportProductsScreen} />
+      <PStack.Screen name="ProductDetail"   component={ProductDetailScreen} />
     </PStack.Navigator>
   );
 }
@@ -62,6 +65,7 @@ function MoreStack() {
       <MStack.Screen name="AddSecondhand"    component={AddSecondhandScreen} />
       <MStack.Screen name="SecondhandDetail" component={SecondhandDetailScreen} />
       <MStack.Screen name="ImeiSearch"       component={ImeiSearchScreen} />
+      <MStack.Screen name="Catalog"          component={CatalogScreen} />
     </MStack.Navigator>
   );
 }
@@ -94,8 +98,8 @@ export default function BottomTabs() {
         options={{ tabBarLabel: 'More',
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>☰</Text> }}
         listeners={({ navigation }) => ({
-          // Reset MoreStack to MoreMenu every time the tab is pressed
-          tabPress: () => {
+          tabPress: (e) => {
+            e.preventDefault();
             navigation.navigate('MoreTab', { screen: 'MoreMenu' });
           },
         })}

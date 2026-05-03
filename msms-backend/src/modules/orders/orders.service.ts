@@ -1,7 +1,7 @@
 import { prisma } from '../../config/db';
 import { sendAdminNewOrderEmail, sendOrderReceivedEmail } from '../../utils/email';
 
-const PLAN_PRICES: Record<string, number> = { SIMPLE: 2500, PRO: 6000 };
+const PLAN_PRICES: Record<string, number> = { SIMPLE: 25000, PRO: 95000 };
 
 export async function createOrder(data: {
   customerName: string;
@@ -9,6 +9,7 @@ export async function createOrder(data: {
   customerPhone: string;
   plan: string;
   transactionId: string;
+  screenshotUrl: string;
   notes?: string;
 }) {
   const plan = data.plan.toUpperCase();
@@ -22,6 +23,7 @@ export async function createOrder(data: {
       plan,
       amount:        PLAN_PRICES[plan],
       transactionId: data.transactionId.trim(),
+      screenshotUrl: data.screenshotUrl,
       notes:         data.notes?.trim() || null,
       status:        'PENDING',
     },
@@ -36,6 +38,7 @@ export async function createOrder(data: {
     plan:          order.plan,
     amount:        order.amount,
     transactionId: order.transactionId,
+    screenshotUrl: order.screenshotUrl,
   }).catch(() => {}); // don't fail the request if email fails
 
   // Confirm to customer

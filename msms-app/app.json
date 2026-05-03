@@ -32,6 +32,21 @@
         "projectId": "be7246d9-eef5-4450-a48a-4c480ba442d9"
       }
     },
-    "owner": "wajiha345"
+    "owner": "wajiha345",
+    "plugins": [
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app needs access to your photos to upload seller and CNIC photos."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "The app needs camera access to scan IMEI/barcodes and take seller and CNIC photos."
+        }
+      ]
+    ]
   }
 }

@@ -13,6 +13,9 @@ interface CreateSecondhandInput {
   notes?:        string;
   sellerPhotoUrl?: string;
   cnicPhotoUrl?:   string;
+  storage?:      string;
+  color?:        string;
+  ram?:          string;
 }
 
 export async function getSecondhandRecords(isSold?: boolean) {
@@ -71,6 +74,9 @@ export async function createSecondhandRecord(
         salePrice:     data.purchasePrice, // owner sets sale price later
         stock:         1,                  // one unit by definition
         isSecondhand:  true,
+        storage:       data.storage ?? null,
+        color:         data.color   ?? null,
+        ram:           data.ram     ?? null,
       },
     });
 

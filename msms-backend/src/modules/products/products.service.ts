@@ -6,10 +6,14 @@ interface CreateProductInput {
   category?: string;
   condition: 'new' | 'used';
   imei?: string;
+  barcode?: string;
   purchasePrice: number;
   salePrice: number;
   stock: number;
   isSecondhand?: boolean;
+  storage?: string;
+  color?: string;
+  ram?: string;
 }
 
 interface UpdateProductInput extends Partial<CreateProductInput> {}
@@ -43,6 +47,21 @@ export async function getProductById(id: string) {
   return product;
 }
 
+// ── Lookup product by IMEI or barcode (for scanner) ──
+export async function getProductByCode(code: string) {
+  const trimmed = code.trim();
+  const product = await prisma.product.findFirst({
+    where: {
+      isDeleted: false,
+      OR: [
+        { imei:    trimmed },
+        { barcode: trimmed },
+      ],
+    },
+  });
+  return product; // null = not found
+}
+
 // ── Create product ──
 export async function createProduct(data: CreateProductInput) {
   // If IMEI provided, make sure it isn't already used
@@ -50,7 +69,14 @@ export async function createProduct(data: CreateProductInput) {
     const exists = await prisma.product.findFirst({
       where: { imei: data.imei, isDeleted: false },
     });
-    if (exists) throw new Error('A product with this IMEI already exists');
+    if (exists) throw new Error(`A product with IMEI ${data.imei} already exists in inventory`);
+  }
+  // If barcode provided, ensure it isn't duplicated
+  if (data.barcode) {
+    const exists = await prisma.product.findFirst({
+      where: { barcode: data.barcode, isDeleted: false },
+    });
+    if (exists) throw new Error(`A product with this barcode already exists in inventory`);
   }
 
   return prisma.product.create({ data });
@@ -65,6 +91,13 @@ export async function updateProduct(id: string, data: UpdateProductInput) {
       where: { imei: data.imei, isDeleted: false, NOT: { id } },
     });
     if (conflict) throw new Error('Another product already uses this IMEI');
+  }
+
+  if (data.barcode) {
+    const conflict = await prisma.product.findFirst({
+      where: { barcode: data.barcode, isDeleted: false, NOT: { id } },
+    });
+    if (conflict) throw new Error('Another product already uses this barcode');
   }
 
   return prisma.product.update({ where: { id }, data });

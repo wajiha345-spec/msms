@@ -3,350 +3,1467 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MSMS — Mobile Shop Management System</title>
+  <title>MSMS - Mobile Shop Management System</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --blue:    #2563eb;
-      --blue-d:  #1d4ed8;
-      --green:   #16a34a;
-      --gray-50: #f8fafc;
-      --gray-100:#f1f5f9;
-      --gray-200:#e2e8f0;
-      --gray-400:#94a3b8;
-      --gray-600:#475569;
-      --gray-800:#1e293b;
-      --radius:  12px;
+      --bg: #f5f1e8;
+      --surface: rgba(255, 255, 255, 0.84);
+      --surface-strong: #132235;
+      --surface-soft: #fffdf9;
+      --line: rgba(19, 34, 53, 0.12);
+      --line-strong: rgba(19, 34, 53, 0.18);
+      --text: #132235;
+      --muted: #596777;
+      --muted-soft: #7b8896;
+      --brand: #0f766e;
+      --brand-strong: #0b5e58;
+      --brand-soft: #d5f1ec;
+      --accent: #f59e0b;
+      --accent-soft: #ffe9bf;
+      --success: #13804f;
+      --danger: #dc2626;
+      --shadow-lg: 0 32px 80px rgba(19, 34, 53, 0.14);
+      --shadow-md: 0 18px 40px rgba(19, 34, 53, 0.1);
+      --radius: 30px;
+      --maxw: 1180px;
     }
 
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-           color: var(--gray-800); background: #fff; }
+    html { scroll-behavior: smooth; }
 
-    /* ── Nav ── */
-    nav { display:flex; justify-content:space-between; align-items:center;
-          padding:18px 40px; border-bottom:1px solid var(--gray-200);
-          position:sticky; top:0; background:#fff; z-index:100; }
-    .nav-logo { font-size:20px; font-weight:800; color:var(--blue); letter-spacing:-0.5px; }
-    .nav-logo span { color:var(--gray-800); }
-    .nav-cta { background:var(--blue); color:#fff; border:none; padding:10px 22px;
-               border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;
-               transition:background .2s; }
-    .nav-cta:hover { background:var(--blue-d); }
+    body {
+      font-family: "Trebuchet MS", "Aptos", "Segoe UI", sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(15, 118, 110, 0.16), transparent 30%),
+        radial-gradient(circle at top right, rgba(245, 158, 11, 0.14), transparent 26%),
+        linear-gradient(180deg, #fcfaf5 0%, var(--bg) 52%, #f7f3eb 100%);
+    }
 
-    /* ── Hero ── */
-    .hero { text-align:center; padding:80px 24px 60px; max-width:700px; margin:0 auto; }
-    .hero-badge { display:inline-block; background:#dbeafe; color:var(--blue);
-                  font-size:13px; font-weight:600; padding:5px 14px; border-radius:20px;
-                  margin-bottom:20px; }
-    .hero h1 { font-size:clamp(32px, 5vw, 54px); font-weight:800; line-height:1.15;
-               letter-spacing:-1px; margin-bottom:20px; }
-    .hero h1 span { color:var(--blue); }
-    .hero p { font-size:18px; color:var(--gray-600); line-height:1.7; margin-bottom:36px; }
-    .hero-btns { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
-    .btn-primary { background:var(--blue); color:#fff; border:none; padding:14px 32px;
-                   border-radius:10px; font-size:16px; font-weight:600; cursor:pointer;
-                   transition:background .2s; }
-    .btn-primary:hover { background:var(--blue-d); }
-    .btn-secondary { background:var(--gray-100); color:var(--gray-800); border:none;
-                     padding:14px 32px; border-radius:10px; font-size:16px; font-weight:600;
-                     cursor:pointer; transition:background .2s; }
-    .btn-secondary:hover { background:var(--gray-200); }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(19, 34, 53, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(19, 34, 53, 0.03) 1px, transparent 1px);
+      background-size: 28px 28px;
+      mask-image: radial-gradient(circle at center, black 44%, transparent 92%);
+      pointer-events: none;
+      z-index: -2;
+    }
 
-    /* ── Section ── */
-    section { padding:72px 24px; }
-    .section-label { text-align:center; font-size:13px; font-weight:700; color:var(--blue);
-                     text-transform:uppercase; letter-spacing:1.5px; margin-bottom:12px; }
-    .section-title { text-align:center; font-size:clamp(24px,4vw,38px); font-weight:800;
-                     letter-spacing:-0.5px; margin-bottom:12px; }
-    .section-sub { text-align:center; color:var(--gray-600); font-size:16px;
-                   max-width:540px; margin:0 auto 52px; line-height:1.6; }
+    nav,
+    .hero,
+    section,
+    footer {
+      position: relative;
+      z-index: 1;
+    }
 
-    /* ── How it works ── */
-    .steps { display:flex; gap:24px; max-width:900px; margin:0 auto; flex-wrap:wrap; justify-content:center; }
-    .step { flex:1; min-width:200px; max-width:260px; text-align:center; }
-    .step-num { width:48px; height:48px; border-radius:50%; background:var(--blue);
-                color:#fff; font-size:20px; font-weight:700; display:flex;
-                align-items:center; justify-content:center; margin:0 auto 16px; }
-    .step h3 { font-size:16px; font-weight:700; margin-bottom:8px; }
-    .step p { font-size:14px; color:var(--gray-600); line-height:1.6; }
-    .step-arrow { font-size:24px; color:var(--gray-400); align-self:center; }
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      width: 100%;
+      margin: 0;
+      padding: 18px 32px;
+      position: sticky;
+      top: 0;
+      background: linear-gradient(180deg, rgba(241, 235, 223, 0.96), rgba(255, 250, 242, 0.9));
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(19, 34, 53, 0.08);
+      box-shadow: 0 10px 24px rgba(19, 34, 53, 0.08);
+      z-index: 100;
+    }
 
-    /* ── Plans ── */
-    .plans { display:flex; gap:24px; max-width:860px; margin:0 auto; flex-wrap:wrap; justify-content:center; }
-    .plan-card { flex:1; min-width:280px; max-width:380px; border:2px solid var(--gray-200);
-                 border-radius:var(--radius); padding:32px; position:relative;
-                 transition:border-color .2s, box-shadow .2s; }
-    .plan-card:hover { border-color:var(--blue); box-shadow:0 8px 32px rgba(37,99,235,.12); }
-    .plan-card.popular { border-color:var(--blue); }
-    .popular-badge { position:absolute; top:-14px; left:50%; transform:translateX(-50%);
-                     background:var(--blue); color:#fff; font-size:12px; font-weight:700;
-                     padding:4px 16px; border-radius:20px; white-space:nowrap; }
-    .plan-name { font-size:22px; font-weight:800; margin-bottom:6px; }
-    .plan-price { font-size:40px; font-weight:800; color:var(--blue); margin:16px 0 4px; }
-    .plan-price span { font-size:18px; font-weight:500; color:var(--gray-600); }
-    .plan-once { font-size:13px; color:var(--gray-400); margin-bottom:24px; }
-    .plan-desc { font-size:14px; color:var(--gray-600); line-height:1.6; margin-bottom:24px;
-                 padding-bottom:24px; border-bottom:1px solid var(--gray-200); }
-    .plan-features { list-style:none; margin-bottom:28px; }
-    .plan-features li { display:flex; align-items:flex-start; gap:10px; font-size:14px;
-                        padding:7px 0; color:var(--gray-800); }
-    .plan-features li .icon { color:var(--green); font-size:16px; flex-shrink:0; margin-top:1px; }
-    .plan-features li .icon-no { color:var(--gray-400); }
-    .plan-btn { width:100%; padding:14px; border-radius:10px; font-size:15px;
-                font-weight:700; cursor:pointer; border:none; transition:all .2s; }
-    .plan-btn-primary { background:var(--blue); color:#fff; }
-    .plan-btn-primary:hover { background:var(--blue-d); }
-    .plan-btn-secondary { background:var(--gray-100); color:var(--gray-800); }
-    .plan-btn-secondary:hover { background:var(--gray-200); }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
 
-    /* ── FAQ ── */
-    .faq { max-width:680px; margin:0 auto; }
-    .faq-item { border-bottom:1px solid var(--gray-200); padding:20px 0; }
-    .faq-q { font-size:16px; font-weight:600; cursor:pointer; display:flex;
-             justify-content:space-between; align-items:center; gap:12px; }
-    .faq-q .arrow { color:var(--gray-400); font-size:20px; transition:transform .2s; flex-shrink:0; }
-    .faq-q.open .arrow { transform:rotate(180deg); }
-    .faq-a { font-size:14px; color:var(--gray-600); line-height:1.7; margin-top:12px;
-             display:none; }
-    .faq-a.open { display:block; }
+    .logo-mark {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      background: linear-gradient(145deg, var(--brand), #0c4f56);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      box-shadow: 0 12px 24px rgba(15, 118, 110, 0.26);
+      flex-shrink: 0;
+    }
 
-    /* ── Footer ── */
-    footer { background:var(--gray-800); color:var(--gray-400); text-align:center;
-             padding:36px 24px; font-size:14px; }
-    footer strong { color:#fff; }
+    .logo-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      min-width: 0;
+    }
 
-    /* ── Modal ── */
-    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55);
-                     z-index:200; align-items:center; justify-content:center; padding:16px; }
-    .modal-overlay.open { display:flex; }
-    .modal { background:#fff; border-radius:16px; padding:36px 32px; width:100%;
-             max-width:500px; max-height:90vh; overflow-y:auto;
-             box-shadow:0 24px 64px rgba(0,0,0,.25); }
-    .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
-    .modal-title { font-size:20px; font-weight:700; }
-    .modal-close { background:none; border:none; font-size:24px; cursor:pointer;
-                   color:var(--gray-400); line-height:1; }
-    .modal-close:hover { color:var(--gray-800); }
+    .logo-name {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
 
-    /* Steps inside modal */
-    .m-steps { display:flex; gap:0; margin-bottom:28px; }
-    .m-step { flex:1; text-align:center; position:relative; }
-    .m-step-dot { width:30px; height:30px; border-radius:50%; background:var(--gray-200);
-                  color:var(--gray-400); font-size:13px; font-weight:700;
-                  display:flex; align-items:center; justify-content:center; margin:0 auto 6px; }
-    .m-step.active .m-step-dot { background:var(--blue); color:#fff; }
-    .m-step.done .m-step-dot { background:var(--green); color:#fff; }
-    .m-step-label { font-size:11px; color:var(--gray-400); font-weight:600; }
-    .m-step.active .m-step-label { color:var(--blue); }
-    .m-step::after { content:''; position:absolute; top:15px; left:calc(50% + 15px);
-                     width:calc(100% - 30px); height:2px; background:var(--gray-200); }
-    .m-step:last-child::after { display:none; }
+    .logo-tag {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted-soft);
+      white-space: nowrap;
+    }
 
-    /* Form */
-    .form-group { margin-bottom:16px; }
-    .form-label { display:block; font-size:13px; font-weight:600; color:var(--gray-600);
-                  margin-bottom:6px; }
-    .form-input { width:100%; padding:11px 14px; border:1.5px solid var(--gray-200);
-                  border-radius:8px; font-size:15px; color:var(--gray-800);
-                  transition:border-color .2s; outline:none; }
-    .form-input:focus { border-color:var(--blue); }
-    .form-error { font-size:12px; color:#dc2626; margin-top:4px; display:none; }
+    .nav-ticker {
+      flex: 1;
+      min-width: 140px;
+      overflow: hidden;
+      border-left: 1px solid rgba(19, 34, 53, 0.08);
+      border-right: 1px solid rgba(19, 34, 53, 0.08);
+      padding: 0 18px;
+      margin: 0 6px;
+    }
 
-    /* Plan select */
-    .plan-select-row { display:flex; gap:10px; margin-bottom:16px; }
-    .plan-select-btn { flex:1; padding:12px 8px; border:2px solid var(--gray-200);
-                       border-radius:10px; text-align:center; cursor:pointer;
-                       transition:all .2s; background:#fff; }
-    .plan-select-btn.selected { border-color:var(--blue); background:#eff6ff; }
-    .plan-select-btn .ps-name { font-weight:700; font-size:15px; }
-    .plan-select-btn .ps-price { font-size:13px; color:var(--gray-400); margin-top:2px; }
-    .plan-select-btn.selected .ps-price { color:var(--blue); }
+    .ticker-track {
+      display: inline-flex;
+      align-items: center;
+      gap: 34px;
+      white-space: nowrap;
+      min-width: max-content;
+      animation: headerTicker 20s linear infinite;
+    }
 
-    /* Payment box */
-    .payment-box { background:var(--gray-50); border:1px solid var(--gray-200);
-                   border-radius:10px; padding:20px; margin-bottom:20px; }
-    .payment-box h4 { font-size:14px; font-weight:700; margin-bottom:14px; color:var(--gray-800); }
-    .payment-method-tabs { display:flex; gap:8px; margin-bottom:16px; }
-    .pm-tab { flex:1; padding:8px; border:1.5px solid var(--gray-200); border-radius:8px;
-              text-align:center; font-size:13px; font-weight:600; cursor:pointer;
-              transition:all .15s; background:#fff; }
-    .pm-tab.active { border-color:var(--blue); background:#eff6ff; color:var(--blue); }
-    .pm-detail { font-size:14px; color:var(--gray-600); line-height:1.8; }
-    .pm-detail strong { color:var(--gray-800); }
-    .pm-amount { font-size:22px; font-weight:800; color:var(--blue); margin:12px 0 4px; }
-    .pm-amount-label { font-size:12px; color:var(--gray-400); }
+    .ticker-item {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
 
-    /* Success */
-    .success-box { text-align:center; padding:20px 0; }
-    .success-icon { font-size:56px; margin-bottom:16px; }
-    .success-box h3 { font-size:22px; font-weight:700; margin-bottom:10px; }
-    .success-box p { color:var(--gray-600); font-size:15px; line-height:1.7; }
+    .ticker-item strong {
+      color: var(--brand-strong);
+      font-weight: 900;
+    }
 
-    .submit-btn { width:100%; padding:14px; background:var(--blue); color:#fff;
-                  border:none; border-radius:10px; font-size:16px; font-weight:700;
-                  cursor:pointer; transition:background .2s; margin-top:4px; }
-    .submit-btn:hover { background:var(--blue-d); }
-    .submit-btn:disabled { background:var(--gray-400); cursor:not-allowed; }
+    .nav-cta,
+    .btn-primary,
+    .btn-secondary,
+    .plan-btn,
+    .submit-btn {
+      border: none;
+      cursor: pointer;
+      transition: transform .22s ease, box-shadow .22s ease, background .22s ease, color .22s ease, border-color .22s ease;
+    }
 
-    .back-link { text-align:center; margin-top:14px; font-size:14px; color:var(--gray-400);
-                 cursor:pointer; }
-    .back-link:hover { color:var(--blue); }
+    .nav-cta {
+      background: linear-gradient(135deg, var(--brand), var(--brand-strong));
+      color: #fff;
+      padding: 12px 22px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 700;
+      box-shadow: 0 14px 26px rgba(15, 118, 110, 0.24);
+    }
 
-    .error-banner { background:#fef2f2; border:1px solid #fecaca; color:#dc2626;
-                    border-radius:8px; padding:12px 16px; font-size:14px;
-                    margin-bottom:16px; display:none; }
+    .nav-cta:hover,
+    .btn-primary:hover,
+    .plan-btn-primary:hover,
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 32px rgba(15, 118, 110, 0.24);
+    }
+
+    .hero {
+      width: min(calc(100% - 32px), var(--maxw));
+      margin: 22px auto 0;
+      padding: 92px 32px 84px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(300px, .9fr);
+      gap: 32px;
+      align-items: stretch;
+    }
+
+    .hero-copy {
+      text-align: left;
+      padding: 20px 0;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 253, 249, 0.78);
+      color: var(--brand-strong);
+      border: 1px solid rgba(15, 118, 110, 0.18);
+      box-shadow: 0 8px 20px rgba(19, 34, 53, 0.05);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 9px 16px;
+      border-radius: 999px;
+      margin-bottom: 22px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(42px, 6vw, 74px);
+      font-weight: 700;
+      line-height: 1.02;
+      letter-spacing: -0.05em;
+      margin-bottom: 22px;
+      max-width: 10ch;
+    }
+
+    .hero h1 span {
+      color: var(--brand);
+      display: inline-block;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: var(--muted);
+      line-height: 1.8;
+      margin-bottom: 34px;
+      max-width: 58ch;
+    }
+
+    .hero-btns {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 26px;
+    }
+
+    .btn-primary,
+    .btn-secondary,
+    .plan-btn,
+    .submit-btn {
+      padding: 15px 26px;
+      border-radius: 16px;
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.2;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .btn-primary,
+    .plan-btn-primary,
+    .submit-btn {
+      background: linear-gradient(135deg, var(--brand), var(--brand-strong));
+      color: #fff;
+      box-shadow: 0 16px 30px rgba(15, 118, 110, 0.2);
+    }
+
+    .btn-secondary,
+    .plan-btn-secondary {
+      background: rgba(255, 253, 249, 0.76);
+      color: var(--text);
+      border: 1px solid rgba(19, 34, 53, 0.12);
+      box-shadow: 0 10px 24px rgba(19, 34, 53, 0.06);
+    }
+
+    .btn-secondary:hover,
+    .plan-btn-secondary:hover {
+      transform: translateY(-2px);
+      border-color: rgba(15, 118, 110, 0.22);
+      box-shadow: 0 16px 28px rgba(19, 34, 53, 0.08);
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .hero-chip {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.65);
+      border: 1px solid rgba(19, 34, 53, 0.1);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    .hero-panel {
+      background:
+        linear-gradient(180deg, rgba(255, 252, 248, 0.93), rgba(255, 253, 251, 0.86)),
+        linear-gradient(135deg, rgba(15, 118, 110, 0.025), rgba(245, 158, 11, 0.03));
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      border-radius: 34px;
+      box-shadow: var(--shadow-lg);
+      padding: 26px;
+      display: grid;
+      gap: 16px;
+      align-content: start;
+      overflow: hidden;
+    }
+
+    .panel-card {
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid rgba(19, 34, 53, 0.08);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 14px 28px rgba(19, 34, 53, 0.06);
+    }
+
+    .panel-card.primary {
+      background: linear-gradient(145deg, #4a667d, #6f9f95);
+      color: #fff;
+      min-height: 220px;
+    }
+
+    .panel-label {
+      display: inline-block;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(19, 34, 53, 0.44);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      font-size: 12px;
+      font-weight: 700;
+      color: #f8fafc;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      transition: background .22s ease, transform .22s ease, box-shadow .22s ease;
+      cursor: default;
+    }
+
+    .panel-label:hover {
+      background: rgba(66, 95, 119, 0.78);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 18px rgba(19, 34, 53, 0.2);
+    }
+
+    .panel-card.primary h3 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 30px;
+      line-height: 1.08;
+      margin-bottom: 12px;
+      max-width: 11ch;
+    }
+
+    .panel-card.primary p {
+      color: rgba(255, 255, 255, 0.8);
+      line-height: 1.7;
+      font-size: 15px;
+      margin-bottom: 20px;
+    }
+
+    .panel-figure {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .mini-stat {
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.14);
+      backdrop-filter: blur(10px);
+    }
+
+    .mini-stat strong {
+      display: block;
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+
+    .mini-stat span {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.72);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .panel-stack {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .soft-card-title {
+      font-size: 13px;
+      color: var(--muted-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+      font-weight: 800;
+    }
+
+    .soft-card-value {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .soft-card-copy {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    section {
+      width: min(calc(100% - 32px), var(--maxw));
+      margin: 0 auto;
+      padding: 42px 0 34px;
+    }
+
+    .section-shell {
+      background: rgba(255, 253, 249, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.66);
+      border-radius: 34px;
+      padding: 38px 28px;
+      box-shadow: var(--shadow-md);
+      backdrop-filter: blur(16px);
+    }
+
+    .section-label {
+      text-align: center;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--brand);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      text-align: center;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(30px, 4vw, 48px);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      margin-bottom: 12px;
+    }
+
+    .section-sub {
+      text-align: center;
+      color: var(--muted);
+      font-size: 16px;
+      max-width: 620px;
+      margin: 0 auto 42px;
+      line-height: 1.75;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 18px;
+      max-width: 100%;
+      margin: 0 auto;
+    }
+
+    .step {
+      min-width: 0;
+      text-align: left;
+      padding: 24px 20px;
+      background: rgba(255, 255, 255, 0.75);
+      border: 1px solid rgba(19, 34, 53, 0.08);
+      border-radius: 24px;
+      box-shadow: 0 14px 28px rgba(19, 34, 53, 0.05);
+    }
+
+    .step-num {
+      width: 52px;
+      height: 52px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--brand), var(--brand-strong));
+      color: #fff;
+      font-size: 20px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 0 18px;
+      box-shadow: 0 12px 24px rgba(15, 118, 110, 0.2);
+    }
+
+    .step h3 {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .step p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+
+    .plans {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .plan-card {
+      min-width: 0;
+      border: 1px solid rgba(19, 34, 53, 0.12);
+      background: rgba(255, 255, 255, 0.82);
+      border-radius: 30px;
+      padding: 32px;
+      position: relative;
+      box-shadow: 0 18px 40px rgba(19, 34, 53, 0.08);
+      transition: transform .24s ease, border-color .24s ease, box-shadow .24s ease;
+      overflow: hidden;
+    }
+
+    .plan-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      height: 120px;
+      background: linear-gradient(180deg, rgba(15, 118, 110, 0.08), transparent);
+      pointer-events: none;
+    }
+
+    .plan-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(15, 118, 110, 0.28);
+      box-shadow: 0 26px 56px rgba(19, 34, 53, 0.12);
+    }
+
+    .plan-card.popular {
+      background: linear-gradient(180deg, rgba(15, 118, 110, 0.08), rgba(255, 255, 255, 0.86));
+      border-color: rgba(15, 118, 110, 0.28);
+      transform: scale(1.01);
+    }
+
+    .popular-badge {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      background: var(--accent-soft);
+      color: #8b4a00;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 8px 12px;
+      border-radius: 999px;
+      white-space: nowrap;
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .plan-name {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      position: relative;
+    }
+
+    .plan-price-was {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--muted-soft);
+      text-decoration: line-through;
+      margin-bottom: 2px;
+    }
+    .plan-save-badge {
+      display: inline-block;
+      background: #dc2626;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 8px;
+      letter-spacing: 0.03em;
+    }
+    .plan-price {
+      font-size: 46px;
+      font-weight: 800;
+      color: var(--brand);
+      margin: 22px 0 4px;
+      letter-spacing: -0.04em;
+      position: relative;
+    }
+
+    .plan-price span {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .plan-once {
+      font-size: 13px;
+      color: var(--muted-soft);
+      margin-bottom: 24px;
+      font-weight: 700;
+      position: relative;
+    }
+
+    .plan-desc {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.75;
+      margin-bottom: 24px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid rgba(19, 34, 53, 0.08);
+      position: relative;
+    }
+
+    .plan-features {
+      list-style: none;
+      margin-bottom: 28px;
+      position: relative;
+    }
+
+    .plan-features li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 14px;
+      padding: 8px 0;
+      color: var(--text);
+      line-height: 1.65;
+    }
+
+    .plan-features li .icon {
+      color: var(--success);
+      font-size: 16px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .plan-features li .icon-no { color: var(--muted-soft); }
+
+    .faq {
+      max-width: 760px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+
+    .faq-item {
+      border: 1px solid rgba(19, 34, 53, 0.08);
+      background: rgba(255, 255, 255, 0.72);
+      border-radius: 22px;
+      padding: 0 22px;
+      box-shadow: 0 12px 26px rgba(19, 34, 53, 0.05);
+    }
+
+    .faq-q {
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 20px 0;
+    }
+
+    .faq-q .arrow {
+      color: var(--muted-soft);
+      font-size: 18px;
+      transition: transform .2s ease;
+      flex-shrink: 0;
+    }
+
+    .faq-q.open .arrow { transform: rotate(180deg); }
+
+    .faq-a {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.8;
+      padding-bottom: 20px;
+      display: none;
+    }
+
+    .faq-a.open { display: block; }
+
+    footer {
+      width: min(calc(100% - 32px), var(--maxw));
+      margin: 12px auto 28px;
+      background: linear-gradient(135deg, #132235, #1c3f49);
+      color: rgba(255, 255, 255, 0.72);
+      text-align: center;
+      padding: 36px 24px;
+      font-size: 14px;
+      border-radius: 30px;
+      box-shadow: var(--shadow-lg);
+    }
+
+    footer strong { color: #fff; }
+
+    /* ── Stolen phone callout ── */
+    .stolen-callout {
+      width: min(calc(100% - 32px), var(--maxw));
+      margin: 28px auto 0;
+      background: linear-gradient(135deg, #1a0505 0%, #3b0a0a 50%, #1f0a00 100%);
+      border-radius: 28px;
+      padding: 52px 48px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 32px;
+      align-items: center;
+      box-shadow: 0 24px 64px rgba(220, 38, 38, 0.22), 0 8px 24px rgba(0,0,0,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    .stolen-callout::before {
+      content: "🚫";
+      position: absolute;
+      right: -10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 180px;
+      opacity: 0.06;
+      pointer-events: none;
+      line-height: 1;
+    }
+    .stolen-callout-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(220, 38, 38, 0.25);
+      border: 1px solid rgba(220, 38, 38, 0.5);
+      color: #fca5a5;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 999px;
+      margin-bottom: 16px;
+    }
+    .stolen-callout h2 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(26px, 3.5vw, 42px);
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin-bottom: 14px;
+    }
+    .stolen-callout h2 span { color: #f87171; }
+    .stolen-callout p {
+      font-size: 15px;
+      color: rgba(255,255,255,0.65);
+      line-height: 1.75;
+      max-width: 56ch;
+      margin-bottom: 24px;
+    }
+    .stolen-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .stolen-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.82);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 999px;
+    }
+    .stolen-pill.danger {
+      background: rgba(220,38,38,0.18);
+      border-color: rgba(220,38,38,0.4);
+      color: #fca5a5;
+    }
+    .stolen-stat-box {
+      background: rgba(220, 38, 38, 0.12);
+      border: 1px solid rgba(220, 38, 38, 0.3);
+      border-radius: 20px;
+      padding: 28px 32px;
+      text-align: center;
+      min-width: 180px;
+      flex-shrink: 0;
+    }
+    .stolen-stat-num {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 52px;
+      font-weight: 700;
+      color: #f87171;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .stolen-stat-label {
+      font-size: 13px;
+      color: rgba(255,255,255,0.55);
+      line-height: 1.5;
+    }
+    @media (max-width: 680px) {
+      .stolen-callout { grid-template-columns: 1fr; padding: 36px 24px; }
+      .stolen-stat-box { display: none; }
+    }
+
+    .screenshot-zone {
+      border: 2px dashed var(--line-strong);
+      border-radius: 14px;
+      padding: 20px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      background: rgba(19,34,53,0.02);
+    }
+    .screenshot-zone:hover { border-color: var(--brand); background: var(--brand-soft); }
+    .screenshot-zone.has-file { border-style: solid; border-color: var(--brand); background: var(--brand-soft); }
+    .screenshot-zone-label { font-size: 14px; color: var(--muted); pointer-events: none; }
+    .screenshot-zone-label strong { color: var(--brand); }
+    .screenshot-zone-label small { display: block; margin-top: 4px; font-size: 12px; color: var(--muted-soft); }
+    #screenshot-preview { display:none; max-width:100%; max-height:220px; border-radius:10px; margin-top:12px; border:1px solid var(--line); object-fit:contain; }
+    #screenshot-change { display:none; font-size:12px; color:var(--brand); margin-top:8px; text-decoration:underline; cursor:pointer; }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(12, 22, 35, 0.64);
+      backdrop-filter: blur(10px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: linear-gradient(180deg, #fffdf9, #ffffff);
+      border-radius: 28px;
+      padding: 34px 30px;
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 28px 72px rgba(0, 0, 0, 0.28);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .modal-title {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .modal-close {
+      background: rgba(19, 34, 53, 0.06);
+      border: none;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--muted);
+      line-height: 1;
+    }
+
+    .modal-close:hover { color: var(--text); }
+
+    .m-steps {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 28px;
+      padding: 14px;
+      background: rgba(19, 34, 53, 0.04);
+      border-radius: 20px;
+      align-items: start;
+    }
+
+    .m-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      min-width: 0;
+    }
+
+    .m-step-dot {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(19, 34, 53, 0.1);
+      color: var(--muted-soft);
+      font-size: 13px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 6px;
+      line-height: 1;
+      font-family: "Segoe UI", sans-serif;
+      position: relative;
+      z-index: 1;
+    }
+
+    .m-step.active .m-step-dot { background: var(--brand); color: #fff; }
+    .m-step.done .m-step-dot { background: var(--success); color: #fff; }
+
+    .m-step-label {
+      font-size: 11px;
+      color: var(--muted-soft);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .m-step.active .m-step-label { color: var(--brand); }
+
+    .m-step::after {
+      content: '';
+      position: absolute;
+      top: 17px;
+      left: calc(50% + 22px);
+      width: calc(100% - 44px);
+      height: 2px;
+      background: rgba(19, 34, 53, 0.12);
+    }
+
+    .m-step:last-child::after { display: none; }
+
+    .form-group { margin-bottom: 18px; }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 8px;
+      letter-spacing: 0.02em;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 13px 15px;
+      border: 1.5px solid rgba(19, 34, 53, 0.12);
+      border-radius: 14px;
+      font-size: 15px;
+      color: var(--text);
+      transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+      outline: none;
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .form-input:focus {
+      border-color: rgba(15, 118, 110, 0.42);
+      box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.1);
+    }
+
+    .form-error {
+      font-size: 12px;
+      color: var(--danger);
+      margin-top: 5px;
+      display: none;
+    }
+
+    .plan-select-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 18px;
+      align-items: stretch;
+    }
+
+    .plan-select-btn {
+      flex: 1;
+      min-width: 0;
+      padding: 14px 10px;
+      border: 1.5px solid rgba(19, 34, 53, 0.12);
+      border-radius: 18px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s ease;
+      background: rgba(255, 255, 255, 0.78);
+    }
+
+    .plan-select-btn.selected {
+      border-color: rgba(15, 118, 110, 0.34);
+      background: rgba(213, 241, 236, 0.65);
+      box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.08);
+    }
+
+    .plan-select-btn .ps-name { font-weight: 800; font-size: 16px; }
+    .plan-select-btn .ps-price { font-size: 13px; color: var(--muted-soft); margin-top: 4px; }
+    .plan-select-btn.selected .ps-price { color: var(--brand); }
+
+    .payment-box {
+      background: linear-gradient(180deg, rgba(15, 118, 110, 0.06), rgba(255, 255, 255, 0.92));
+      border: 1px solid rgba(19, 34, 53, 0.1);
+      border-radius: 22px;
+      padding: 22px;
+      margin-bottom: 20px;
+    }
+
+    .payment-method-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 18px;
+      align-items: stretch;
+    }
+
+    .pm-tab {
+      flex: 1;
+      min-width: 0;
+      padding: 10px 8px;
+      border: 1.5px solid rgba(19, 34, 53, 0.12);
+      border-radius: 12px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .15s ease;
+      background: rgba(255, 255, 255, 0.88);
+    }
+
+    .pm-tab.active {
+      border-color: rgba(15, 118, 110, 0.32);
+      background: rgba(213, 241, 236, 0.7);
+      color: var(--brand-strong);
+    }
+
+    .pm-detail {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.85;
+    }
+
+    .pm-detail strong { color: var(--text); }
+
+    .pm-amount {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--brand);
+      margin: 4px 0 6px;
+      letter-spacing: -0.04em;
+    }
+
+    .pm-amount-label {
+      font-size: 12px;
+      color: var(--muted-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+    }
+
+    .success-box { text-align: center; padding: 20px 0; }
+    .success-icon { font-size: 56px; margin-bottom: 16px; }
+
+    .success-box h3 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 30px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .success-box p {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.8;
+    }
+
+    .submit-btn:disabled {
+      background: var(--muted-soft);
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    #step-1 .submit-btn,
+    #step-2 .submit-btn {
+      width: 100%;
+      display: block;
+      margin-top: 8px;
+      min-height: 52px;
+    }
+
+    .back-link {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 14px;
+      color: var(--muted-soft);
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .back-link:hover { color: var(--brand); }
+
+    .error-banner {
+      background: #fff1f1;
+      border: 1px solid #ffc9c9;
+      color: var(--danger);
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    @media (max-width: 980px) {
+      .nav-ticker {
+        display: none;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+        padding-top: 74px;
+      }
+
+      .hero-copy,
+      .hero h1,
+      .hero p {
+        text-align: center;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .hero-btns,
+      .hero-meta { justify-content: center; }
+
+      .steps,
+      .plans {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      nav {
+        width: 100%;
+        padding: 14px 18px;
+        top: 0;
+      }
+
+      .nav-logo { font-size: 24px; }
+      .nav-cta { padding: 11px 18px; }
+
+      .logo-mark {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        font-size: 16px;
+      }
+
+      .logo-name {
+        font-size: 24px;
+      }
+
+      .hero {
+        width: calc(100% - 20px);
+        padding: 66px 18px 56px;
+      }
+
+      section,
+      footer {
+        width: calc(100% - 20px);
+      }
+
+      .section-shell {
+        padding: 30px 18px;
+        border-radius: 26px;
+      }
+
+      .steps,
+      .plans,
+      .panel-stack,
+      .panel-figure {
+        grid-template-columns: 1fr;
+      }
+
+      .plan-card.popular { transform: none; }
+
+      .modal {
+        padding: 26px 18px;
+        border-radius: 22px;
+      }
+
+      .m-steps {
+        gap: 8px;
+        padding: 10px;
+      }
+
+      .m-step::after {
+        left: calc(50% + 18px);
+        width: calc(100% - 36px);
+      }
+
+      .payment-method-tabs,
+      .plan-select-row { flex-direction: column; }
+    }
+
+    @keyframes headerTicker {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
   </style>
 </head>
 <body>
 
 <!-- Navigation -->
 <nav>
-  <div class="nav-logo">MSMS<span>.</span></div>
+  <div class="nav-logo">
+    <div class="logo-mark">MS</div>
+    <div class="logo-copy">
+      <div class="logo-name">MSMS</div>
+      <div class="logo-tag">Shop Management</div>
+    </div>
+  </div>
+  <div class="nav-ticker">
+    <div class="ticker-track">
+      <span class="ticker-item"><strong>MSMS</strong> one-time payment</span>
+      <span class="ticker-item">built for Pakistan mobile shops</span>
+      <span class="ticker-item">simple invoices to full inventory</span>
+      <span class="ticker-item">🚫 <strong>keep track of stolen or blocked mobiles</strong></span>
+      <span class="ticker-item">license key sent after verification</span>
+      <span class="ticker-item"><strong>MSMS</strong> one-time payment</span>
+      <span class="ticker-item">built for Pakistan mobile shops</span>
+      <span class="ticker-item">simple invoices to full inventory</span>
+      <span class="ticker-item">🚫 <strong>keep track of stolen or blocked mobiles</strong></span>
+      <span class="ticker-item">license key sent after verification</span>
+    </div>
+  </div>
   <button class="nav-cta" onclick="openModal()">Buy Now</button>
 </nav>
 
 <!-- Hero -->
 <div class="hero">
-  <div class="hero-badge">📱 Mobile Shop Management System</div>
-  <h1>Run Your Mobile Shop <span>Smarter</span></h1>
-  <p>From quick invoicing to full inventory management — MSMS is built for mobile phone shops in Pakistan. One-time payment, no subscriptions, ever.</p>
-  <div class="hero-btns">
-    <button class="btn-primary" onclick="openModal('PRO')">Get Pro — Rs 6,000</button>
-    <button class="btn-secondary" onclick="document.getElementById('plans').scrollIntoView({behavior:'smooth'})">Compare Plans</button>
+  <div class="hero-copy">
+    <div class="hero-badge">Mobile Shop Management System</div>
+    <h1>Run your shop with <span>clarity</span>.</h1>
+    <p>From lightning-fast invoicing to full inventory control, MSMS gives mobile phone shops in Pakistan a cleaner and more professional way to sell, track, and grow with a one-time payment.</p>
+    <div class="hero-btns">
+      <button class="btn-primary" onclick="openModal('PRO')">Get Pro - Rs 95,000</button>
+      <button class="btn-secondary" onclick="document.getElementById('plans').scrollIntoView({behavior:'smooth'})">Compare Plans</button>
+    </div>
+    <div class="hero-meta">
+      <div class="hero-chip">One-time payment</div>
+      <div class="hero-chip">Android 8.0+</div>
+      <div class="hero-chip">Built for Pakistan mobile shops</div>
+    </div>
+  </div>
+
+  <div class="hero-panel">
+    <div class="panel-card primary">
+      <div class="panel-label">MSMS Pro</div>
+      <h3>Everything your counter needs in one place.</h3>
+      <p>Sales, stock movement, secondhand phone records, and profit reporting all live in a layout designed to feel fast and dependable.</p>
+      <div class="panel-figure">
+        <div class="mini-stat">
+          <strong>Rs 95,000</strong>
+          <span>One-time</span>
+        </div>
+        <div class="mini-stat">
+          <strong>No renewals</strong>
+          <span>Forever access</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-stack">
+      <div class="panel-card">
+        <div class="soft-card-title">Invoicing</div>
+        <div class="soft-card-value">Fast</div>
+        <div class="soft-card-copy">Create polished invoices in moments and keep customer records easy to revisit.</div>
+      </div>
+      <div class="panel-card">
+        <div class="soft-card-title">Inventory</div>
+        <div class="soft-card-value">Live</div>
+        <div class="soft-card-copy">Track stock, IMEI details, and purchases with the clarity serious shops need every day.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Stolen / Blocked Phone Callout -->
+<div class="stolen-callout">
+  <div>
+    <div class="stolen-callout-badge">🚫 Fraud Protection</div>
+    <h2>Never get stuck with a<br/><span>stolen or blocked mobile.</span></h2>
+    <p>
+      Every day shopkeepers in Pakistan unknowingly buy stolen phones — only to find out
+      later when the customer is long gone. MSMS lets you scan any IMEI instantly and check
+      its PTA status before handing over a single rupee.
+    </p>
+    <div class="stolen-pills">
+      <div class="stolen-pill danger">🚫 Blocked by PTA — reject it</div>
+      <div class="stolen-pill danger">⚠️ Stolen — do not accept</div>
+      <div class="stolen-pill">✅ PTA Compliant — safe to buy</div>
+      <div class="stolen-pill">📋 Full device info from IMEI</div>
+    </div>
+  </div>
+  <div class="stolen-stat-box">
+    <div class="stolen-stat-num">IMEI</div>
+    <div class="stolen-stat-label">Instant check<br/>before every deal</div>
   </div>
 </div>
 
 <!-- How it works -->
-<section style="background:var(--gray-50)">
-  <div class="section-label">Simple Process</div>
-  <div class="section-title">Up and running in minutes</div>
-  <div class="section-sub">No technical skills needed. Pay once, download, and set up your shop.</div>
-  <div class="steps">
-    <div class="step">
-      <div class="step-num">1</div>
-      <h3>Choose a Plan</h3>
-      <p>Pick Simple for invoicing only, or Pro for the full shop management suite.</p>
-    </div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <h3>Make Payment</h3>
-      <p>Pay via JazzCash, Easypaisa, or bank transfer. No card required.</p>
-    </div>
-    <div class="step">
-      <div class="step-num">3</div>
-      <h3>Get Your Key</h3>
-      <p>We verify your payment and send a license key + download link to your email.</p>
-    </div>
-    <div class="step">
-      <div class="step-num">4</div>
-      <h3>Set Up Your Shop</h3>
-      <p>Install the app, enter your key, set your shop name and password. Done.</p>
+<section>
+  <div class="section-shell">
+    <div class="section-label">Simple Process</div>
+    <div class="section-title">Up and running in minutes</div>
+    <div class="section-sub">No technical setup and no subscription maze. Choose your version, pay once, and start running your shop with a more polished system.</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Choose your version</h3>
+        <p>Pick Simple for invoice-focused work or Pro for the complete management setup.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Send payment</h3>
+        <p>Use JazzCash, Easypaisa, or a bank transfer. No credit card or subscription billing required.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Receive access</h3>
+        <p>Your payment is verified and your license key plus download link are sent to your email.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h3>Start selling</h3>
+        <p>Install the app, activate your license, and set up your shop name and password.</p>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- Plans -->
 <section id="plans">
-  <div class="section-label">Pricing</div>
-  <div class="section-title">One-time payment. No renewals.</div>
-  <div class="section-sub">Pay once and own the software forever. No monthly fees, no hidden charges.</div>
-  <div class="plans">
+  <div class="section-shell">
+    <div class="section-label">Pricing</div>
+    <div class="section-title">One-time payment. No renewals.</div>
+    <div class="section-sub">Choose the version that matches your shop today. The pricing stays simple while the presentation feels much more premium.</div>
+    <div class="plans">
 
-    <!-- Simple -->
-    <div class="plan-card">
-      <div class="plan-name">Simple</div>
-      <div class="plan-price">Rs 2,500 <span></span></div>
-      <div class="plan-once">One-time payment — no subscription</div>
-      <div class="plan-desc">Perfect for small shop owners who need fast, professional invoicing without the complexity.</div>
-      <ul class="plan-features">
-        <li><span class="icon">✓</span> Professional invoice generation</li>
-        <li><span class="icon">✓</span> Customer records</li>
-        <li><span class="icon">✓</span> PDF invoices</li>
-        <li><span class="icon">✓</span> Custom shop name &amp; branding</li>
-        <li><span class="icon icon-no">✗</span> <span style="color:var(--gray-400)">Inventory management</span></li>
-        <li><span class="icon icon-no">✗</span> <span style="color:var(--gray-400)">Secondhand phone tracking</span></li>
-        <li><span class="icon icon-no">✗</span> <span style="color:var(--gray-400)">Purchase recording</span></li>
-        <li><span class="icon icon-no">✗</span> <span style="color:var(--gray-400)">Sales dashboard &amp; reports</span></li>
-      </ul>
-      <button class="plan-btn plan-btn-secondary" onclick="openModal('SIMPLE')">Buy Simple</button>
-    </div>
+      <!-- Simple -->
+      <div class="plan-card">
+        <div class="plan-name">Simple</div>
+        <div class="plan-save-badge">Save Rs 5,000</div>
+        <div class="plan-price-was">Rs 30,000</div>
+        <div class="plan-price">Rs 25,000 <span></span></div>
+        <div class="plan-once">One-time payment - no subscription</div>
+        <div class="plan-desc">Best for smaller counters that want clean invoices, customer records, and a faster sales flow without the full inventory layer.</div>
+        <ul class="plan-features">
+          <li><span class="icon">✓</span> Professional invoice generation</li>
+          <li><span class="icon">✓</span> Customer records</li>
+          <li><span class="icon">✓</span> PDF invoices</li>
+          <li><span class="icon">✓</span> Custom shop name &amp; branding</li>
+          <li><span class="icon icon-no">✕</span> <span style="color:var(--muted-soft)">Inventory management</span></li>
+          <li><span class="icon icon-no">✕</span> <span style="color:var(--muted-soft)">Secondhand phone tracking</span></li>
+          <li><span class="icon icon-no">✕</span> <span style="color:var(--muted-soft)">Purchase recording</span></li>
+          <li><span class="icon icon-no">✕</span> <span style="color:var(--muted-soft)">Sales dashboard &amp; reports</span></li>
+        </ul>
+        <button class="plan-btn plan-btn-secondary" onclick="openModal('SIMPLE')">Buy Simple</button>
+      </div>
 
-    <!-- Pro -->
-    <div class="plan-card popular">
-      <div class="popular-badge">⭐ Most Popular</div>
-      <div class="plan-name">Pro</div>
-      <div class="plan-price">Rs 6,000 <span></span></div>
-      <div class="plan-once">One-time payment — no subscription</div>
-      <div class="plan-desc">The complete solution for serious shop owners who want full control over inventory, sales, and reports.</div>
-      <ul class="plan-features">
-        <li><span class="icon">✓</span> Everything in Simple</li>
-        <li><span class="icon">✓</span> Full inventory management</li>
-        <li><span class="icon">✓</span> Secondhand phone intake &amp; tracking</li>
-        <li><span class="icon">✓</span> CNIC &amp; seller photo recording</li>
-        <li><span class="icon">✓</span> Purchase recording</li>
-        <li><span class="icon">✓</span> Sales dashboard with profit reports</li>
-        <li><span class="icon">✓</span> IMEI search &amp; tracking</li>
-        <li><span class="icon">✓</span> Real-time stock updates</li>
-      </ul>
-      <button class="plan-btn plan-btn-primary" onclick="openModal('PRO')">Buy Pro</button>
+      <!-- Pro -->
+      <div class="plan-card popular">
+        <div class="popular-badge">Most Popular</div>
+        <div class="plan-name">Pro</div>
+        <div class="plan-save-badge">Save Rs 15,000</div>
+        <div class="plan-price-was">Rs 1,10,000</div>
+        <div class="plan-price">Rs 95,000 <span></span></div>
+        <div class="plan-once">One-time payment - no subscription</div>
+        <div class="plan-desc">The full operating system for serious shop owners who need inventory control, purchase tracking, secondhand phone records, and profit visibility.</div>
+        <ul class="plan-features">
+          <li><span class="icon">✓</span> Everything in Simple</li>
+          <li><span class="icon">✓</span> Full inventory management</li>
+          <li><span class="icon">✓</span> Secondhand phone intake &amp; tracking</li>
+          <li><span class="icon">✓</span> CNIC &amp; seller photo recording</li>
+          <li><span class="icon">✓</span> Purchase recording</li>
+          <li><span class="icon">✓</span> Sales dashboard with profit reports</li>
+          <li><span class="icon">✓</span> Keep track of stolen or blocked mobiles</li>
+          <li><span class="icon">✓</span> Real-time stock updates</li>
+        </ul>
+        <button class="plan-btn plan-btn-primary" onclick="openModal('PRO')">Buy Pro</button>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- FAQ -->
-<section style="background:var(--gray-50)">
-  <div class="section-label">FAQ</div>
-  <div class="section-title">Common Questions</div>
-  <div class="section-sub">Everything you need to know before buying.</div>
-  <div class="faq">
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">
-        Is this really a one-time payment? <span class="arrow">▾</span>
+<section>
+  <div class="section-shell">
+    <div class="section-label">FAQ</div>
+    <div class="section-title">Common Questions</div>
+    <div class="section-sub">Everything a buyer needs before placing an order, presented in a simpler and more premium layout.</div>
+    <div class="faq">
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          Is this really a one-time payment? <span class="arrow">▾</span>
+        </div>
+        <div class="faq-a">Yes. You pay once and the app is yours forever. There are no monthly fees, no renewal charges, and no subscriptions of any kind.</div>
       </div>
-      <div class="faq-a">Yes. You pay once and the app is yours forever. There are no monthly fees, no renewal charges, and no subscriptions of any kind.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">
-        How do I receive the app after payment? <span class="arrow">▾</span>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          How do I receive the app after payment? <span class="arrow">▾</span>
+        </div>
+        <div class="faq-a">After we verify your payment, we send your license key and download link to the email address you provide. Install the APK on your Android phone and complete the setup steps.</div>
       </div>
-      <div class="faq-a">After we verify your payment (usually within a few hours), we email your license key and a download link to the email address you provided. Click the link to download the APK, install it on your Android phone, and follow the setup steps.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">
-        What Android version is required? <span class="arrow">▾</span>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          What Android version is required? <span class="arrow">▾</span>
+        </div>
+        <div class="faq-a">The app requires Android 8.0 or higher. It is not currently available for iPhone.</div>
       </div>
-      <div class="faq-a">The app requires Android 8.0 or higher. It is not currently available for iPhone.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">
-        Can I use it on multiple phones? <span class="arrow">▾</span>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          Can I use it on multiple phones? <span class="arrow">▾</span>
+        </div>
+        <div class="faq-a">Each license key activates one account. If you need the app on multiple devices for staff, contact us for a multi-device arrangement.</div>
       </div>
-      <div class="faq-a">Each license key activates one account. If you need the app on multiple devices for staff, contact us for a multi-device arrangement.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">
-        How long does payment verification take? <span class="arrow">▾</span>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          How long does payment verification take? <span class="arrow">▾</span>
+        </div>
+        <div class="faq-a">Typically within 2-4 hours during business hours, and often faster. You will receive an email as soon as your order is approved.</div>
       </div>
-      <div class="faq-a">Typically within 2–4 hours during business hours. In most cases, it's much faster. You will receive an email as soon as your order is approved.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">
-        What payment methods are accepted? <span class="arrow">▾</span>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          What payment methods are accepted? <span class="arrow">▾</span>
+        </div>
+        <div class="faq-a">We accept JazzCash, Easypaisa, and direct bank transfer. All payments are one-time only.</div>
       </div>
-      <div class="faq-a">We accept JazzCash, Easypaisa, and direct bank transfer. All are one-time payments.</div>
     </div>
   </div>
 </section>
 
 <!-- Footer -->
 <footer>
-  <p><strong>MSMS</strong> — Mobile Shop Management System</p>
+  <p><strong>MSMS</strong> - Mobile Shop Management System</p>
   <p style="margin-top:8px">Questions? Contact us at <strong id="footer-email">support@msms.pk</strong></p>
   <p style="margin-top:12px;font-size:12px">© 2025 MSMS. All rights reserved.</p>
 </footer>
 
-<!-- ── ORDER MODAL ── -->
+<!-- ORDER MODAL -->
 <div class="modal-overlay" id="modal" onclick="handleOverlayClick(event)">
   <div class="modal">
     <div class="modal-header">
@@ -368,11 +1485,11 @@
       <div class="plan-select-row">
         <div class="plan-select-btn" id="ps-SIMPLE" onclick="selectPlan('SIMPLE')">
           <div class="ps-name">Simple</div>
-          <div class="ps-price">Rs 2,500</div>
+          <div class="ps-price">Rs 25,000</div>
         </div>
         <div class="plan-select-btn selected" id="ps-PRO" onclick="selectPlan('PRO')">
           <div class="ps-name">Pro</div>
-          <div class="ps-price">Rs 6,000</div>
+          <div class="ps-price">Rs 95,000</div>
         </div>
       </div>
       <div class="form-group">
@@ -396,7 +1513,7 @@
     <!-- Step 2: Payment -->
     <div id="step-2" style="display:none">
       <div class="payment-box">
-        <div class="pm-amount" id="pay-amount">Rs 6,000</div>
+        <div class="pm-amount" id="pay-amount">Rs 95,000</div>
         <div class="pm-amount-label">One-time payment for <span id="pay-plan">Pro</span> Plan</div>
         <div class="payment-method-tabs" style="margin-top:16px">
           <div class="pm-tab active" onclick="setPayMethod('jazzcash',this)">JazzCash</div>
@@ -404,22 +1521,22 @@
           <div class="pm-tab" onclick="setPayMethod('bank',this)">Bank Transfer</div>
         </div>
         <div class="pm-detail" id="pm-detail-jazzcash">
-          Send <strong id="pmd-jc-amount">Rs 6,000</strong> to:<br/>
-          JazzCash: <strong>0300-0000000</strong><br/>
-          Account Title: <strong>Your Name Here</strong><br/><br/>
+          Send <strong id="pmd-jc-amount">Rs 95,000</strong> to:<br/>
+          JazzCash: <strong>0301-1444150</strong><br/>
+          Account Title: <strong>Mudassar Sardar</strong><br/><br/>
           <em>After sending, enter the JazzCash Transaction ID below.</em>
         </div>
         <div class="pm-detail" id="pm-detail-easypaisa" style="display:none">
-          Send <strong id="pmd-ep-amount">Rs 6,000</strong> to:<br/>
-          Easypaisa: <strong>0300-0000000</strong><br/>
-          Account Title: <strong>Your Name Here</strong><br/><br/>
+          Send <strong id="pmd-ep-amount">Rs 95,000</strong> to:<br/>
+          Easypaisa: <strong>0312-5938303</strong><br/>
+          Account Title: <strong>Mudassar Sardar</strong><br/><br/>
           <em>After sending, enter the Easypaisa Transaction ID below.</em>
         </div>
         <div class="pm-detail" id="pm-detail-bank" style="display:none">
-          Bank: <strong>HBL / Meezan / Any</strong><br/>
-          Account Title: <strong>Your Name Here</strong><br/>
-          IBAN: <strong>PK00XXXX0000000000000000</strong><br/><br/>
-          Transfer <strong id="pmd-bk-amount">Rs 6,000</strong> and enter the transaction reference below.
+          Bank: <strong>UBL</strong><br/>
+          Account Title: <strong>Mudassar Sardar</strong><br/>
+          Account No: <strong>0435251151942</strong><br/><br/>
+          Transfer <strong id="pmd-bk-amount">Rs 95,000</strong> and enter the transaction reference below.
         </div>
       </div>
 
@@ -428,6 +1545,21 @@
         <input class="form-input" id="f-txn" type="text" placeholder="e.g. TXN123456789" />
         <div class="form-error" id="e-txn">Please enter the transaction ID</div>
       </div>
+
+      <div class="form-group">
+        <label class="form-label">Payment Screenshot *</label>
+        <div class="screenshot-zone" id="screenshot-zone" onclick="document.getElementById('f-screenshot').click()">
+          <input type="file" id="f-screenshot" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleScreenshot(this)" />
+          <div class="screenshot-zone-label" id="screenshot-placeholder">
+            📸 <strong>Click to upload</strong> your payment confirmation screenshot
+            <small>JPG, PNG or WebP — max 5 MB</small>
+          </div>
+          <img id="screenshot-preview" alt="Payment screenshot preview" />
+          <div id="screenshot-change" onclick="event.stopPropagation();document.getElementById('f-screenshot').click()">Change photo</div>
+        </div>
+        <div class="form-error" id="e-screenshot">Please upload your payment screenshot</div>
+      </div>
+
       <div class="form-group">
         <label class="form-label">Notes (optional)</label>
         <input class="form-input" id="f-notes" type="text" placeholder="Any notes for us" />
@@ -446,7 +1578,11 @@
         <br/>
         <p>Your <strong>license key and download link</strong> will be sent to:<br/><strong id="success-email"></strong></p>
         <br/>
-        <p style="font-size:13px;color:var(--gray-400)">Check your spam folder if you don't see the email within 4 hours.</p>
+        <div id="success-ref-row" style="background:rgba(19,34,53,0.04);border-radius:12px;padding:12px 16px;margin:4px 0 12px;text-align:left">
+          <div style="font-size:11px;color:var(--muted-soft);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Order Reference</div>
+          <div id="success-orderid" style="font-family:monospace;font-size:13px;color:var(--text);word-break:break-all"></div>
+        </div>
+        <p style="font-size:13px;color:var(--muted-soft)">Keep this reference in case you need to follow up. Check your spam folder if you don't see the email within 4 hours.</p>
       </div>
     </div>
 
@@ -454,19 +1590,20 @@
 </div>
 
 <script>
-  // ── Config — update these before going live ──────────────────────────────
-  const API_BASE   = 'https://api.msms-app.site';
+  // â”€â”€ Config â€” update these before going live â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // --- Config: update API_BASE and SUPPORT_EMAIL before going live ---
+  const API_BASE      = 'https://api.msms-app.site';
   const SUPPORT_EMAIL = 'support@msms.pk';
 
   document.getElementById('footer-email').textContent = SUPPORT_EMAIL;
 
-  // ── State ────────────────────────────────────────────────────────────────
+  // --- State ---
   let selectedPlan = 'PRO';
   let currentPayMethod = 'jazzcash';
 
-  const PRICES = { SIMPLE: 2500, PRO: 6000 };
+  const PRICES = { SIMPLE: 25000, PRO: 95000 };
 
-  // ── Plan selection ───────────────────────────────────────────────────────
+  // --- Plan selection ---
   function selectPlan(plan) {
     selectedPlan = plan;
     document.querySelectorAll('.plan-select-btn').forEach(b => b.classList.remove('selected'));
@@ -475,10 +1612,43 @@
 
   function openModal(plan) {
     if (plan) selectPlan(plan);
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-email').value = '';
+    document.getElementById('f-phone').value = '';
+    document.getElementById('f-txn').value = '';
+    document.getElementById('f-notes').value = '';
+    clearScreenshot();
+    setPayMethod('jazzcash', document.querySelector('.pm-tab'));
     document.getElementById('modal').classList.add('open');
     document.body.style.overflow = 'hidden';
     showStep(1);
     hideError();
+  }
+
+  function clearScreenshot() {
+    document.getElementById('f-screenshot').value = '';
+    document.getElementById('screenshot-preview').style.display = 'none';
+    document.getElementById('screenshot-placeholder').style.display = 'block';
+    document.getElementById('screenshot-change').style.display = 'none';
+    document.getElementById('screenshot-zone').classList.remove('has-file');
+  }
+
+  function handleScreenshot(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const preview   = document.getElementById('screenshot-preview');
+    const placeholder = document.getElementById('screenshot-placeholder');
+    const changeBtn = document.getElementById('screenshot-change');
+    const zone      = document.getElementById('screenshot-zone');
+    const reader    = new FileReader();
+    reader.onload = e => {
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+      placeholder.style.display = 'none';
+      changeBtn.style.display = 'block';
+      zone.classList.add('has-file');
+    };
+    reader.readAsDataURL(file);
   }
 
   function closeModal() {
@@ -490,7 +1660,7 @@
     if (e.target === document.getElementById('modal')) closeModal();
   }
 
-  // ── Steps ────────────────────────────────────────────────────────────────
+  // --- Steps ---
   function showStep(n) {
     [1, 2, 3].forEach(i => {
       document.getElementById('step-' + i).style.display = i === n ? 'block' : 'none';
@@ -502,7 +1672,7 @@
 
   function goBack(step) { showStep(step); hideError(); }
 
-  // ── Validation ───────────────────────────────────────────────────────────
+  // --- Validation helpers ---
   function showError(id, msg) {
     const el = document.getElementById('e-' + id);
     el.textContent = msg; el.style.display = 'block';
@@ -521,25 +1691,34 @@
 
   function goToPayment() {
     clearErrors(); hideError();
-    let ok = true;
+    let valid = true;
     const name  = document.getElementById('f-name').value.trim();
     const email = document.getElementById('f-email').value.trim();
     const phone = document.getElementById('f-phone').value.trim();
-    if (!name)                        { showError('name', 'Please enter your name'); ok = false; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError('email', 'Please enter a valid email'); ok = false; }
-    if (phone.length < 10)            { showError('phone', 'Please enter your phone number'); ok = false; }
-    if (!ok) return;
+    if (!name)                                      { showError('name',  'Please enter your full name'); valid = false; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError('email', 'Please enter a valid email address'); valid = false; }
+    if (phone.replace(/\D/g, '').length < 10)       { showError('phone', 'Please enter a valid 10-digit phone number'); valid = false; }
+    if (!valid) return;
 
     const price = PRICES[selectedPlan];
     document.getElementById('pay-amount').textContent = 'Rs ' + price.toLocaleString();
-    document.getElementById('pay-plan').textContent = selectedPlan === 'PRO' ? 'Pro' : 'Simple';
-    ['pmd-jc-amount','pmd-ep-amount','pmd-bk-amount'].forEach(id =>
+    document.getElementById('pay-plan').textContent   = selectedPlan === 'PRO' ? 'Pro' : 'Simple';
+    ['pmd-jc-amount', 'pmd-ep-amount', 'pmd-bk-amount'].forEach(id =>
       document.getElementById(id).textContent = 'Rs ' + price.toLocaleString()
     );
+    document.getElementById('f-txn').value   = '';
+    document.getElementById('f-notes').value = '';
     showStep(2);
+    const submitBtn = document.getElementById('submit-btn');
+    submitBtn.disabled = true;
+    if (document.activeElement) document.activeElement.blur();
+    setTimeout(() => {
+      submitBtn.disabled = false;
+      document.getElementById('f-txn').focus();
+    }, 300);
   }
 
-  // ── Payment method tabs ──────────────────────────────────────────────────
+  // --- Payment method tabs ---
   function setPayMethod(method, el) {
     currentPayMethod = method;
     document.querySelectorAll('.pm-tab').forEach(t => t.classList.remove('active'));
@@ -549,48 +1728,53 @@
     );
   }
 
-  // ── Submit ───────────────────────────────────────────────────────────────
+  // --- Submit order ---
   async function submitOrder() {
     clearErrors(); hideError();
-    const txn = document.getElementById('f-txn').value.trim();
-    if (!txn) { showError('txn', 'Please enter the transaction ID'); return; }
+
+    const txn        = document.getElementById('f-txn').value.trim();
+    const screenshot = document.getElementById('f-screenshot').files[0];
+
+    let valid = true;
+    if (!txn)        { showError('txn',        'Please enter the transaction ID');                         valid = false; }
+    if (!screenshot) { showError('screenshot', 'Please upload your payment screenshot — it is required'); valid = false; }
+    if (!valid) return;
 
     const btn = document.getElementById('submit-btn');
     btn.disabled = true;
-    btn.textContent = 'Submitting…';
+    btn.textContent = 'Uploading & submitting...';
 
     try {
-      const res = await fetch(API_BASE + '/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customerName:  document.getElementById('f-name').value.trim(),
-          customerEmail: document.getElementById('f-email').value.trim(),
-          customerPhone: document.getElementById('f-phone').value.trim(),
-          plan:          selectedPlan,
-          transactionId: txn,
-          notes:         document.getElementById('f-notes').value.trim() || undefined,
-        }),
-      });
+      const fd = new FormData();
+      fd.append('customerName',  document.getElementById('f-name').value.trim());
+      fd.append('customerEmail', document.getElementById('f-email').value.trim());
+      fd.append('customerPhone', document.getElementById('f-phone').value.trim());
+      fd.append('plan',          selectedPlan);
+      fd.append('transactionId', txn);
+      fd.append('screenshot',    screenshot);
+      const notes = document.getElementById('f-notes').value.trim();
+      if (notes) fd.append('notes', notes);
 
+      const res  = await fetch(API_BASE + '/api/orders', { method: 'POST', body: fd });
       const data = await res.json();
+
       if (!res.ok || !data.success) {
         showBanner(data.error || 'Something went wrong. Please try again.');
         return;
       }
 
-      document.getElementById('success-email').textContent =
-        document.getElementById('f-email').value.trim();
+      document.getElementById('success-email').textContent   = document.getElementById('f-email').value.trim();
+      document.getElementById('success-orderid').textContent = data.data && data.data.orderId ? data.data.orderId : '';
       showStep(3);
-    } catch {
+    } catch (_err) {
       showBanner('Network error. Please check your connection and try again.');
     } finally {
-      btn.disabled = false;
+      btn.disabled    = false;
       btn.textContent = 'Submit Order';
     }
   }
 
-  // ── FAQ ──────────────────────────────────────────────────────────────────
+  // --- FAQ accordion ---
   function toggleFaq(el) {
     const a = el.nextElementSibling;
     const open = a.classList.contains('open');

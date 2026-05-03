@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
   TouchableOpacity, Alert, ActivityIndicator,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Input } from '../../components/Inputs';
@@ -73,8 +74,11 @@ export default function SetupScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
 
         {/* Logo / header */}
         <View style={styles.logoBox}>
@@ -182,12 +186,12 @@ export default function SetupScreen() {
         </TouchableOpacity>
 
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: colors.background, paddingTop: 0 },
   scroll:    { padding: 24, paddingTop: 60, paddingBottom: 48 },
   logoBox:   { alignItems: 'center', marginBottom: 36 },
   logoText:  { fontSize: 36, fontWeight: '800', color: colors.primary, letterSpacing: -1 },

@@ -49,6 +49,7 @@ export async function create(req: AuthRequest, res: Response) {
       mobileName, brand, imei,
       sellerName, sellerCnic, sellerPhone,
       purchasePrice, notes,
+      storage, color, ram,
     } = req.body;
 
     if (!mobileName) return fail(res, 'mobileName is required');
@@ -93,6 +94,9 @@ export async function create(req: AuthRequest, res: Response) {
         notes: notes ?? undefined,
         sellerPhotoUrl,
         cnicPhotoUrl,
+        storage: storage ?? undefined,
+        color:   color   ?? undefined,
+        ram:     ram     ?? undefined,
       },
       io
     );

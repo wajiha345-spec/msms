@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, Alert,
+  TouchableOpacity, Alert, ActivityIndicator,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Input }           from '../../components/Inputs';
 import { Button }          from '../../components/Buttons';
 import { ProductPicker }   from '../../components/ProductPicker';
+import ScannerOverlay      from '../../components/ScannerOverlay';
 import { Product, productsApi } from '../../api/products';
 import { salesApi }        from '../../api/sales';
 import { invoicesApi }     from '../../api/invoices';
@@ -30,6 +32,15 @@ export default function NewSaleScreen() {
   const [loading,       setLoading]       = useState(false);
   const [errors,        setErrors]        = useState<Record<string, string>>({});
 
+  // Scanner state
+  const [scannerOpen,   setScannerOpen]   = useState(false);
+  const [scanLoading,   setScanLoading]   = useState(false);
+
+  // Track which product ID the scanner auto-filled the IMEI for.
+  // When the user picks a *different* product, we clear that stale IMEI so
+  // the wrong handset is never recorded on the sale.
+  const imeiLinkedToProductId = useRef<string | null>(null);
+
   // Pre-select product when arriving from Secondhand Detail screen
   useEffect(() => {
     if (preselectedProductId) {
@@ -39,9 +50,22 @@ export default function NewSaleScreen() {
     }
   }, [preselectedProductId]);
 
-  // Auto-fill sale price from product default when product is selected
+  // Auto-fill sale price; clear a scanner-set IMEI if the product changed
   useEffect(() => {
-    if (product) setSalePrice(String(product.salePrice));
+    if (product) {
+      setSalePrice(String(product.salePrice));
+      // If the IMEI in the form was auto-filled for a *different* product, clear it
+      if (imeiLinkedToProductId.current && imeiLinkedToProductId.current !== product.id) {
+        setImei('');
+        imeiLinkedToProductId.current = null;
+      }
+    } else {
+      // Product cleared entirely — drop any scanner-linked IMEI
+      if (imeiLinkedToProductId.current) {
+        setImei('');
+        imeiLinkedToProductId.current = null;
+      }
+    }
   }, [product]);
 
   // Live profit calculation
@@ -50,6 +74,52 @@ export default function NewSaleScreen() {
   const cost    = product ? product.purchasePrice * qty : 0;
   const revenue = price * qty;
   const profit  = revenue - cost;
+
+  // ── Scanner handler ────────────────────────────────────────────────────────
+  async function handleScanCode(code: string) {
+    setScannerOpen(false);
+    setScanLoading(true);
+    try {
+      const res = await productsApi.scan(code);
+      const p = res.data.data;
+
+      if (p.stock <= 0) {
+        Alert.alert(
+          '⚠️ Out of Stock',
+          `"${p.name}" (${p.brand}) was found but has 0 units in stock.`,
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      // Auto-select product
+      setProduct(p);
+      // IMEI detection rule: exactly 15 digits = GSMA IMEI standard.
+      // Anything else (EAN-13 = 13 digits, Code-128 = alphanumeric, etc.) is a barcode.
+      // The barcode identifies the *model* in inventory; the IMEI identifies *this unit*.
+      if (/^\d{15}$/.test(code)) {
+        setImei(code);
+        imeiLinkedToProductId.current = p.id;  // link so we can clear on product change
+      }
+      Alert.alert(
+        '✓ Product Found',
+        `${p.name} (${p.brand})\nStock: ${p.stock} units\nSale Price: Rs ${p.salePrice.toLocaleString()}`,
+        [{ text: 'OK' }]
+      );
+    } catch (e: any) {
+      if (e?.response?.status === 404) {
+        Alert.alert(
+          '❌ Product Not Found',
+          'No product with this IMEI/barcode exists in inventory.\n\nAdd it first via the Products tab.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert('Scan Error', e?.response?.data?.error ?? e?.message ?? 'Lookup failed');
+      }
+    } finally {
+      setScanLoading(false);
+    }
+  }
 
   function validate() {
     const e: Record<string, string> = {};
@@ -101,7 +171,11 @@ export default function NewSaleScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={0}
+    >
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.backBtn}>← Back</Text>
@@ -110,7 +184,46 @@ export default function NewSaleScreen() {
         <View style={{ width: 60 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
+      {/* Scanner modal */}
+      <ScannerOverlay
+        visible={scannerOpen}
+        onScanned={handleScanCode}
+        onClose={() => setScannerOpen(false)}
+        title="Scan Barcode to Find Product"
+        hint="Point at barcode — tap ⌨️ Type for IMEI"
+      />
+
+      <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+
+        {/* ── Scan banner ── */}
+        <TouchableOpacity
+          style={styles.scanBanner}
+          onPress={() => setScannerOpen(true)}
+          disabled={scanLoading}
+          activeOpacity={0.8}
+        >
+          {scanLoading ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={styles.scanBannerIcon}>📷</Text>
+          )}
+          <View style={{ flex: 1 }}>
+            <Text style={styles.scanBannerTitle}>
+              {scanLoading ? 'Looking up product…' : 'Scan barcode or type IMEI'}
+            </Text>
+            <Text style={styles.scanBannerSub}>
+              {scanLoading ? 'Please wait…' : 'Camera reads barcodes — use ⌨️ Type for IMEI'}
+            </Text>
+          </View>
+          {!scanLoading && <Text style={styles.scanBannerArrow}>›</Text>}
+        </TouchableOpacity>
+
+        {/* ── OR divider ── */}
+        <View style={styles.orRow}>
+          <View style={styles.orLine} />
+          <Text style={styles.orText}>or pick manually</Text>
+          <View style={styles.orLine} />
+        </View>
 
         <ProductPicker
           label="Product *"
@@ -187,7 +300,7 @@ export default function NewSaleScreen() {
         />
         <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -254,4 +367,27 @@ const styles = StyleSheet.create({
     marginBottom:  10,
     marginTop:     4,
   },
+
+  scanBanner: {
+    flexDirection:   'row',
+    alignItems:      'center',
+    gap:             12,
+    backgroundColor: colors.primary,
+    borderRadius:    14,
+    padding:         16,
+    marginBottom:    12,
+  },
+  scanBannerIcon:  { fontSize: 28 },
+  scanBannerTitle: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  scanBannerSub:   { color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 2 },
+  scanBannerArrow: { color: '#fff', fontSize: 22, fontWeight: '300' },
+
+  orRow: {
+    flexDirection:  'row',
+    alignItems:     'center',
+    marginBottom:   12,
+    gap:            8,
+  },
+  orLine: { flex: 1, height: 1, backgroundColor: colors.border },
+  orText: { fontSize: 12, color: colors.textMuted, fontWeight: '500' },
 });

@@ -48,7 +48,7 @@ export async function setupShop(req: Request, res: Response) {
     ]);
 
     const token = jwt.sign(
-      { userId: user.id, role: user.role },
+      { userId: user.id, role: user.role, plan: user.plan },
       process.env.JWT_SECRET!,
       { expiresIn: '30d' }
     );

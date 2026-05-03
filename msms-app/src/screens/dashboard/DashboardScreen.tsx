@@ -11,9 +11,103 @@ import { useAuth }   from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
 import { colors }    from '../../theme/colors';
 
+// ── SIMPLE plan home screen ──────────────────────────────────────────────────
+function SimpleHomeScreen({ user, logout }: { user: any; logout: () => void }) {
+  const navigation = useNavigation<any>();
+
+  function handleLogout() {
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Logout', style: 'destructive', onPress: logout },
+    ]);
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.greeting}>Hi, {user?.username} 👋</Text>
+          <Text style={styles.liveText}>{user?.shopName}</Text>
+        </View>
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
+      </View>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingTop: 24 }}>
+        <TouchableOpacity
+          style={simpleStyles.newSaleBtn}
+          activeOpacity={0.85}
+          onPress={() => navigation.navigate('SalesTab', { screen: 'NewSale' })}
+        >
+          <Text style={simpleStyles.newSaleIcon}>💰</Text>
+          <Text style={simpleStyles.newSaleLabel}>New Sale</Text>
+          <Text style={simpleStyles.newSaleArrow}>›</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={simpleStyles.salesBtn}
+          activeOpacity={0.85}
+          onPress={() => navigation.navigate('SalesTab', { screen: 'SalesList' })}
+        >
+          <Text style={simpleStyles.salesIcon}>🧾</Text>
+          <Text style={simpleStyles.salesLabel}>View Sales &amp; Invoices</Text>
+          <Text style={simpleStyles.salesArrow}>›</Text>
+        </TouchableOpacity>
+        <View style={simpleStyles.upgradeBanner}>
+          <Text style={simpleStyles.upgradeIcon}>⭐</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={simpleStyles.upgradeTitle}>Upgrade to PRO</Text>
+            <Text style={simpleStyles.upgradeSub}>
+              Unlock the full dashboard, inventory management, secondhand records,
+              purchase tracking, IMEI search and more — one-time Rs 6,000.
+            </Text>
+          </View>
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+const simpleStyles = StyleSheet.create({
+  newSaleBtn: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: colors.primary, borderRadius: 14,
+    padding: 20, marginBottom: 12,
+  },
+  newSaleIcon:  { fontSize: 28, marginRight: 14 },
+  newSaleLabel: { flex: 1, fontSize: 17, fontWeight: '700', color: '#fff' },
+  newSaleArrow: { fontSize: 24, color: 'rgba(255,255,255,0.7)' },
+  salesBtn: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: colors.card, borderRadius: 14,
+    padding: 18, marginBottom: 20,
+    borderWidth: 1, borderColor: colors.border,
+  },
+  salesIcon:  { fontSize: 24, marginRight: 14 },
+  salesLabel: { flex: 1, fontSize: 15, fontWeight: '600', color: colors.text },
+  salesArrow: { fontSize: 22, color: colors.textMuted },
+  upgradeBanner: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 12,
+    backgroundColor: '#fffbeb', borderRadius: 14, padding: 16,
+    borderWidth: 1, borderColor: '#fde68a',
+  },
+  upgradeIcon:  { fontSize: 24 },
+  upgradeTitle: { fontSize: 14, fontWeight: '700', color: '#92400e', marginBottom: 4 },
+  upgradeSub:   { fontSize: 13, color: '#b45309', lineHeight: 19 },
+});
+
+// ── Router: decides which screen to show ────────────────────────────────────
 export default function DashboardScreen() {
-  const navigation           = useNavigation<any>();
-  const { user, logout }     = useAuth();
+  const { user, logout } = useAuth();
+  if (user?.plan !== 'PRO') {
+    return <SimpleHomeScreen user={user} logout={logout} />;
+  }
+  return <ProDashboard />;
+}
+
+// ── PRO dashboard (all hooks are safe here — no conditional above them) ──────
+function ProDashboard() {
+  const navigation            = useNavigation<any>();
+  const { user, logout }      = useAuth();
   const { socket, connected } = useSocket();
 
   const [data,       setData]       = useState<DashboardData | null>(null);

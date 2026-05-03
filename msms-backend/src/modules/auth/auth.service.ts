@@ -10,7 +10,7 @@ export async function loginUser(username: string, password: string) {
   if (!valid) throw new Error('Invalid username or password');
 
   const token = jwt.sign(
-    { userId: user.id, role: user.role },
+    { userId: user.id, role: user.role, plan: user.plan },
     process.env.JWT_SECRET!,
     { expiresIn: '30d' }
   );

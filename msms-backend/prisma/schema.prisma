@@ -25,9 +25,13 @@ model Product {
   category      String            @default("phone")
   condition     String            @default("new")
   imei          String?
+  barcode       String?
   purchasePrice Float
   salePrice     Float
   stock         Int               @default(0)
+  storage       String?
+  color         String?
+  ram           String?
   isSecondhand  Boolean           @default(false)
   isDeleted     Boolean           @default(false)
   createdAt     DateTime          @default(now())
@@ -35,6 +39,9 @@ model Product {
   sales         Sale[]
   purchases     Purchase[]
   secondhand    SecondhandRecord?
+
+  @@index([imei])
+  @@index([barcode])
 }
 
 model Sale {
@@ -78,6 +85,7 @@ model Order {
   amount        Int
   status        String      @default("PENDING") // "PENDING" | "PAID" | "CANCELLED"
   transactionId String?
+  screenshotUrl String?     // Cloudinary URL of payment proof uploaded by customer
   notes         String?
   licenseKey    LicenseKey?
   createdAt     DateTime    @default(now())
@@ -93,6 +101,21 @@ model LicenseKey {
   activatedAt   DateTime?
   shopName      String?
   createdAt     DateTime  @default(now())
+}
+
+// ── Shared product catalog ────────────────────────────────────────────────────
+// Any shopkeeper who scans an unknown barcode and fills it in manually
+// contributes the entry here. All future scans of the same barcode across
+// all shops get instant auto-fill — the catalog grows with every new product.
+model ProductCatalog {
+  id       String   @id @default(cuid())
+  barcode  String   @unique
+  name     String
+  brand    String
+  category String   @default("phone")
+  addedAt  DateTime @default(now())
+
+  @@index([barcode])
 }
 
 model SecondhandRecord {

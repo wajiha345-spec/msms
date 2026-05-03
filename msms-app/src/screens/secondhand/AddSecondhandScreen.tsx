@@ -8,6 +8,8 @@ import {
   Alert,
   ActivityIndicator,
   Image,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
@@ -15,6 +17,10 @@ import * as ImagePicker from 'expo-image-picker';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Input } from '../../components/Inputs';
 import { Button } from '../../components/Buttons';
+import ScannerOverlay from '../../components/ScannerOverlay';
+import ImeiVerifyPanel from '../../components/ImeiVerifyPanel';
+import VariantPicker from '../../components/VariantPicker';
+import { ImeiVerifyResult } from '../../api/imeiVerify';
 import { secondhandApi } from '../../api/secondhand';
 import { colors } from '../../theme/colors';
 
@@ -31,6 +37,9 @@ type DraftData = {
   notes: string;
   sellerPhotoUri?: string;
   cnicPhotoUri?: string;
+  storage?: string;
+  color?: string;
+  ram?: string;
 };
 
 export default function AddSecondhandScreen() {
@@ -45,12 +54,21 @@ export default function AddSecondhandScreen() {
   const [purchasePrice, setPurchasePrice] = useState('');
   const [notes, setNotes] = useState('');
 
+  const [storage, setStorage] = useState('');
+  const [color, setColor] = useState('');
+  const [ram, setRam] = useState('');
+
   const [sellerPhotoUri, setSellerPhotoUri] = useState<string | undefined>();
   const [cnicPhotoUri, setCnicPhotoUri] = useState<string | undefined>();
 
   const [submitting, setSubmitting] = useState(false);
   const [picking, setPicking] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // imeiBlocked = true when IMEI verify panel says reject AND user hasn't confirmed override
+  const [imeiBlocked, setImeiBlocked] = useState(false);
+
+  // IMEI scanner
+  const [imeiScannerOpen, setImeiScannerOpen] = useState(false);
 
   // Inline camera state — 'seller' | 'cnic' means camera is open for that field
   const [cameraTarget, setCameraTarget] = useState<'seller' | 'cnic' | null>(null);
@@ -70,6 +88,9 @@ export default function AddSecondhandScreen() {
       notes,
       sellerPhotoUri,
       cnicPhotoUri,
+      storage,
+      color,
+      ram,
       ...extra,
     };
   }
@@ -93,6 +114,9 @@ export default function AddSecondhandScreen() {
     setNotes(draft.notes ?? '');
     setSellerPhotoUri(draft.sellerPhotoUri);
     setCnicPhotoUri(draft.cnicPhotoUri);
+    setStorage(draft.storage ?? '');
+    setColor(draft.color ?? '');
+    setRam(draft.ram ?? '');
   }
 
   async function clearDraft() {
@@ -226,8 +250,11 @@ export default function AddSecondhandScreen() {
       formData.append('sellerPhone', sellerPhone.trim());
       formData.append('purchasePrice', purchasePrice);
 
-      if (imei.trim()) formData.append('imei', imei.trim());
-      if (notes.trim()) formData.append('notes', notes.trim());
+      if (imei.trim())    formData.append('imei', imei.trim());
+      if (notes.trim())   formData.append('notes', notes.trim());
+      if (storage.trim()) formData.append('storage', storage.trim());
+      if (color.trim())   formData.append('color', color.trim());
+      if (ram.trim())     formData.append('ram', ram.trim());
 
       if (sellerPhotoUri) {
         const filename = sellerPhotoUri.split('/').pop() ?? 'seller.jpg';
@@ -266,7 +293,11 @@ export default function AddSecondhandScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={0}
+    >
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -281,6 +312,7 @@ export default function AddSecondhandScreen() {
       <ScrollView
         contentContainerStyle={styles.form}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
       >
         <SectionHeader title="Phone Details" />
 
@@ -306,9 +338,49 @@ export default function AddSecondhandScreen() {
           error={errors.brand}
           editable={!submitting && !picking}
         />
+        <VariantPicker
+          label="Storage"
+          value={storage}
+          onChange={setStorage}
+          options={['32GB', '64GB', '128GB', '256GB', '512GB', '1TB']}
+          placeholder="Select storage capacity"
+          disabled={submitting || picking}
+        />
+        <VariantPicker
+          label="RAM"
+          value={ram}
+          onChange={setRam}
+          options={['2GB', '3GB', '4GB', '6GB', '8GB', '12GB', '16GB']}
+          placeholder="Select RAM"
+          disabled={submitting || picking}
+        />
+        <VariantPicker
+          label="Color"
+          value={color}
+          onChange={setColor}
+          options={['Black', 'White', 'Gold', 'Blue', 'Red', 'Green', 'Purple', 'Silver', 'Rose Gold']}
+          placeholder="Select color"
+          disabled={submitting || picking}
+        />
+
+        {/* ── IMEI scan banner ── */}
+        <TouchableOpacity
+          style={styles.scanBanner}
+          onPress={() => setImeiScannerOpen(true)}
+          disabled={submitting || picking}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.scanBannerIcon}>📷</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.scanBannerTitle}>Scan IMEI barcode on the phone</Text>
+            <Text style={styles.scanBannerSub}>Point camera at the IMEI barcode · auto-fills + checks PTA</Text>
+          </View>
+          <Text style={styles.scanBannerArrow}>›</Text>
+        </TouchableOpacity>
+
         <Input
           label="IMEI (recommended)"
-          placeholder="15-digit IMEI"
+          placeholder="15-digit number on phone · or scan above"
           value={imei}
           onChangeText={async (value: string) => {
             setImei(value);
@@ -318,6 +390,20 @@ export default function AddSecondhandScreen() {
           maxLength={15}
           editable={!submitting && !picking}
         />
+
+        {/* Full IMEI verification: device info + PTA DIRBS check */}
+        <ImeiVerifyPanel
+          imei={imei}
+          mode="secondhand"
+          onResult={(r: ImeiVerifyResult) => {
+            if (r.device.found) {
+              if (!mobileName.trim()) setMobileName(`${r.device.brand} ${r.device.model}`.trim());
+              if (!brand.trim())      setBrand(r.device.brand);
+            }
+          }}
+          onBlockChange={setImeiBlocked}
+        />
+
         <Input
           label="Purchase Price (Rs) *"
           placeholder="Amount paid to seller"
@@ -415,16 +501,46 @@ export default function AddSecondhandScreen() {
           disabled={picking || submitting}
         />
 
+        {imeiBlocked && (
+          <View style={styles.blockedBanner}>
+            <Text style={styles.blockedText}>
+              🚫 Cannot save — device is flagged blocked/stolen.{'\n'}
+              Check the verification panel above and confirm override to proceed.
+            </Text>
+          </View>
+        )}
+
         <Button
           label="Save Secondhand Record"
           onPress={handleSubmit}
           loading={submitting}
-          disabled={picking}
-          style={{ marginTop: 12 }}
+          disabled={picking || imeiBlocked}
+          style={{ marginTop: 12, opacity: imeiBlocked ? 0.4 : 1 }}
         />
 
         <View style={{ height: 50 }} />
       </ScrollView>
+
+      {/* IMEI scanner overlay */}
+      <ScannerOverlay
+        visible={imeiScannerOpen}
+        onScanned={async (code) => {
+          setImeiScannerOpen(false);
+          const isImei = /^\d{15}$/.test(code);
+          if (isImei) {
+            setImei(code);
+            await saveDraft({ imei: code });
+          } else {
+            Alert.alert(
+              'Not an IMEI',
+              `Scanned: ${code}\n\nThat looks like a product barcode, not an IMEI. Point the camera at the long 15-digit number barcode on the phone or box.`,
+            );
+          }
+        }}
+        onClose={() => setImeiScannerOpen(false)}
+        title="Scan IMEI Barcode"
+        hint="Point at the barcode above the 15-digit IMEI number"
+      />
 
       {/* Inline camera overlay — stays inside the app so Android never kills the process */}
       {cameraTarget !== null && (
@@ -472,7 +588,7 @@ export default function AddSecondhandScreen() {
           </View>
         </View>
       )}
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -667,6 +783,11 @@ const cameraStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  blockedBanner: {
+    backgroundColor: '#fef2f2', borderRadius: 10, padding: 14, marginTop: 8,
+    borderWidth: 1, borderColor: '#fecaca',
+  },
+  blockedText: { fontSize: 13, color: '#991b1b', lineHeight: 20 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -681,4 +802,15 @@ const styles = StyleSheet.create({
   backBtn: { color: colors.primary, fontSize: 15, fontWeight: '500', width: 60 },
   title: { fontSize: 17, fontWeight: '700', color: colors.text },
   form: { padding: 16 },
+
+  // IMEI scan banner
+  scanBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: colors.primary, borderRadius: 12,
+    padding: 14, marginBottom: 10,
+  },
+  scanBannerIcon:  { fontSize: 24 },
+  scanBannerTitle: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  scanBannerSub:   { color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2 },
+  scanBannerArrow: { color: '#fff', fontSize: 22, fontWeight: '300' },
 });

@@ -6,10 +6,25 @@ import {
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { purchasesApi, Purchase } from '../../api/purchases';
 import { Button } from '../../components/Buttons';
+import { useAuth } from '../../context/AuthContext';
 import { colors } from '../../theme/colors';
 
 export default function PurchasesListScreen() {
   const navigation   = useNavigation<any>();
+  const { user }     = useAuth();
+
+  if (user?.plan !== 'PRO') {
+    return (
+      <View style={styles.proGate}>
+        <Text style={styles.proGateIcon}>🔒</Text>
+        <Text style={styles.proGateTitle}>PRO Feature</Text>
+        <Text style={styles.proGateSub}>
+          Purchase recording is available on the PRO plan.{'\n'}
+          Contact us to upgrade your license.
+        </Text>
+      </View>
+    );
+  }
   const [purchases,  setPurchases]  = useState<Purchase[]>([]);
   const [loading,    setLoading]    = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -166,4 +181,9 @@ const styles = StyleSheet.create({
   meta:        { fontSize: 12, color: colors.textMuted },
   empty:       { alignItems: 'center', paddingTop: 60 },
   emptyText:   { fontSize: 16, color: colors.textMuted, fontWeight: '500' },
+
+  proGate: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, backgroundColor: colors.background },
+  proGateIcon:  { fontSize: 48, marginBottom: 16 },
+  proGateTitle: { fontSize: 20, fontWeight: '700', color: colors.text, marginBottom: 10 },
+  proGateSub:   { fontSize: 14, color: colors.textMuted, textAlign: 'center', lineHeight: 22 },
 });

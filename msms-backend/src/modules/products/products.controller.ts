@@ -4,10 +4,12 @@ import { ok, fail } from '../../utils/response';
 import {
   getProducts,
   getProductById,
+  getProductByCode,
   createProduct,
   updateProduct,
   deleteProduct,
 } from './products.service';
+import { contributeToCatalog } from '../catalog/catalog.service';
 
 function getQueryValue(value: unknown): string | undefined {
   if (typeof value === 'string') return value;
@@ -42,6 +44,18 @@ export async function getOne(req: AuthRequest, res: Response) {
   }
 }
 
+// ── GET /api/products/scan/:code — look up by IMEI or barcode ──
+export async function scanProduct(req: AuthRequest, res: Response) {
+  try {
+    const code = getParamValue(req.params.code);
+    const product = await getProductByCode(code);
+    if (!product) return fail(res, 'Product not found for this IMEI/barcode', 404);
+    return ok(res, product);
+  } catch (e: any) {
+    return fail(res, e.message);
+  }
+}
+
 export async function create(req: AuthRequest, res: Response) {
   try {
     const {
@@ -50,10 +64,14 @@ export async function create(req: AuthRequest, res: Response) {
       category,
       condition,
       imei,
+      barcode,
       purchasePrice,
       salePrice,
       stock,
       isSecondhand,
+      storage,
+      color,
+      ram,
     } = req.body;
 
     if (
@@ -74,11 +92,15 @@ export async function create(req: AuthRequest, res: Response) {
       brand,
       category: category ?? 'phone',
       condition,
-      imei: imei ?? undefined,
+      imei:     imei    ?? undefined,
+      barcode:  barcode ?? undefined,
       purchasePrice: Number(purchasePrice),
-      salePrice: Number(salePrice),
-      stock: Number(stock ?? 0),
-      isSecondhand: Boolean(isSecondhand ?? false),
+      salePrice:     Number(salePrice),
+      stock:         Number(stock ?? 0),
+      isSecondhand:  Boolean(isSecondhand ?? false),
+      storage:  storage  ?? undefined,
+      color:    color    ?? undefined,
+      ram:      ram      ?? undefined,
     });
 
     return ok(res, product);
@@ -102,6 +124,58 @@ export async function remove(req: AuthRequest, res: Response) {
     const id = getParamValue(req.params.id);
     await deleteProduct(id);
     return ok(res, { message: 'Product deleted' });
+  } catch (e: any) {
+    return fail(res, e.message);
+  }
+}
+
+// ── POST /api/products/import — bulk create from CSV rows ─────────────────────
+export async function importProducts(req: AuthRequest, res: Response) {
+  try {
+    const rows: any[] = req.body.products;
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return fail(res, 'products array is required', 400);
+    }
+
+    const created: string[] = [];
+    const errors:  { row: number; name: string; error: string }[] = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      try {
+        if (!r.name || !r.brand || r.purchasePrice == null || r.salePrice == null) {
+          throw new Error('name, brand, purchasePrice and salePrice are required');
+        }
+        const product = await createProduct({
+          name:          String(r.name).trim(),
+          brand:         String(r.brand).trim(),
+          category:      String(r.category  || 'phone').trim(),
+          condition:     r.condition === 'used' ? 'used' : 'new',
+          imei:          r.imei    ? String(r.imei).trim()    : undefined,
+          barcode:       r.barcode ? String(r.barcode).trim() : undefined,
+          purchasePrice: Number(r.purchasePrice),
+          salePrice:     Number(r.salePrice),
+          stock:         Number(r.stock ?? 0),
+          isSecondhand:  false,
+        });
+
+        // Contribute to shared catalog automatically
+        if (r.barcode && r.name) {
+          await contributeToCatalog({
+            barcode:  String(r.barcode).trim(),
+            name:     String(r.name).trim(),
+            brand:    String(r.brand).trim(),
+            category: String(r.category || 'phone').trim(),
+          });
+        }
+
+        created.push(product.id);
+      } catch (e: any) {
+        errors.push({ row: i + 2, name: r.name ?? '—', error: e.message });
+      }
+    }
+
+    return ok(res, { created: created.length, errors });
   } catch (e: any) {
     return fail(res, e.message);
   }
