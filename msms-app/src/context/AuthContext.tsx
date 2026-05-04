@@ -30,14 +30,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     async function init() {
-      const [savedToken, accountRegistered] = await Promise.all([
+      const [savedToken, savedUser, accountRegistered] = await Promise.all([
         AsyncStorage.getItem('auth_token'),
+        AsyncStorage.getItem('auth_user'),
         AsyncStorage.getItem('account_registered'),
       ]);
 
       if (savedToken) {
         setToken(savedToken);
         apiClient.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`;
+        // Restore user object so plan/role are available immediately on restart
+        if (savedUser) {
+          try { setUser(JSON.parse(savedUser)); } catch {}
+        }
       } else if (!accountRegistered) {
         // No token AND no account ever created on this device → show SetupScreen
         setIsNewInstall(true);
@@ -70,7 +75,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(t);
     setUser(u);
     apiClient.defaults.headers.common['Authorization'] = `Bearer ${t}`;
-    await AsyncStorage.setItem('auth_token', t);
+    await Promise.all([
+      AsyncStorage.setItem('auth_token', t),
+      AsyncStorage.setItem('auth_user', JSON.stringify(u)),
+    ]);
   }
 
   function logout() {
@@ -78,6 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     delete apiClient.defaults.headers.common['Authorization'];
     AsyncStorage.removeItem('auth_token');
+    AsyncStorage.removeItem('auth_user');
     // Keep 'account_registered' so they see Login not Setup
   }
 

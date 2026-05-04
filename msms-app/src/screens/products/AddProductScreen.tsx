@@ -14,10 +14,13 @@ import { catalogApi } from '../../api/catalog';
 import ImeiVerifyPanel from '../../components/ImeiVerifyPanel';
 import { ImeiVerifyResult } from '../../api/imeiVerify';
 import { colors }         from '../../theme/colors';
+import { useAuth }        from '../../context/AuthContext';
 
 export default function AddProductScreen() {
   const navigation = useNavigation<any>();
   const route      = useRoute<any>();
+  const { user }   = useAuth();
+  const isPro      = user?.plan === 'PRO';
   const editId     = route.params?.id as string | undefined;
   const isEdit     = Boolean(editId);
 
@@ -271,7 +274,7 @@ export default function AddProductScreen() {
       <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
 
         {/* ── Scan banner ── */}
-        {!isEdit && (
+        {!isEdit && isPro && (
           <TouchableOpacity
             style={styles.scanBanner}
             onPress={() => setScannerOpen(true)}
@@ -293,6 +296,17 @@ export default function AddProductScreen() {
             </View>
             {!scanLoading && <Text style={styles.scanBannerArrow}>›</Text>}
           </TouchableOpacity>
+        )}
+        {/* IMEI scan locked for Simple plan */}
+        {!isEdit && !isPro && (
+          <View style={styles.scanBannerLocked}>
+            <Text style={styles.scanBannerIcon}>📷</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.scanBannerTitleLocked}>IMEI Scan — PRO Feature</Text>
+              <Text style={styles.scanBannerSub}>Upgrade to PRO to scan IMEI and auto-fill product details.</Text>
+            </View>
+            <Text style={styles.proBadge}>PRO</Text>
+          </View>
         )}
 
         {/* Scan result badge */}
@@ -369,8 +383,8 @@ export default function AddProductScreen() {
           keyboardType="numeric"
           maxLength={15}
         />
-        {/* Auto-fill brand/model from IMEI when 15 digits entered */}
-        {!isEdit && (
+        {/* Auto-fill brand/model from IMEI when 15 digits entered — PRO only */}
+        {!isEdit && isPro && (
           <ImeiVerifyPanel
             imei={imei}
             mode="new"
@@ -483,10 +497,22 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary, borderRadius: 14,
     padding: 16, marginBottom: 16,
   },
-  scanBannerIcon:  { fontSize: 28 },
-  scanBannerTitle: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  scanBannerSub:   { color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 2 },
-  scanBannerArrow: { color: '#fff', fontSize: 22, fontWeight: '300' },
+  scanBannerIcon:       { fontSize: 28 },
+  scanBannerTitle:      { color: '#fff', fontSize: 15, fontWeight: '700' },
+  scanBannerTitleLocked:{ color: '#92400e', fontSize: 15, fontWeight: '700' },
+  scanBannerSub:        { color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 2 },
+  scanBannerArrow:      { color: '#fff', fontSize: 22, fontWeight: '300' },
+  scanBannerLocked: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: '#fffbeb', borderRadius: 14,
+    padding: 16, marginBottom: 16,
+    borderWidth: 1, borderColor: '#fde68a',
+  },
+  proBadge: {
+    backgroundColor: '#f59e0b', color: '#fff', fontSize: 11,
+    fontWeight: '800', paddingHorizontal: 8, paddingVertical: 3,
+    borderRadius: 6, overflow: 'hidden',
+  },
 
   badge: {
     backgroundColor: '#f0fdf4', borderRadius: 8, padding: 10,
