@@ -47,10 +47,15 @@ export async function getInvoice(req: AuthRequest, res: Response) {
       return res.send(pdfBuffer);
     }
 
-    // Default → HTML viewer: PDF embedded as base64 so it renders inside the
-    // in-app browser (Chrome Custom Tabs) without triggering a download.
-    const base64Pdf = pdfBuffer.toString('base64');
+    // Default → render invoice as clean HTML (works on all mobile browsers)
+    // The <embed> base64-PDF approach doesn't render on Android Chrome.
     const downloadUrl = `${process.env.BACKEND_URL}/api/invoices/${id}?download=1`;
+    const date = new Date(sale.createdAt).toLocaleDateString('en-PK', {
+      day: '2-digit', month: 'short', year: 'numeric',
+    });
+
+    const row = (label: string, value: string, bold = false) =>
+      `<tr><td class="lbl">${label}</td><td class="val${bold ? ' bold' : ''}">${value}</td></tr>`;
 
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -61,35 +66,81 @@ export async function getInvoice(req: AuthRequest, res: Response) {
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-         background:#f1f5f9;height:100vh;display:flex;flex-direction:column}
+         background:#f1f5f9;min-height:100vh;padding:0 0 40px}
     .toolbar{
-      background:#1e293b;color:#fff;
+      background:#1e293b;color:#fff;position:sticky;top:0;z-index:10;
       display:flex;align-items:center;justify-content:space-between;
-      padding:12px 18px;gap:12px;flex-shrink:0;
-      box-shadow:0 2px 10px rgba(0,0,0,.35);
+      padding:12px 18px;gap:12px;box-shadow:0 2px 10px rgba(0,0,0,.35);
     }
-    .toolbar-title{font-size:15px;font-weight:700;white-space:nowrap;
-                   overflow:hidden;text-overflow:ellipsis}
-    .toolbar-btns{display:flex;gap:8px;flex-shrink:0}
-    .btn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;
-         border:none;cursor:pointer;text-decoration:none;display:inline-block}
-    .btn-print{background:#2563eb;color:#fff}
-    .btn-download{background:#16a34a;color:#fff}
-    .pdf-wrap{flex:1;overflow:hidden}
-    embed{width:100%;height:100%;display:block;border:none}
-    @media print{.toolbar{display:none}.pdf-wrap{height:100vh}}
+    .toolbar-title{font-size:15px;font-weight:700}
+    .toolbar-btns{display:flex;gap:8px}
+    .btn{padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;
+         border:none;cursor:pointer;text-decoration:none;display:inline-block;color:#fff}
+    .btn-print{background:#2563eb}
+    .btn-download{background:#16a34a}
+    .card{background:#fff;border-radius:16px;margin:20px 16px;
+          box-shadow:0 2px 12px rgba(0,0,0,.08);overflow:hidden}
+    .inv-header{background:#0f766e;color:#fff;padding:24px 20px;text-align:center}
+    .inv-title{font-size:22px;font-weight:800;letter-spacing:1px}
+    .inv-no{font-size:13px;opacity:.85;margin-top:4px;font-family:monospace}
+    .inv-date{font-size:12px;opacity:.7;margin-top:2px}
+    table{width:100%;border-collapse:collapse}
+    td{padding:11px 16px;border-bottom:1px solid #f1f5f9;font-size:14px}
+    .lbl{color:#64748b;width:42%}
+    .val{font-weight:500;color:#1e293b}
+    .bold{font-weight:700;font-size:15px;color:#0f766e}
+    .section-title{background:#f8fafc;padding:10px 16px;
+                   font-size:11px;font-weight:700;color:#94a3b8;
+                   letter-spacing:.5px;text-transform:uppercase}
+    @media print{
+      .toolbar{display:none}
+      body{background:#fff;padding:0}
+      .card{margin:0;box-shadow:none;border-radius:0}
+    }
   </style>
 </head>
 <body>
   <div class="toolbar">
     <div class="toolbar-title">Invoice ${sale.invoiceNo}</div>
     <div class="toolbar-btns">
-      <button class="btn btn-print" onclick="window.print()">Print</button>
-      <a class="btn btn-download" href="${downloadUrl}">Download</a>
+      <button class="btn btn-print" onclick="window.print()">🖨 Print</button>
+      <a class="btn btn-download" href="${downloadUrl}">⬇ Download PDF</a>
     </div>
   </div>
-  <div class="pdf-wrap">
-    <embed src="data:application/pdf;base64,${base64Pdf}" type="application/pdf"/>
+
+  <div class="card">
+    <div class="inv-header">
+      <div class="inv-title">SALES INVOICE</div>
+      <div class="inv-no"># ${sale.invoiceNo}</div>
+      <div class="inv-date">${date}</div>
+    </div>
+
+    <div class="section-title">Product</div>
+    <table>
+      ${row('Product', `${sale.product.name}`)}
+      ${row('Brand', sale.product.brand)}
+      ${sale.imei ? row('IMEI', sale.imei) : ''}
+      ${row('Quantity', `${sale.quantity} unit${sale.quantity > 1 ? 's' : ''}`)}
+    </table>
+
+    ${sale.customerName || sale.customerPhone ? `
+    <div class="section-title">Customer</div>
+    <table>
+      ${sale.customerName  ? row('Name',  sale.customerName)  : ''}
+      ${sale.customerPhone ? row('Phone', sale.customerPhone) : ''}
+    </table>` : ''}
+
+    <div class="section-title">Payment</div>
+    <table>
+      ${row('Unit Price', `Rs ${sale.salePrice.toLocaleString()}`)}
+      ${row('Total Amount', `Rs ${sale.totalAmount.toLocaleString()}`, true)}
+    </table>
+
+    <div class="section-title">Recorded By</div>
+    <table>
+      ${row('Staff', sale.recordedBy.username)}
+      ${row('Date', date)}
+    </table>
   </div>
 </body>
 </html>`;

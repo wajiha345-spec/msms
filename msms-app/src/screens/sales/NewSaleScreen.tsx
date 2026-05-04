@@ -164,7 +164,11 @@ export default function NewSaleScreen() {
         ]
       );
     } catch (e: any) {
-      Alert.alert('Sale Failed', e?.response?.data?.error || 'Something went wrong');
+      Alert.alert(
+        'Sale Failed',
+        e?.response?.data?.error || 'Something went wrong',
+        [{ text: 'OK', onPress: () => navigation.goBack() }],
+      );
     } finally {
       setLoading(false);
     }

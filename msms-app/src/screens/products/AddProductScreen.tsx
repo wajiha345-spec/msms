@@ -250,7 +250,11 @@ export default function AddProductScreen() {
         }
       }
     } catch (e: any) {
-      Alert.alert('Error', e?.response?.data?.error || 'Something went wrong');
+      Alert.alert(
+        'Error',
+        e?.response?.data?.error || 'Something went wrong',
+        [{ text: 'OK', onPress: () => navigation.goBack() }],
+      );
     } finally {
       setLoading(false);
     }

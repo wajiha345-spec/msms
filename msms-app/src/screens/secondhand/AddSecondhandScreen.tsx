@@ -286,7 +286,7 @@ export default function AddSecondhandScreen() {
       );
     } catch (e: any) {
       const msg = e?.response?.data?.error ?? e?.message ?? 'Something went wrong';
-      Alert.alert('Save failed', msg);
+      Alert.alert('Save failed', msg, [{ text: 'OK', onPress: () => navigation.goBack() }]);
     } finally {
       setSubmitting(false);
     }
