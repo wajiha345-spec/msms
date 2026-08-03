@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { dashboardApi, DashboardData } from '../../api/dashboard';
+import { salesApi }  from '../../api/sales';
 import { MetricTile } from '../../components/MetricTile';
 import { useAuth }   from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
@@ -113,6 +114,7 @@ function ProDashboard() {
   const [data,       setData]       = useState<DashboardData | null>(null);
   const [loading,    setLoading]    = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [markingPaidId, setMarkingPaidId] = useState<string | null>(null);
 
   async function fetchData(showSpinner = false) {
     if (showSpinner) setLoading(true);
@@ -146,6 +148,18 @@ function ProDashboard() {
     ]);
   }
 
+  async function handleMarkPaid(saleId: string) {
+    setMarkingPaidId(saleId);
+    try {
+      await salesApi.markPaid(saleId);
+      await fetchData();
+    } catch (e: any) {
+      Alert.alert('Error', e?.response?.data?.error ?? 'Could not mark as paid');
+    } finally {
+      setMarkingPaidId(null);
+    }
+  }
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -157,6 +171,7 @@ function ProDashboard() {
 
   const today = data?.today;
   const stock = data?.stock;
+  const installmentAlerts = data?.installmentAlerts ?? [];
 
   return (
     <ScrollView
@@ -200,6 +215,55 @@ function ProDashboard() {
           })}
         </Text>
       </View>
+
+      {/* ── Installment alerts ── */}
+      {installmentAlerts.length > 0 && (
+        <>
+          <SectionLabel title="⚠️ Installments Due" />
+          {installmentAlerts.map((alert) => (
+            <View key={alert.saleId} style={styles.alertCard}>
+              <View style={styles.alertTopRow}>
+                <Text style={styles.alertCustomer} numberOfLines={1}>
+                  {alert.customerName || 'Unknown Customer'}
+                </Text>
+                {alert.isOverdue && (
+                  <View style={styles.overdueBadge}>
+                    <Text style={styles.overdueBadgeText}>OVERDUE</Text>
+                  </View>
+                )}
+              </View>
+              {alert.customerCnic && (
+                <Text style={styles.alertMeta}>CNIC: {alert.customerCnic}</Text>
+              )}
+              {alert.customerPhone && (
+                <Text style={styles.alertMeta}>Phone: {alert.customerPhone}</Text>
+              )}
+              <View style={styles.alertBottomRow}>
+                <View>
+                  <Text style={styles.alertDue}>
+                    Due: {alert.dueDate ? new Date(alert.dueDate).toLocaleDateString('en-PK') : '—'}
+                  </Text>
+                  <Text style={styles.alertAmount}>
+                    Rs {alert.pendingAmount.toLocaleString()} pending
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.markPaidBtn}
+                  onPress={() => handleMarkPaid(alert.saleId)}
+                  disabled={markingPaidId === alert.saleId}
+                  activeOpacity={0.75}
+                >
+                  {markingPaidId === alert.saleId ? (
+                    <ActivityIndicator size="small" color={colors.success} />
+                  ) : (
+                    <Text style={styles.markPaidBtnText}>Mark Paid</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
+        </>
+      )}
 
       {/* ── Today's metrics ── */}
       <SectionLabel title="Today's Performance" />
@@ -477,4 +541,46 @@ const styles = StyleSheet.create({
     gap:               8,
     paddingHorizontal: 16,
   },
+  alertCard: {
+    backgroundColor:  '#FEF2F2',
+    marginHorizontal: 16,
+    marginBottom:     8,
+    borderRadius:     12,
+    padding:          12,
+    borderWidth:      1,
+    borderColor:      '#FECACA',
+  },
+  alertTopRow: {
+    flexDirection:  'row',
+    alignItems:     'center',
+    justifyContent: 'space-between',
+    marginBottom:   4,
+  },
+  alertCustomer: { fontSize: 14, fontWeight: '700', color: colors.text, flex: 1 },
+  overdueBadge: {
+    backgroundColor:   colors.danger,
+    borderRadius:      6,
+    paddingHorizontal: 8,
+    paddingVertical:   3,
+    marginLeft:        8,
+  },
+  overdueBadgeText: { fontSize: 10, fontWeight: '700', color: '#fff' },
+  alertMeta:   { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+  alertBottomRow: {
+    flexDirection:     'row',
+    justifyContent:    'space-between',
+    alignItems:        'center',
+    marginTop:         8,
+  },
+  alertDue:    { fontSize: 12, color: colors.textMuted },
+  alertAmount: { fontSize: 14, fontWeight: '700', color: colors.danger, marginTop: 2 },
+  markPaidBtn: {
+    paddingHorizontal: 14,
+    paddingVertical:   8,
+    borderRadius:      8,
+    backgroundColor:   '#F0FDF4',
+    borderWidth:       1,
+    borderColor:       '#BBF7D0',
+  },
+  markPaidBtnText: { fontSize: 12, fontWeight: '600', color: colors.success },
 });

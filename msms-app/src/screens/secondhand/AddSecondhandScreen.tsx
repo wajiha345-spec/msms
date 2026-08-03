@@ -22,6 +22,7 @@ import ImeiVerifyPanel from '../../components/ImeiVerifyPanel';
 import VariantPicker from '../../components/VariantPicker';
 import { ImeiVerifyResult } from '../../api/imeiVerify';
 import { secondhandApi } from '../../api/secondhand';
+import { formatCnic, formatPhone } from '../../utils/format';
 import { colors } from '../../theme/colors';
 
 const DRAFT_KEY = 'add-secondhand-draft';
@@ -128,17 +129,6 @@ export default function AddSecondhandScreen() {
       console.warn('Failed to restore secondhand draft:', e?.message)
     );
   }, []);
-
-  function formatCnic(text: string): string {
-    const digits = text.replace(/\D/g, '').slice(0, 13);
-    if (digits.length <= 5) return digits;
-    if (digits.length <= 12) return `${digits.slice(0, 5)}-${digits.slice(5)}`;
-    return `${digits.slice(0, 5)}-${digits.slice(5, 12)}-${digits.slice(12)}`;
-  }
-
-  function formatPhone(text: string): string {
-    return text.replace(/\D/g, '').slice(0, 11);
-  }
 
   function validate() {
     const e: Record<string, string> = {};

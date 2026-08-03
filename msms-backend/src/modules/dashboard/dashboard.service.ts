@@ -16,6 +16,7 @@ export async function getDashboardSummary() {
     newStockCount,
     secondhandStockCount,
     recentSales,
+    dueInstallments,
   ] = await Promise.all([
 
     // Today's sales
@@ -59,6 +60,16 @@ export async function getDashboardSummary() {
         recordedBy: { select: { username: true } },
       },
     }),
+
+    // Installment sales due today or overdue, not yet paid
+    prisma.sale.findMany({
+      where: {
+        paymentType:        'INSTALLMENT',
+        installmentPaid:    false,
+        installmentDueDate: { lte: endOfDay },
+      },
+      orderBy: { installmentDueDate: 'asc' },
+    }),
   ]);
 
   // Calculate today's totals
@@ -67,6 +78,17 @@ export async function getDashboardSummary() {
   const todayCost     = todayPurchases.reduce(
     (s, x) => s + x.purchasePrice * x.quantity, 0
   );
+
+  const installmentAlerts = dueInstallments.map((sale) => ({
+    saleId:        sale.id,
+    invoiceNo:     sale.invoiceNo,
+    customerName:  sale.customerName,
+    customerCnic:  sale.customerCnic,
+    customerPhone: sale.customerPhone,
+    pendingAmount: sale.totalAmount,
+    dueDate:       sale.installmentDueDate,
+    isOverdue:     !!sale.installmentDueDate && sale.installmentDueDate < startOfDay,
+  }));
 
   return {
     today: {
@@ -82,5 +104,6 @@ export async function getDashboardSummary() {
       secondhandStock: secondhandStockCount,
     },
     recentSales,
+    installmentAlerts,
   };
 }

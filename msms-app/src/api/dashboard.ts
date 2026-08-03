@@ -24,6 +24,16 @@ export interface DashboardData {
     product:      { name: string; brand: string };
     recordedBy:   { username: string };
   }>;
+  installmentAlerts: Array<{
+    saleId:        string;
+    invoiceNo:     string;
+    customerName:  string | null;
+    customerCnic:  string | null;
+    customerPhone: string | null;
+    pendingAmount: number;
+    dueDate:       string | null;
+    isOverdue:     boolean;
+  }>;
 }
 
 export const dashboardApi = {

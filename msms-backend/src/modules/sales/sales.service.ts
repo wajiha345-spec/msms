@@ -2,15 +2,25 @@ import { prisma } from '../../config/db';
 import { Server } from 'socket.io';
 import { EVENTS } from '../../socket/events';
 
+interface GuarantorInput {
+  name?: string;
+  cnic:  string;
+  phone: string;
+}
+
 interface CreateSaleInput {
   productId:     string;
   quantity:      number;
   salePrice:     number;
   customerName?: string;
   customerPhone?: string;
+  customerCnic?: string;
   imei?:         string;
   secondhandId?: string;
   userId:        string;
+  paymentType:   string; // "CASH" | "INSTALLMENT"
+  installmentDueDate?: Date;
+  guarantors?:   GuarantorInput[];
 }
 
 // Build invoice number: INV-20240118-0001
@@ -43,6 +53,7 @@ export async function getSales(productId?: string, date?: string) {
     include: {
       product:    { select: { name: true, brand: true } },
       recordedBy: { select: { username: true } },
+      guarantors: true,
     },
     orderBy: { createdAt: 'desc' },
   });
@@ -55,6 +66,7 @@ export async function getSaleById(id: string) {
       product:    true,
       recordedBy: { select: { username: true } },
       secondhand: true,
+      guarantors: true,
     },
   });
   if (!sale) throw new Error('Sale not found');
@@ -64,6 +76,19 @@ export async function getSaleById(id: string) {
 export async function createSale(data: CreateSaleInput, io: Server) {
   if (data.quantity <= 0) throw new Error('Quantity must be at least 1');
   if (data.salePrice <= 0) throw new Error('Sale price must be greater than 0');
+
+  if (data.paymentType === 'INSTALLMENT') {
+    if (!data.customerCnic) throw new Error('Customer CNIC is required for installment sales');
+    if (!data.customerPhone) throw new Error('Customer phone is required for installment sales');
+    if (!data.installmentDueDate) throw new Error('Installment due date is required');
+    if (!data.guarantors || data.guarantors.length !== 3) {
+      throw new Error('Exactly 3 guarantors are required for installment sales');
+    }
+    for (const [i, g] of data.guarantors.entries()) {
+      if (!g.cnic)  throw new Error(`Guarantor ${i + 1} CNIC is required`);
+      if (!g.phone) throw new Error(`Guarantor ${i + 1} phone is required`);
+    }
+  }
 
   // --- ATOMIC TRANSACTION ---
   const result = await prisma.$transaction(async (tx) => {
@@ -100,7 +125,17 @@ export async function createSale(data: CreateSaleInput, io: Server) {
         profit,
         customerName:  data.customerName  ?? null,
         customerPhone: data.customerPhone ?? null,
+        customerCnic:  data.customerCnic  ?? null,
         imei:          data.imei          ?? null,
+        paymentType:   data.paymentType,
+        installmentDueDate: data.paymentType === 'INSTALLMENT' ? data.installmentDueDate : null,
+        guarantors: data.paymentType === 'INSTALLMENT' && data.guarantors
+          ? { create: data.guarantors.map((g) => ({
+              name:  g.name || null,
+              cnic:  g.cnic,
+              phone: g.phone,
+            })) }
+          : undefined,
       },
     });
 
@@ -140,4 +175,19 @@ export async function createSale(data: CreateSaleInput, io: Server) {
   io.to('shop:main').emit(EVENTS.DASHBOARD_REFRESH, {});
 
   return result.sale;
+}
+
+export async function markInstallmentPaid(id: string, io: Server) {
+  const sale = await prisma.sale.findUnique({ where: { id } });
+  if (!sale) throw new Error('Sale not found');
+  if (sale.paymentType !== 'INSTALLMENT') throw new Error('Sale is not an installment sale');
+
+  const updated = await prisma.sale.update({
+    where: { id },
+    data:  { installmentPaid: true },
+  });
+
+  io.to('shop:main').emit(EVENTS.DASHBOARD_REFRESH, {});
+
+  return updated;
 }

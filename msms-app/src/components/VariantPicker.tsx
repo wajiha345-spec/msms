@@ -12,6 +12,10 @@ interface VariantPickerProps {
   options: string[];
   placeholder?: string;
   disabled?: boolean;
+  /** When true, always requires one of `options` to be selected — tapping the
+   *  active option keeps it selected instead of toggling it off, and there's
+   *  no "None" entry in the list. Use for required single-choice fields. */
+  required?: boolean;
 }
 
 export default function VariantPicker({
@@ -21,11 +25,12 @@ export default function VariantPicker({
   options,
   placeholder = 'Select...',
   disabled = false,
+  required = false,
 }: VariantPickerProps) {
   const [open, setOpen] = useState(false);
 
   function select(opt: string) {
-    onChange(opt === value ? '' : opt); // tap same = deselect
+    onChange(required ? opt : (opt === value ? '' : opt)); // tap same = deselect, unless required
     setOpen(false);
   }
 
@@ -52,7 +57,7 @@ export default function VariantPicker({
             <Text style={styles.sheetTitle}>{label}</Text>
 
             <FlatList
-              data={['', ...options]}
+              data={required ? options : ['', ...options]}
               keyExtractor={(item) => item || '__none__'}
               renderItem={({ item }) => (
                 <TouchableOpacity

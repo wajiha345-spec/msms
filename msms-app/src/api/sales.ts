@@ -1,5 +1,12 @@
 import { apiClient } from './client';
 
+export interface Guarantor {
+  id?:   string;
+  name?: string;
+  cnic:  string;
+  phone: string;
+}
+
 export interface Sale {
   id:            string;
   invoiceNo:     string;
@@ -10,7 +17,12 @@ export interface Sale {
   profit:        number;
   customerName?: string;
   customerPhone?: string;
+  customerCnic?: string;
   imei?:         string;
+  paymentType:   'CASH' | 'INSTALLMENT';
+  installmentDueDate?: string;
+  installmentPaid?:    boolean;
+  guarantors?:   Guarantor[];
   createdAt:     string;
   product:       { name: string; brand: string };
   recordedBy:    { username: string };
@@ -22,8 +34,12 @@ export interface CreateSalePayload {
   salePrice:     number;
   customerName?: string;
   customerPhone?: string;
+  customerCnic?: string;
   imei?:         string;
   secondhandId?: string;
+  paymentType:   'CASH' | 'INSTALLMENT';
+  installmentDueDate?: string;
+  guarantors?:   Guarantor[];
 }
 
 export const salesApi = {
@@ -37,4 +53,7 @@ export const salesApi = {
 
   create: (payload: CreateSalePayload) =>
     apiClient.post<{ success: boolean; data: Sale }>('/sales', payload),
+
+  markPaid: (id: string) =>
+    apiClient.patch<{ success: boolean; data: Sale }>(`/sales/${id}/mark-paid`),
 };

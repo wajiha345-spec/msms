@@ -9,11 +9,15 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Input }           from '../../components/Inputs';
 import { Button }          from '../../components/Buttons';
 import { ProductPicker }   from '../../components/ProductPicker';
+import VariantPicker       from '../../components/VariantPicker';
 import ScannerOverlay      from '../../components/ScannerOverlay';
 import { Product, productsApi } from '../../api/products';
-import { salesApi }        from '../../api/sales';
+import { salesApi, Guarantor }  from '../../api/sales';
 import { invoicesApi }     from '../../api/invoices';
+import { formatCnic, formatPhone, formatDateInput, parseDDMMYYYY } from '../../utils/format';
 import { colors }          from '../../theme/colors';
+
+const EMPTY_GUARANTOR: Guarantor = { name: '', cnic: '', phone: '' };
 
 export default function NewSaleScreen() {
   const navigation = useNavigation<any>();
@@ -31,6 +35,18 @@ export default function NewSaleScreen() {
   const [imei,          setImei]          = useState('');
   const [loading,       setLoading]       = useState(false);
   const [errors,        setErrors]        = useState<Record<string, string>>({});
+
+  // Installment sale fields
+  const [paymentType,        setPaymentType]        = useState<'Cash' | 'Installment'>('Cash');
+  const [customerCnic,       setCustomerCnic]       = useState('');
+  const [installmentDueDate, setInstallmentDueDate] = useState('');
+  const [guarantors,         setGuarantors]         = useState<Guarantor[]>([
+    { ...EMPTY_GUARANTOR }, { ...EMPTY_GUARANTOR }, { ...EMPTY_GUARANTOR },
+  ]);
+
+  function updateGuarantor(index: number, field: keyof Guarantor, value: string) {
+    setGuarantors((prev) => prev.map((g, i) => (i === index ? { ...g, [field]: value } : g)));
+  }
 
   // Scanner state
   const [scannerOpen,   setScannerOpen]   = useState(false);
@@ -128,22 +144,55 @@ export default function NewSaleScreen() {
     if (!salePrice || price <= 0) e.salePrice = 'Enter a valid sale price';
     if (product && qty > product.stock)
       e.quantity = `Only ${product.stock} in stock`;
+
+    if (paymentType === 'Installment') {
+      if (!customerCnic.trim()) e.customerCnic = 'Customer CNIC is required';
+      else if (customerCnic.replace(/\D/g, '').length !== 13)
+        e.customerCnic = 'CNIC must be 13 digits (XXXXX-XXXXXXX-X)';
+
+      if (!customerPhone.trim()) e.customerPhone = 'Customer phone is required';
+      else if (customerPhone.length !== 11) e.customerPhone = 'Phone must be 11 digits';
+
+      if (!installmentDueDate.trim()) e.installmentDueDate = 'Due date is required';
+      else if (!parseDDMMYYYY(installmentDueDate)) e.installmentDueDate = 'Enter a valid date (DD/MM/YYYY)';
+
+      guarantors.forEach((g, i) => {
+        if (!g.cnic.trim()) e[`guarantor${i}Cnic`] = 'Guarantor CNIC is required';
+        else if (g.cnic.replace(/\D/g, '').length !== 13) e[`guarantor${i}Cnic`] = 'CNIC must be 13 digits';
+
+        if (!g.phone.trim()) e[`guarantor${i}Phone`] = 'Guarantor phone is required';
+        else if (g.phone.length !== 11) e[`guarantor${i}Phone`] = 'Phone must be 11 digits';
+      });
+    }
+
     setErrors(e);
+    console.log('[DEBUG] validate() paymentType =', paymentType, 'errors =', e);
     return Object.keys(e).length === 0;
   }
 
   async function handleSubmit() {
-    if (!validate()) return;
+    console.log('[DEBUG] Record Sale tapped. paymentType state =', paymentType);
+    if (!validate()) {
+      return;
+    }
     setLoading(true);
     try {
+      const isInstallment = paymentType === 'Installment';
+      const dueDate = isInstallment ? parseDDMMYYYY(installmentDueDate) : null;
+      console.log('[DEBUG] Submitting sale. isInstallment =', isInstallment, 'dueDate =', dueDate);
+
       const sale = await salesApi.create({
         productId:     product!.id,
         quantity:      qty,
         salePrice:     price,
         customerName:  customerName  || undefined,
         customerPhone: customerPhone || undefined,
+        customerCnic:  isInstallment ? customerCnic : undefined,
         imei:          imei          || undefined,
         secondhandId:  secondhandId  || undefined,
+        paymentType:   isInstallment ? 'INSTALLMENT' : 'CASH',
+        installmentDueDate: dueDate ? dueDate.toISOString() : undefined,
+        guarantors:    isInstallment ? guarantors : undefined,
       });
 
       const invoiceUrl = invoicesApi.getUrl(sale.data.data.id);
@@ -273,7 +322,23 @@ export default function NewSaleScreen() {
           </View>
         )}
 
-        <Text style={styles.sectionLabel}>Customer Info (optional)</Text>
+        <Text style={styles.sectionLabel}>Payment</Text>
+        <VariantPicker
+          label="Payment Type *"
+          value={paymentType}
+          onChange={(v) => {
+            const next = v === 'Installment' ? 'Installment' : 'Cash';
+            console.log('[DEBUG] Payment Type picker changed:', { tapped: v, next });
+            setPaymentType(next);
+          }}
+          options={['Cash', 'Installment']}
+          placeholder="Select payment type"
+          required
+        />
+
+        <Text style={styles.sectionLabel}>
+          Customer Info {paymentType === 'Cash' ? '(optional)' : ''}
+        </Text>
         <Input
           label="Customer Name"
           placeholder="e.g. Ahmed Khan"
@@ -281,11 +346,13 @@ export default function NewSaleScreen() {
           onChangeText={setCustomerName}
         />
         <Input
-          label="Customer Phone"
+          label={paymentType === 'Installment' ? 'Customer Phone *' : 'Customer Phone'}
           placeholder="e.g. 03001234567"
           value={customerPhone}
-          onChangeText={setCustomerPhone}
+          onChangeText={(v) => setCustomerPhone(formatPhone(v))}
           keyboardType="phone-pad"
+          maxLength={11}
+          error={errors.customerPhone}
         />
         <Input
           label="IMEI of sold unit (optional)"
@@ -295,6 +362,60 @@ export default function NewSaleScreen() {
           keyboardType="numeric"
           maxLength={15}
         />
+
+        {paymentType === 'Installment' && (
+          <>
+            <Input
+              label="Customer CNIC *"
+              placeholder="35202-1234567-1"
+              value={customerCnic}
+              onChangeText={(v) => setCustomerCnic(formatCnic(v))}
+              keyboardType="numeric"
+              maxLength={15}
+              error={errors.customerCnic}
+            />
+            <Input
+              label="Installment Due Date *"
+              placeholder="DD/MM/YYYY"
+              value={installmentDueDate}
+              onChangeText={(v) => setInstallmentDueDate(formatDateInput(v))}
+              keyboardType="numeric"
+              maxLength={10}
+              error={errors.installmentDueDate}
+            />
+
+            <Text style={styles.sectionLabel}>Guarantors (3 required)</Text>
+            {guarantors.map((g, i) => (
+              <View key={i} style={styles.guarantorBox}>
+                <Text style={styles.guarantorTitle}>Guarantor {i + 1}</Text>
+                <Input
+                  label="Name (optional)"
+                  placeholder="e.g. Bilal Ahmed"
+                  value={g.name}
+                  onChangeText={(v) => updateGuarantor(i, 'name', v)}
+                />
+                <Input
+                  label="CNIC *"
+                  placeholder="35202-1234567-1"
+                  value={g.cnic}
+                  onChangeText={(v) => updateGuarantor(i, 'cnic', formatCnic(v))}
+                  keyboardType="numeric"
+                  maxLength={15}
+                  error={errors[`guarantor${i}Cnic`]}
+                />
+                <Input
+                  label="Phone *"
+                  placeholder="03001234567"
+                  value={g.phone}
+                  onChangeText={(v) => updateGuarantor(i, 'phone', formatPhone(v))}
+                  keyboardType="phone-pad"
+                  maxLength={11}
+                  error={errors[`guarantor${i}Phone`]}
+                />
+              </View>
+            ))}
+          </>
+        )}
 
         <Button
           label="Record Sale"
@@ -370,6 +491,20 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginBottom:  10,
     marginTop:     4,
+  },
+  guarantorBox: {
+    backgroundColor: colors.card,
+    borderRadius:    12,
+    padding:         12,
+    marginBottom:    12,
+    borderWidth:     1,
+    borderColor:     colors.border,
+  },
+  guarantorTitle: {
+    fontSize:     13,
+    fontWeight:   '700',
+    color:        colors.text,
+    marginBottom: 8,
   },
 
   scanBanner: {

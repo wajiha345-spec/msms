@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../../middleware/auth';
 import { ok, fail } from '../../utils/response';
-import { getSales, getSaleById, createSale } from './sales.service';
+import { getSales, getSaleById, createSale, markInstallmentPaid } from './sales.service';
 
 function getQueryValue(value: unknown): string | undefined {
   if (typeof value === 'string') return value;
@@ -44,8 +44,12 @@ export async function create(req: AuthRequest, res: Response) {
       salePrice,
       customerName,
       customerPhone,
+      customerCnic,
       imei,
       secondhandId,
+      paymentType,
+      installmentDueDate,
+      guarantors,
     } = req.body;
 
     if (!productId) return fail(res, 'productId is required');
@@ -61,13 +65,28 @@ export async function create(req: AuthRequest, res: Response) {
         salePrice: Number(salePrice),
         customerName,
         customerPhone,
+        customerCnic,
         imei,
         secondhandId,
         userId: req.user!.userId,
+        paymentType: paymentType === 'INSTALLMENT' ? 'INSTALLMENT' : 'CASH',
+        installmentDueDate: installmentDueDate ? new Date(installmentDueDate) : undefined,
+        guarantors: Array.isArray(guarantors) ? guarantors : undefined,
       },
       io
     );
 
+    return ok(res, sale);
+  } catch (e: any) {
+    return fail(res, e.message);
+  }
+}
+
+export async function markPaid(req: AuthRequest, res: Response) {
+  try {
+    const id = getParamValue(req.params.id);
+    const io = req.app.get('io');
+    const sale = await markInstallmentPaid(id, io);
     return ok(res, sale);
   } catch (e: any) {
     return fail(res, e.message);
