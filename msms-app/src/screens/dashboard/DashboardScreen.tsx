@@ -98,8 +98,8 @@ const simpleStyles = StyleSheet.create({
 
 // ── Router: decides which screen to show ────────────────────────────────────
 export default function DashboardScreen() {
-  const { user, logout } = useAuth();
-  if (user?.plan !== 'PRO') {
+  const { user, logout, hasProAccess } = useAuth();
+  if (!hasProAccess) {
     return <SimpleHomeScreen user={user} logout={logout} />;
   }
   return <ProDashboard />;
@@ -215,6 +215,11 @@ function ProDashboard() {
           })}
         </Text>
       </View>
+
+      {/* ── Trial countdown banner ── */}
+      {user?.plan === 'TRIAL' && user.trialEndsAt && (
+        <TrialBanner trialEndsAt={user.trialEndsAt} />
+      )}
 
       {/* ── Installment alerts ── */}
       {installmentAlerts.length > 0 && (
@@ -409,6 +414,51 @@ function ProDashboard() {
 }
 
 // ── Sub-components ───────────────────────────────────────────────
+
+function TrialBanner({ trialEndsAt }: { trialEndsAt: string }) {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const msLeft = new Date(trialEndsAt).getTime() - now;
+  const hoursLeft = Math.max(0, Math.floor(msLeft / (60 * 60 * 1000)));
+  const minsLeft  = Math.max(0, Math.floor((msLeft % (60 * 60 * 1000)) / (60 * 1000)));
+
+  return (
+    <View style={trialStyles.banner}>
+      <Text style={trialStyles.icon}>⏳</Text>
+      <View style={{ flex: 1 }}>
+        <Text style={trialStyles.title}>
+          Free Trial — {hoursLeft}h {minsLeft}m left
+        </Text>
+        <Text style={trialStyles.sub}>
+          Purchase a license anytime to keep your data and unlock permanently.
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+const trialStyles = StyleSheet.create({
+  banner: {
+    flexDirection:     'row',
+    alignItems:         'flex-start',
+    gap:                10,
+    backgroundColor:    '#eff6ff',
+    marginHorizontal:   16,
+    marginTop:          12,
+    borderRadius:       12,
+    padding:            12,
+    borderWidth:        1,
+    borderColor:        '#bfdbfe',
+  },
+  icon:  { fontSize: 20 },
+  title: { fontSize: 13, fontWeight: '700', color: colors.primary },
+  sub:   { fontSize: 12, color: colors.primary, opacity: 0.8, marginTop: 2, lineHeight: 16 },
+});
 
 function SectionLabel({ title }: { title: string }) {
   return (

@@ -19,8 +19,7 @@ import { useAuth }        from '../../context/AuthContext';
 export default function AddProductScreen() {
   const navigation = useNavigation<any>();
   const route      = useRoute<any>();
-  const { user }   = useAuth();
-  const isPro      = user?.plan === 'PRO';
+  const { hasProAccess: isPro } = useAuth();
   const editId     = route.params?.id as string | undefined;
   const isEdit     = Boolean(editId);
 

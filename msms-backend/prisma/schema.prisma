@@ -7,15 +7,16 @@ datasource db {
 }
 
 model Shop {
-  id         String     @id @default(cuid())
-  name       String
-  plan       String     @default("PRO")
-  createdAt  DateTime   @default(now())
-  users      User[]
-  products   Product[]
-  sales      Sale[]
-  purchases  Purchase[]
-  secondhand SecondhandRecord[]
+  id           String     @id @default(cuid())
+  name         String
+  plan         String     @default("PRO") // "TRIAL" | "SIMPLE" | "PRO"
+  trialEndsAt  DateTime?  // set only when plan = "TRIAL"; cleared on upgrade
+  createdAt    DateTime   @default(now())
+  users        User[]
+  products     Product[]
+  sales        Sale[]
+  purchases    Purchase[]
+  secondhand   SecondhandRecord[]
 }
 
 model User {

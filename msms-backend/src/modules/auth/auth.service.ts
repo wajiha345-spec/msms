@@ -18,8 +18,10 @@ export async function loginUser(username: string, password: string) {
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) throw new Error('Invalid username or password');
 
+  const trialEndsAt = user.shop.trialEndsAt ? user.shop.trialEndsAt.toISOString() : null;
+
   const token = jwt.sign(
-    { userId: user.id, role: user.role, plan: user.shop.plan, shopId: user.shopId },
+    { userId: user.id, role: user.role, plan: user.shop.plan, shopId: user.shopId, trialEndsAt },
     process.env.JWT_SECRET!,
     { expiresIn: '30d' }
   );
@@ -27,11 +29,12 @@ export async function loginUser(username: string, password: string) {
   return {
     token,
     user: {
-      id:       user.id,
-      username: user.username,
-      role:     user.role,
-      shopName: user.shop.name,
-      plan:     user.shop.plan,
+      id:          user.id,
+      username:    user.username,
+      role:        user.role,
+      shopName:    user.shop.name,
+      plan:        user.shop.plan,
+      trialEndsAt: user.shop.trialEndsAt,
     },
   };
 }

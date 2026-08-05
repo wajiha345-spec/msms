@@ -75,9 +75,16 @@ export default function LoginScreen() {
 
         <TouchableOpacity
           style={styles.linkButton}
+          onPress={() => navigation.navigate('TrialSignup')}
+        >
+          <Text style={styles.linkText}>Try free for 48 hours</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.linkButton}
           onPress={() => navigation.navigate('Setup')}
         >
-          <Text style={styles.linkText}>Create new account</Text>
+          <Text style={styles.linkText}>Have a license key? Activate it</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>

@@ -8,6 +8,7 @@ interface AuthUser {
   role:     string;
   shopName: string;
   plan:     string;
+  trialEndsAt?: string | null;
 }
 
 interface AuthContextType {
@@ -15,8 +16,12 @@ interface AuthContextType {
   token:       string | null;
   loading:     boolean;
   isNewInstall: boolean;
+  isTrialExpired: boolean;
+  hasProAccess: boolean;
   login:       (username: string, password: string) => Promise<void>;
   setupShop:   (data: { licenseKey: string; shopName: string; username: string; password: string }) => Promise<void>;
+  startTrial:  (data: { shopName: string; username: string; password: string; email: string }) => Promise<void>;
+  upgradeAccount: (licenseKey: string) => Promise<void>;
   forgotPassword: (username: string) => Promise<{ maskedEmail?: string }>;
   resetPassword:  (username: string, otp: string, newPassword: string) => Promise<void>;
   logout:      () => void;
@@ -29,6 +34,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token,        setToken]        = useState<string | null>(null);
   const [loading,      setLoading]      = useState(true);
   const [isNewInstall, setIsNewInstall] = useState(false);
+  const [now,          setNow]          = useState(() => Date.now());
+
+  // Re-check the trial deadline every minute so the app locks itself
+  // automatically once time's up, without requiring a restart.
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const isTrialExpired = !!(
+    user?.plan === 'TRIAL' && user.trialEndsAt && new Date(user.trialEndsAt).getTime() <= now
+  );
+
+  // An active (non-expired) trial gets full PRO access, same as the backend's isActiveTrial().
+  const hasProAccess = user?.plan === 'PRO' || (user?.plan === 'TRIAL' && !isTrialExpired);
 
   useEffect(() => {
     async function init() {
@@ -73,6 +93,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     applySession(t, u);
   }
 
+  async function startTrial(data: {
+    shopName: string;
+    username: string;
+    password: string;
+    email:    string;
+  }) {
+    const res = await apiClient.post('/trial/start', data);
+    const { token: t, user: u } = res.data.data;
+    await AsyncStorage.setItem('account_registered', '1');
+    setIsNewInstall(false);
+    applySession(t, u);
+  }
+
+  // Converts the caller's existing (trial) shop to a paid plan in place —
+  // all data saved during the trial stays under the same shopId.
+  async function upgradeAccount(licenseKey: string) {
+    const res = await apiClient.post('/setup/upgrade', { licenseKey });
+    const { token: t, user: u } = res.data.data;
+    applySession(t, u);
+  }
+
   async function forgotPassword(username: string) {
     const res = await apiClient.post('/auth/forgot-password', { username });
     return { maskedEmail: res.data.data.maskedEmail as string | undefined };
@@ -102,7 +143,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, isNewInstall, login, setupShop, forgotPassword, resetPassword, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, isNewInstall, isTrialExpired, hasProAccess, login, setupShop, startTrial, upgradeAccount, forgotPassword, resetPassword, logout }}>
       {children}
     </AuthContext.Provider>
   );

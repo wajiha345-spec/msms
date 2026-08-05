@@ -44,6 +44,23 @@ export async function downloadApp(req: Request, res: Response) {
   }
 }
 
+// GET /api/download-trial
+// Public download for the 48-hour free trial — no license key required.
+// Always serves the PRO build since the trial unlocks all PRO features;
+// access is gated server-side by the trial account's JWT, not the binary.
+export async function downloadTrialApk(_req: Request, res: Response) {
+  const apkUrl = process.env.APK_URL_PRO;
+  if (!apkUrl) {
+    console.error('[Download] APK_URL_PRO is not set in environment variables');
+    return res.status(503).send(downloadPage(
+      'Download Temporarily Unavailable',
+      'The download link is not configured yet. Please contact support and we will send you the file directly.',
+      false,
+    ));
+  }
+  return res.redirect(apkUrl);
+}
+
 function downloadPage(title: string, message: string, success: boolean): string {
   const icon = success ? '✅' : '⚠️';
   return `<!DOCTYPE html>

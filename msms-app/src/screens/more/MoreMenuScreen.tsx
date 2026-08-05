@@ -54,9 +54,9 @@ function ProUpgradeBanner() {
 
 export default function MoreMenuScreen() {
   const navigation = useNavigation<any>();
-  const { user, logout } = useAuth();
+  const { user, logout, hasProAccess } = useAuth();
 
-  const isPro = user?.plan === 'PRO';
+  const isPro = hasProAccess;
 
   function handleLogout() {
     Alert.alert('Logout', 'Are you sure you want to logout?', [

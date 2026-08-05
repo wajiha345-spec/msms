@@ -11,9 +11,9 @@ import { colors } from '../../theme/colors';
 
 export default function PurchasesListScreen() {
   const navigation   = useNavigation<any>();
-  const { user }     = useAuth();
+  const { hasProAccess } = useAuth();
 
-  if (user?.plan !== 'PRO') {
+  if (!hasProAccess) {
     return (
       <View style={styles.proGate}>
         <Text style={styles.proGateIcon}>🔒</Text>

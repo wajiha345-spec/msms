@@ -15,8 +15,9 @@ import licenseRoutes    from './modules/licenses/licenses.routes';
 import setupRoutes      from './modules/setup/setup.routes';
 import catalogRoutes    from './modules/catalog/catalog.routes';
 import imeiVerifyRoutes from './modules/imei-verify/imei-verify.routes';
-import { downloadApp }  from './modules/licenses/licenses.controller';
-import { authenticate, requirePlan } from './middleware/auth';
+import trialRoutes      from './modules/trial/trial.routes';
+import { downloadApp, downloadTrialApk } from './modules/licenses/licenses.controller';
+import { authenticate, requirePlan, checkTrialExpiry } from './middleware/auth';
 
 const app = express();
 
@@ -28,21 +29,23 @@ app.use('/api/auth',          authRoutes);       // login only (register removed
 app.use('/api/orders',        orderRoutes);      // website order form
 app.use('/api/admin',         adminRoutes);      // protected by ADMIN_SECRET query param
 app.use('/api/licenses',      licenseRoutes);    // key validation for app setup
-app.use('/api/setup',         setupRoutes);      // first-time app registration
+app.use('/api/setup',         setupRoutes);      // first-time app registration + authenticated upgrade
+app.use('/api/trial',         trialRoutes);      // 48-hour free trial signup, no license key needed
 app.get('/api/download/:key', downloadApp);      // APK download (license key = access token)
+app.get('/api/download-trial', downloadTrialApk); // APK download for trial signups (no key needed)
 app.use('/api/invoices',      invoiceRoutes);    // PDF invoices (invoice UUID = access token)
 
 // ── SIMPLE + PRO: both plans can access these ────────────────────────────────
-app.use('/api/products', authenticate, productRoutes);  // import route gated inside
-app.use('/api/sales',    authenticate, saleRoutes);
+app.use('/api/products', authenticate, checkTrialExpiry, productRoutes);  // import route gated inside
+app.use('/api/sales',    authenticate, checkTrialExpiry, saleRoutes);
 
-// ── PRO only ─────────────────────────────────────────────────────────────────
-app.use('/api/purchases',   authenticate, requirePlan('PRO'), purchaseRoutes);
-app.use('/api/secondhand',  authenticate, requirePlan('PRO'), secondhandRoutes);
-app.use('/api/imei',        authenticate, requirePlan('PRO'), imeiRoutes);
-app.use('/api/imei-verify', authenticate, requirePlan('PRO'), imeiVerifyRoutes);
-app.use('/api/dashboard',   authenticate, requirePlan('PRO'), dashboardRoutes);
-app.use('/api/catalog',     authenticate, requirePlan('PRO'), catalogRoutes);
+// ── PRO only (an active trial counts as PRO) ────────────────────────────────
+app.use('/api/purchases',   authenticate, checkTrialExpiry, requirePlan('PRO'), purchaseRoutes);
+app.use('/api/secondhand',  authenticate, checkTrialExpiry, requirePlan('PRO'), secondhandRoutes);
+app.use('/api/imei',        authenticate, checkTrialExpiry, requirePlan('PRO'), imeiRoutes);
+app.use('/api/imei-verify', authenticate, checkTrialExpiry, requirePlan('PRO'), imeiVerifyRoutes);
+app.use('/api/dashboard',   authenticate, checkTrialExpiry, requirePlan('PRO'), dashboardRoutes);
+app.use('/api/catalog',     authenticate, checkTrialExpiry, requirePlan('PRO'), catalogRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });

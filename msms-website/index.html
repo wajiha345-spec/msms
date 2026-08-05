@@ -293,6 +293,18 @@
       gap: 10px;
     }
 
+    .trial-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 26px;
+      color: var(--brand-strong);
+      font-weight: 700;
+      font-size: 15px;
+      text-decoration: none;
+    }
+    .trial-link:hover { text-decoration: underline; }
+
     .hero-chip {
       padding: 10px 14px;
       border-radius: 999px;
@@ -1262,6 +1274,7 @@
       <button class="btn-primary" onclick="openModal('PRO')">Get Pro - Rs 25,000</button>
       <button class="btn-secondary" onclick="document.getElementById('plans').scrollIntoView({behavior:'smooth'})">Compare Plans</button>
     </div>
+    <a class="trial-link" href="https://api.msms-app.site/api/download-trial">Or try free for 48 hours, no card needed →</a>
     <div class="hero-meta">
       <div class="hero-chip">One-time payment</div>
       <div class="hero-chip">Android 8.0+</div>
