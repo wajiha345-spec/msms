@@ -155,6 +155,33 @@ export async function sendLicenseEmail(customer: {
   });
 }
 
+// ── Send a one-time password reset code ───────────────────────────────────────
+export async function sendPasswordResetEmail(customer: {
+  username: string;
+  email:    string;
+  otp:      string;
+}) {
+  await getResend().emails.send({
+    from: FROM_SUPPORT,
+    to:   customer.email,
+    subject: 'Your MSMS Password Reset Code',
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto">
+        <h2 style="color:#1e293b">Reset your password</h2>
+        <p>We received a request to reset the password for username <strong>${customer.username}</strong>.</p>
+
+        <div style="background:#f1f5f9;border-radius:10px;padding:20px;margin:20px 0;text-align:center">
+          <p style="margin:0 0 6px;color:#64748b;font-size:13px">YOUR RESET CODE</p>
+          <p style="font-size:28px;font-weight:700;letter-spacing:6px;color:#1e293b;margin:0;font-family:monospace">${customer.otp}</p>
+        </div>
+
+        <p>Enter this code in the app to set a new password. It expires in 15 minutes.</p>
+        <p style="color:#64748b;font-size:13px">If you didn't request this, you can safely ignore this email — your password will not be changed.</p>
+      </div>
+    `,
+  });
+}
+
 // ── Confirm order received (while payment is being verified) ─────────────────
 export async function sendOrderReceivedEmail(customer: {
   name: string;

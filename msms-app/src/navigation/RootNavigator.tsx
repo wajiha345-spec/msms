@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, ActivityIndicator } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import LoginScreen  from '../screens/auth/LoginScreen';
+import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import SetupScreen  from '../screens/onboarding/SetupScreen';
 import BottomTabs   from './BottomTabs';
 import { colors }   from '../theme/colors';
@@ -32,12 +33,14 @@ export default function RootNavigator() {
           <>
             <Stack.Screen name="Setup" component={SetupScreen} />
             <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
           </>
         ) : (
           // Returning user, just logged out — show login
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Setup" component={SetupScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
           </>
         )}
       </Stack.Navigator>

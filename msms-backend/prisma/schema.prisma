@@ -19,15 +19,18 @@ model Shop {
 }
 
 model User {
-  id           String     @id @default(cuid())
-  username     String     @unique
-  passwordHash String
-  role         String     @default("staff")
-  createdAt    DateTime   @default(now())
-  shop         Shop       @relation(fields: [shopId], references: [id])
-  shopId       String
-  sales        Sale[]
-  purchases    Purchase[]
+  id                 String     @id @default(cuid())
+  username           String     @unique
+  passwordHash       String
+  role               String     @default("staff")
+  email              String?
+  resetOtpHash       String?
+  resetOtpExpiresAt  DateTime?
+  createdAt          DateTime   @default(now())
+  shop               Shop       @relation(fields: [shopId], references: [id])
+  shopId             String
+  sales              Sale[]
+  purchases          Purchase[]
 
   @@index([shopId])
 }

@@ -17,6 +17,8 @@ interface AuthContextType {
   isNewInstall: boolean;
   login:       (username: string, password: string) => Promise<void>;
   setupShop:   (data: { licenseKey: string; shopName: string; username: string; password: string }) => Promise<void>;
+  forgotPassword: (username: string) => Promise<{ maskedEmail?: string }>;
+  resetPassword:  (username: string, otp: string, newPassword: string) => Promise<void>;
   logout:      () => void;
 }
 
@@ -71,6 +73,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     applySession(t, u);
   }
 
+  async function forgotPassword(username: string) {
+    const res = await apiClient.post('/auth/forgot-password', { username });
+    return { maskedEmail: res.data.data.maskedEmail as string | undefined };
+  }
+
+  async function resetPassword(username: string, otp: string, newPassword: string) {
+    await apiClient.post('/auth/reset-password', { username, otp, newPassword });
+  }
+
   async function applySession(t: string, u: AuthUser) {
     setToken(t);
     setUser(u);
@@ -91,7 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, isNewInstall, login, setupShop, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, isNewInstall, login, setupShop, forgotPassword, resetPassword, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -20,7 +20,10 @@ export async function setupShop(req: Request, res: Response) {
     if (shopName.trim().length < 2) return fail(res, 'Shop name must be at least 2 characters');
 
     // Validate the license key
-    const license = await prisma.licenseKey.findUnique({ where: { key: licenseKey } });
+    const license = await prisma.licenseKey.findUnique({
+      where: { key: licenseKey },
+      include: { order: { select: { customerEmail: true } } },
+    });
     if (!license)           return fail(res, 'Invalid license key', 404);
     if (license.isActivated) return fail(res, 'This license key has already been used', 409);
 
@@ -41,6 +44,7 @@ export async function setupShop(req: Request, res: Response) {
           passwordHash,
           shopId:       shop.id,
           role:         'admin', // shop owner gets admin role
+          email:        license.order.customerEmail,
         },
       });
       await tx.licenseKey.update({
