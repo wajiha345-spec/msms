@@ -42,6 +42,21 @@ export interface CreateSalePayload {
   guarantors?:   Guarantor[];
 }
 
+export interface ImportSaleRow {
+  date:           string; // ISO
+  productName:    string;
+  brand?:         string;
+  quantity:       number;
+  salePrice:      number;
+  purchasePrice?: number;
+  customerName?:  string;
+  customerPhone?: string;
+  customerCnic?:  string;
+  paymentType:    'CASH' | 'INSTALLMENT';
+  installmentDueDate?: string; // ISO
+  installmentPaid?:    boolean;
+}
+
 export const salesApi = {
   list: (productId?: string, date?: string) =>
     apiClient.get<{ success: boolean; data: Sale[] }>('/sales', {
@@ -56,4 +71,9 @@ export const salesApi = {
 
   markPaid: (id: string) =>
     apiClient.patch<{ success: boolean; data: Sale }>(`/sales/${id}/mark-paid`),
+
+  importHistory: (sales: ImportSaleRow[]) =>
+    apiClient.post<{ success: boolean; data: { created: number; errors: { row: number; name: string; error: string }[] } }>(
+      '/sales/import', { sales }
+    ),
 };

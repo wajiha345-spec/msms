@@ -11,9 +11,9 @@ interface CreatePurchaseInput {
   userId:        string;
 }
 
-export async function getPurchases(productId?: string) {
+export async function getPurchases(shopId: string, productId?: string) {
   return prisma.purchase.findMany({
-    where: productId ? { productId } : {},
+    where: { shopId, ...(productId ? { productId } : {}) },
     include: {
       product:    { select: { name: true, brand: true } },
       recordedBy: { select: { username: true } },
@@ -22,9 +22,9 @@ export async function getPurchases(productId?: string) {
   });
 }
 
-export async function getPurchaseById(id: string) {
-  const p = await prisma.purchase.findUnique({
-    where: { id },
+export async function getPurchaseById(shopId: string, id: string) {
+  const p = await prisma.purchase.findFirst({
+    where: { id, shopId },
     include: {
       product:    { select: { name: true, brand: true } },
       recordedBy: { select: { username: true } },
@@ -34,10 +34,10 @@ export async function getPurchaseById(id: string) {
   return p;
 }
 
-export async function createPurchase(data: CreatePurchaseInput, io: Server) {
+export async function createPurchase(shopId: string, data: CreatePurchaseInput, io: Server) {
   // Verify product exists and is not deleted
   const product = await prisma.product.findFirst({
-    where: { id: data.productId, isDeleted: false },
+    where: { id: data.productId, shopId, isDeleted: false },
   });
   if (!product) throw new Error('Product not found');
   if (data.quantity <= 0) throw new Error('Quantity must be at least 1');
@@ -51,6 +51,7 @@ export async function createPurchase(data: CreatePurchaseInput, io: Server) {
       data: {
         productId:     data.productId,
         userId:        data.userId,
+        shopId,
         quantity:      data.quantity,
         purchasePrice: data.purchasePrice,
         supplierName:  data.supplierName,
@@ -66,18 +67,19 @@ export async function createPurchase(data: CreatePurchaseInput, io: Server) {
     return { purchase, updatedStock: updated.stock };
   });
 
-  // Emit realtime events AFTER the transaction succeeds
-  io.to('shop:main').emit(EVENTS.PURCHASE_CREATED, {
+  // Emit realtime events AFTER the transaction succeeds — scoped to this shop only
+  const room = `shop:${shopId}`;
+  io.to(room).emit(EVENTS.PURCHASE_CREATED, {
     productId:    data.productId,
     productName:  product.name,
     quantity:     data.quantity,
     updatedStock: result.updatedStock,
   });
-  io.to('shop:main').emit(EVENTS.INVENTORY_UPDATED, {
+  io.to(room).emit(EVENTS.INVENTORY_UPDATED, {
     productId: data.productId,
     stock:     result.updatedStock,
   });
-  io.to('shop:main').emit(EVENTS.DASHBOARD_REFRESH, {});
+  io.to(room).emit(EVENTS.DASHBOARD_REFRESH, {});
 
   return result.purchase;
 }

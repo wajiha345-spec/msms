@@ -66,7 +66,8 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         });
 
         socket.on('connect', () => {
-          socket.emit('join', 'shop:main');
+          // No client-side join needed — the server verifies the JWT and
+          // auto-joins this socket to its own shop's room.
           setConnected(true);
         });
 

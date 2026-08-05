@@ -1,6 +1,6 @@
 import { prisma } from '../../config/db';
 
-export async function searchByImei(query: string) {
+export async function searchByImei(shopId: string, query: string) {
   if (!query || query.trim().length < 4) {
     throw new Error('Search query must be at least 4 characters');
   }
@@ -13,6 +13,7 @@ export async function searchByImei(query: string) {
     // Products with matching full IMEI or last-4 digits
     prisma.product.findMany({
       where: {
+        shopId,
         isDeleted: false,
         OR: [
           { imei: { equals: q } },
@@ -29,6 +30,7 @@ export async function searchByImei(query: string) {
     // Sales with matching IMEI
     prisma.sale.findMany({
       where: {
+        shopId,
         OR: [
           { imei: { equals: q } },
           { imei: { endsWith: q } },
@@ -44,6 +46,7 @@ export async function searchByImei(query: string) {
     // Secondhand records with matching IMEI
     prisma.secondhandRecord.findMany({
       where: {
+        shopId,
         OR: [
           { imei: { equals: q } },
           { imei: { endsWith: q } },

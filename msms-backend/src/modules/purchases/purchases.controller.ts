@@ -21,7 +21,7 @@ function getParamValue(value: unknown): string {
 export async function list(req: AuthRequest, res: Response) {
   try {
     const productId = getQueryValue(req.query.productId);
-    const purchases = await getPurchases(productId);
+    const purchases = await getPurchases(req.user!.shopId, productId);
     return ok(res, purchases);
   } catch (e: any) {
     return fail(res, e.message);
@@ -31,7 +31,7 @@ export async function list(req: AuthRequest, res: Response) {
 export async function getOne(req: AuthRequest, res: Response) {
   try {
     const id = getParamValue(req.params.id);
-    const purchase = await getPurchaseById(id);
+    const purchase = await getPurchaseById(req.user!.shopId, id);
     return ok(res, purchase);
   } catch (e: any) {
     return fail(res, e.message, 404);
@@ -55,6 +55,7 @@ export async function create(req: AuthRequest, res: Response) {
     const io = req.app.get('io');
 
     const purchase = await createPurchase(
+      req.user!.shopId,
       {
         productId,
         quantity: Number(quantity),

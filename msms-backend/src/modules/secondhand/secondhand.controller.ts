@@ -26,7 +26,7 @@ export async function list(req: AuthRequest, res: Response) {
     const filter =
       isSold === 'true' ? true :
       isSold === 'false' ? false : undefined;
-    const records = await getSecondhandRecords(filter);
+    const records = await getSecondhandRecords(req.user!.shopId, filter);
     return ok(res, records);
   } catch (e: any) {
     return fail(res, e.message);
@@ -36,7 +36,7 @@ export async function list(req: AuthRequest, res: Response) {
 export async function getOne(req: AuthRequest, res: Response) {
   try {
     const id = getParamValue(req.params.id); // CHANGED
-    const record = await getSecondhandById(id); // CHANGED
+    const record = await getSecondhandById(req.user!.shopId, id); // CHANGED
     return ok(res, record);
   } catch (e: any) {
     return fail(res, e.message, 404);
@@ -83,6 +83,7 @@ export async function create(req: AuthRequest, res: Response) {
     const io = req.app.get('io');
 
     const record = await createSecondhandRecord(
+      req.user!.shopId,
       {
         mobileName,
         brand,
@@ -111,7 +112,7 @@ export async function update(req: AuthRequest, res: Response) {
   try {
     const id = getParamValue(req.params.id); // CHANGED
     const { notes, salePrice } = req.body;
-    const record = await updateSecondhandRecord(id, { // CHANGED
+    const record = await updateSecondhandRecord(req.user!.shopId, id, { // CHANGED
       notes,
       salePrice: salePrice ? Number(salePrice) : undefined,
     });

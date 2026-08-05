@@ -30,25 +30,28 @@ export async function setupShop(req: Request, res: Response) {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Create user and mark license as activated atomically
-    const [user] = await prisma.$transaction([
-      prisma.user.create({
+    // Create the shop, its first admin user, and mark the license as activated atomically
+    const [shop, user] = await prisma.$transaction(async (tx) => {
+      const shop = await tx.shop.create({
+        data: { name: shopName.trim(), plan: license.plan },
+      });
+      const user = await tx.user.create({
         data: {
           username:     username.trim(),
           passwordHash,
-          shopName:     shopName.trim(),
-          plan:         license.plan,
+          shopId:       shop.id,
           role:         'admin', // shop owner gets admin role
         },
-      }),
-      prisma.licenseKey.update({
+      });
+      await tx.licenseKey.update({
         where: { key: licenseKey },
         data:  { isActivated: true, activatedAt: new Date(), shopName: shopName.trim() },
-      }),
-    ]);
+      });
+      return [shop, user];
+    });
 
     const token = jwt.sign(
-      { userId: user.id, role: user.role, plan: user.plan },
+      { userId: user.id, role: user.role, plan: shop.plan, shopId: shop.id },
       process.env.JWT_SECRET!,
       { expiresIn: '30d' }
     );
@@ -58,8 +61,8 @@ export async function setupShop(req: Request, res: Response) {
       user: {
         id:       user.id,
         username: user.username,
-        shopName: user.shopName,
-        plan:     user.plan,
+        shopName: shop.name,
+        plan:     shop.plan,
         role:     user.role,
       },
     });

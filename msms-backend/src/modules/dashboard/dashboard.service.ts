@@ -1,6 +1,6 @@
 import { prisma } from '../../config/db';
 
-export async function getDashboardSummary() {
+export async function getDashboardSummary(shopId: string) {
   // Get start and end of today
   const now        = new Date();
   const startOfDay = new Date(now);
@@ -21,7 +21,7 @@ export async function getDashboardSummary() {
 
     // Today's sales
     prisma.sale.findMany({
-      where: { createdAt: { gte: startOfDay, lte: endOfDay } },
+      where: { shopId, createdAt: { gte: startOfDay, lte: endOfDay } },
       select: {
         totalAmount: true,
         profit:      true,
@@ -32,27 +32,28 @@ export async function getDashboardSummary() {
 
     // Today's purchases
     prisma.purchase.findMany({
-      where: { createdAt: { gte: startOfDay, lte: endOfDay } },
+      where: { shopId, createdAt: { gte: startOfDay, lte: endOfDay } },
       select: { purchasePrice: true, quantity: true },
     }),
 
     // Total active products
     prisma.product.count({
-      where: { isDeleted: false },
+      where: { shopId, isDeleted: false },
     }),
 
     // New phones in stock
     prisma.product.count({
-      where: { isDeleted: false, isSecondhand: false, stock: { gt: 0 } },
+      where: { shopId, isDeleted: false, isSecondhand: false, stock: { gt: 0 } },
     }),
 
     // Secondhand phones still available
     prisma.product.count({
-      where: { isDeleted: false, isSecondhand: true, stock: { gt: 0 } },
+      where: { shopId, isDeleted: false, isSecondhand: true, stock: { gt: 0 } },
     }),
 
     // Last 10 sales with product info
     prisma.sale.findMany({
+      where:   { shopId },
       take:    10,
       orderBy: { createdAt: 'desc' },
       include: {
@@ -64,6 +65,7 @@ export async function getDashboardSummary() {
     // Installment sales due today or overdue, not yet paid
     prisma.sale.findMany({
       where: {
+        shopId,
         paymentType:        'INSTALLMENT',
         installmentPaid:    false,
         installmentDueDate: { lte: endOfDay },

@@ -27,7 +27,7 @@ export async function list(req: AuthRequest, res: Response) {
     const search = getQueryValue(req.query.search);
     const condition = getQueryValue(req.query.condition);
 
-    const products = await getProducts(search, condition);
+    const products = await getProducts(req.user!.shopId, search, condition);
     return ok(res, products);
   } catch (e: any) {
     return fail(res, e.message);
@@ -37,7 +37,7 @@ export async function list(req: AuthRequest, res: Response) {
 export async function getOne(req: AuthRequest, res: Response) {
   try {
     const id = getParamValue(req.params.id);
-    const product = await getProductById(id);
+    const product = await getProductById(req.user!.shopId, id);
     return ok(res, product);
   } catch (e: any) {
     return fail(res, e.message, 404);
@@ -48,7 +48,7 @@ export async function getOne(req: AuthRequest, res: Response) {
 export async function scanProduct(req: AuthRequest, res: Response) {
   try {
     const code = getParamValue(req.params.code);
-    const product = await getProductByCode(code);
+    const product = await getProductByCode(req.user!.shopId, code);
     if (!product) return fail(res, 'Product not found for this IMEI/barcode', 404);
     return ok(res, product);
   } catch (e: any) {
@@ -87,7 +87,7 @@ export async function create(req: AuthRequest, res: Response) {
       );
     }
 
-    const product = await createProduct({
+    const product = await createProduct(req.user!.shopId, {
       name,
       brand,
       category: category ?? 'phone',
@@ -112,7 +112,7 @@ export async function create(req: AuthRequest, res: Response) {
 export async function update(req: AuthRequest, res: Response) {
   try {
     const id = getParamValue(req.params.id);
-    const product = await updateProduct(id, req.body);
+    const product = await updateProduct(req.user!.shopId, id, req.body);
     return ok(res, product);
   } catch (e: any) {
     return fail(res, e.message);
@@ -122,7 +122,7 @@ export async function update(req: AuthRequest, res: Response) {
 export async function remove(req: AuthRequest, res: Response) {
   try {
     const id = getParamValue(req.params.id);
-    await deleteProduct(id);
+    await deleteProduct(req.user!.shopId, id);
     return ok(res, { message: 'Product deleted' });
   } catch (e: any) {
     return fail(res, e.message);
@@ -146,7 +146,7 @@ export async function importProducts(req: AuthRequest, res: Response) {
         if (!r.name || !r.brand || r.purchasePrice == null || r.salePrice == null) {
           throw new Error('name, brand, purchasePrice and salePrice are required');
         }
-        const product = await createProduct({
+        const product = await createProduct(req.user!.shopId, {
           name:          String(r.name).trim(),
           brand:         String(r.brand).trim(),
           category:      String(r.category  || 'phone').trim(),

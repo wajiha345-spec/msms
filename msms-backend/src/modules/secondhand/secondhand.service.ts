@@ -18,9 +18,9 @@ interface CreateSecondhandInput {
   ram?:          string;
 }
 
-export async function getSecondhandRecords(isSold?: boolean) {
+export async function getSecondhandRecords(shopId: string, isSold?: boolean) {
   return prisma.secondhandRecord.findMany({
-    where: isSold !== undefined ? { isSold } : {},
+    where: { shopId, ...(isSold !== undefined ? { isSold } : {}) },
     include: {
       product: {
         select: { name: true, stock: true, salePrice: true, isDeleted: true },
@@ -30,9 +30,9 @@ export async function getSecondhandRecords(isSold?: boolean) {
   });
 }
 
-export async function getSecondhandById(id: string) {
-  const record = await prisma.secondhandRecord.findUnique({
-    where: { id },
+export async function getSecondhandById(shopId: string, id: string) {
+  const record = await prisma.secondhandRecord.findFirst({
+    where: { id, shopId },
     include: {
       product: true,
       sales: {
@@ -48,13 +48,14 @@ export async function getSecondhandById(id: string) {
 }
 
 export async function createSecondhandRecord(
+  shopId: string,
   data: CreateSecondhandInput,
   io: Server
 ) {
-  // Validate IMEI uniqueness if provided
+  // Validate IMEI uniqueness within this shop if provided
   if (data.imei) {
     const existing = await prisma.secondhandRecord.findFirst({
-      where: { imei: data.imei },
+      where: { shopId, imei: data.imei },
     });
     if (existing) throw new Error('A secondhand record with this IMEI already exists');
   }
@@ -65,6 +66,7 @@ export async function createSecondhandRecord(
     // 1. Create a Product for inventory tracking
     const product = await tx.product.create({
       data: {
+        shopId,
         name:          data.mobileName,
         brand:         data.brand,
         category:      'phone',
@@ -83,6 +85,7 @@ export async function createSecondhandRecord(
     // 2. Create the SecondhandRecord with seller KYC
     const record = await tx.secondhandRecord.create({
       data: {
+        shopId,
         productId:     product.id,
         mobileName:    data.mobileName,
         brand:         data.brand,
@@ -101,25 +104,27 @@ export async function createSecondhandRecord(
     return { product, record };
   });
 
-  io.to('shop:main').emit(EVENTS.SECONDHAND_CREATED, {
+  const room = `shop:${shopId}`;
+  io.to(room).emit(EVENTS.SECONDHAND_CREATED, {
     id:         result.record.id,
     mobileName: data.mobileName,
     brand:      data.brand,
   });
-  io.to('shop:main').emit(EVENTS.INVENTORY_UPDATED, {
+  io.to(room).emit(EVENTS.INVENTORY_UPDATED, {
     productId: result.product.id,
     stock:     1,
   });
-  io.to('shop:main').emit(EVENTS.DASHBOARD_REFRESH, {});
+  io.to(room).emit(EVENTS.DASHBOARD_REFRESH, {});
 
   return result.record;
 }
 
 export async function updateSecondhandRecord(
+  shopId: string,
   id: string,
   data: { notes?: string; salePrice?: number }
 ) {
-  const record = await prisma.secondhandRecord.findUnique({ where: { id } });
+  const record = await prisma.secondhandRecord.findFirst({ where: { id, shopId } });
   if (!record) throw new Error('Record not found');
 
   // Allow updating notes and the sale price on the linked product

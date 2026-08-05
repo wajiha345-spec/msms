@@ -15,7 +15,7 @@ export async function search(req: AuthRequest, res: Response) {
 
     if (!q) return fail(res, 'Query parameter "q" is required');
 
-    const results = await searchByImei(q);
+    const results = await searchByImei(req.user!.shopId, q);
     return ok(res, results);
   } catch (e: any) {
     return fail(res, e.message);

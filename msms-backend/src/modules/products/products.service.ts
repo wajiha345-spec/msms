@@ -19,9 +19,10 @@ interface CreateProductInput {
 interface UpdateProductInput extends Partial<CreateProductInput> {}
 
 // ── List all products (with optional search + condition filter) ──
-export async function getProducts(search?: string, condition?: string) {
+export async function getProducts(shopId: string, search?: string, condition?: string) {
   return prisma.product.findMany({
     where: {
+      shopId,
       isDeleted: false,
       ...(condition ? { condition } : {}),
       ...(search
@@ -39,19 +40,20 @@ export async function getProducts(search?: string, condition?: string) {
 }
 
 // ── Get single product ──
-export async function getProductById(id: string) {
+export async function getProductById(shopId: string, id: string) {
   const product = await prisma.product.findFirst({
-    where: { id, isDeleted: false },
+    where: { id, shopId, isDeleted: false },
   });
   if (!product) throw new Error('Product not found');
   return product;
 }
 
 // ── Lookup product by IMEI or barcode (for scanner) ──
-export async function getProductByCode(code: string) {
+export async function getProductByCode(shopId: string, code: string) {
   const trimmed = code.trim();
   const product = await prisma.product.findFirst({
     where: {
+      shopId,
       isDeleted: false,
       OR: [
         { imei:    trimmed },
@@ -63,39 +65,39 @@ export async function getProductByCode(code: string) {
 }
 
 // ── Create product ──
-export async function createProduct(data: CreateProductInput) {
-  // If IMEI provided, make sure it isn't already used
+export async function createProduct(shopId: string, data: CreateProductInput) {
+  // If IMEI provided, make sure it isn't already used within this shop
   if (data.imei) {
     const exists = await prisma.product.findFirst({
-      where: { imei: data.imei, isDeleted: false },
+      where: { shopId, imei: data.imei, isDeleted: false },
     });
     if (exists) throw new Error(`A product with IMEI ${data.imei} already exists in inventory`);
   }
-  // If barcode provided, ensure it isn't duplicated
+  // If barcode provided, ensure it isn't duplicated within this shop
   if (data.barcode) {
     const exists = await prisma.product.findFirst({
-      where: { barcode: data.barcode, isDeleted: false },
+      where: { shopId, barcode: data.barcode, isDeleted: false },
     });
     if (exists) throw new Error(`A product with this barcode already exists in inventory`);
   }
 
-  return prisma.product.create({ data });
+  return prisma.product.create({ data: { ...data, shopId } });
 }
 
 // ── Update product ──
-export async function updateProduct(id: string, data: UpdateProductInput) {
-  await getProductById(id); // throws if not found
+export async function updateProduct(shopId: string, id: string, data: UpdateProductInput) {
+  await getProductById(shopId, id); // throws if not found
 
   if (data.imei) {
     const conflict = await prisma.product.findFirst({
-      where: { imei: data.imei, isDeleted: false, NOT: { id } },
+      where: { shopId, imei: data.imei, isDeleted: false, NOT: { id } },
     });
     if (conflict) throw new Error('Another product already uses this IMEI');
   }
 
   if (data.barcode) {
     const conflict = await prisma.product.findFirst({
-      where: { barcode: data.barcode, isDeleted: false, NOT: { id } },
+      where: { shopId, barcode: data.barcode, isDeleted: false, NOT: { id } },
     });
     if (conflict) throw new Error('Another product already uses this barcode');
   }
@@ -104,8 +106,8 @@ export async function updateProduct(id: string, data: UpdateProductInput) {
 }
 
 // ── Soft-delete product ──
-export async function deleteProduct(id: string) {
-  await getProductById(id); // throws if not found
+export async function deleteProduct(shopId: string, id: string) {
+  await getProductById(shopId, id); // throws if not found
 
   // Soft-delete if there are linked sales (preserve history)
   const hasSales = await prisma.sale.findFirst({ where: { productId: id } });

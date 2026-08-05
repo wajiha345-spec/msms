@@ -3,14 +3,14 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../../config/db';
 
 export async function loginUser(username: string, password: string) {
-  const user = await prisma.user.findUnique({ where: { username } });
+  const user = await prisma.user.findUnique({ where: { username }, include: { shop: true } });
   if (!user) throw new Error('Invalid username or password');
 
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) throw new Error('Invalid username or password');
 
   const token = jwt.sign(
-    { userId: user.id, role: user.role, plan: user.plan },
+    { userId: user.id, role: user.role, plan: user.shop.plan, shopId: user.shopId },
     process.env.JWT_SECRET!,
     { expiresIn: '30d' }
   );
@@ -21,20 +21,8 @@ export async function loginUser(username: string, password: string) {
       id:       user.id,
       username: user.username,
       role:     user.role,
-      shopName: user.shopName,
-      plan:     user.plan,
+      shopName: user.shop.name,
+      plan:     user.shop.plan,
     },
   };
-}
-
-export async function registerUser(username: string, password: string, role = 'staff') {
-  const exists = await prisma.user.findUnique({ where: { username } });
-  if (exists) throw new Error('Username already taken');
-
-  const passwordHash = await bcrypt.hash(password, 10);
-  const user = await prisma.user.create({
-    data: { username, passwordHash, role },
-  });
-
-  return { id: user.id, username: user.username, role: user.role };
 }

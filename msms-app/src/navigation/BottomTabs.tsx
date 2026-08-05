@@ -11,6 +11,7 @@ import ProductDetailScreen    from '../screens/products/ProductDetailScreen';
 import CatalogScreen          from '../screens/catalog/CatalogScreen';
 import SalesListScreen        from '../screens/sales/SalesListScreen';
 import NewSaleScreen          from '../screens/sales/NewSaleScreen';
+import ImportSalesHistoryScreen from '../screens/sales/ImportSalesHistoryScreen';
 import PurchasesListScreen    from '../screens/purchases/PurchasesListScreen';
 import NewPurchaseScreen      from '../screens/purchases/NewPurchaseScreen';
 import MoreMenuScreen         from '../screens/more/MoreMenuScreen';
@@ -43,6 +44,7 @@ function SalesStack() {
     <SStack.Navigator screenOptions={{ headerShown: false }}>
       <SStack.Screen name="SalesList" component={SalesListScreen} />
       <SStack.Screen name="NewSale"   component={NewSaleScreen} />
+      <SStack.Screen name="ImportSalesHistory" component={ImportSalesHistoryScreen} />
     </SStack.Navigator>
   );
 }

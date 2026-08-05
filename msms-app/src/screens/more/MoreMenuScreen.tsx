@@ -119,6 +119,14 @@ export default function MoreMenuScreen() {
           onPress={() => handleProFeature('Import Products', () => navigation.navigate('ProductsTab', { screen: 'ImportProducts' }))}
         />
         <MenuItem
+          icon="📜"
+          label="Import Sales History (CSV)"
+          subtitle="Bring in past sales/customers from another app"
+          proOnly
+          isPro={isPro}
+          onPress={() => handleProFeature('Import Sales History', () => navigation.navigate('SalesTab', { screen: 'ImportSalesHistory' }))}
+        />
+        <MenuItem
           icon="🗄️"
           label="Product Catalog"
           subtitle="View and delete shared barcode catalog entries"
