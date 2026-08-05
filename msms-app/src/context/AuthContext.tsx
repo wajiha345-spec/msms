@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { apiClient } from '../api/client';
+import { apiClient, setUnauthorizedHandler } from '../api/client';
 
 interface AuthUser {
   id:       string;
@@ -72,6 +72,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     }
     init();
+
+    // Any request rejected with 401 means the stored session is dead
+    // (expired/invalid token) — drop it so RootNavigator falls back to Login
+    // instead of leaving the user stuck on a broken authenticated screen.
+    setUnauthorizedHandler(() => logout());
   }, []);
 
   async function login(username: string, password: string) {
