@@ -46,7 +46,7 @@ export async function getOne(req: AuthRequest, res: Response) {
 export async function create(req: AuthRequest, res: Response) {
   try {
     const {
-      mobileName, brand, imei,
+      mobileName, brand, category, imei,
       sellerName, sellerCnic, sellerPhone,
       purchasePrice, notes,
       storage, color, ram,
@@ -87,6 +87,7 @@ export async function create(req: AuthRequest, res: Response) {
       {
         mobileName,
         brand,
+        category: category ?? undefined,
         imei: imei ?? undefined,
         sellerName,
         sellerCnic,

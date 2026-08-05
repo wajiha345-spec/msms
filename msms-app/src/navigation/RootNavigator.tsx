@@ -5,6 +5,7 @@ import { View, ActivityIndicator } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import LoginScreen  from '../screens/auth/LoginScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
+import WelcomeScreen from '../screens/onboarding/WelcomeScreen';
 import SetupScreen  from '../screens/onboarding/SetupScreen';
 import TrialSignupScreen  from '../screens/onboarding/TrialSignupScreen';
 import TrialExpiredScreen from '../screens/onboarding/TrialExpiredScreen';
@@ -36,8 +37,9 @@ export default function RootNavigator() {
             <Stack.Screen name="Main" component={BottomTabs} />
           )
         ) : isNewInstall ? (
-          // Brand-new install with no account — show trial signup first
+          // Brand-new install with no account — let them choose Login / Create Account / Free Trial
           <>
+            <Stack.Screen name="Welcome" component={WelcomeScreen} />
             <Stack.Screen name="TrialSignup" component={TrialSignupScreen} />
             <Stack.Screen name="Setup" component={SetupScreen} />
             <Stack.Screen name="Login" component={LoginScreen} />

@@ -5,6 +5,7 @@ import { EVENTS } from '../../socket/events';
 interface CreateSecondhandInput {
   mobileName:    string;
   brand:         string;
+  category?:     string;
   imei?:         string;
   sellerName:    string;
   sellerCnic:    string;
@@ -69,7 +70,7 @@ export async function createSecondhandRecord(
         shopId,
         name:          data.mobileName,
         brand:         data.brand,
-        category:      'phone',
+        category:      data.category?.trim() || 'phone',
         condition:     'used',
         imei:          data.imei ?? null,
         purchasePrice: data.purchasePrice,

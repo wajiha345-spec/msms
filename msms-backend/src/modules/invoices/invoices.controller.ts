@@ -34,6 +34,7 @@ export async function getInvoice(req: AuthRequest, res: Response) {
       imei:          sale.imei          ?? undefined,
       quantity:      sale.quantity,
       salePrice:     sale.salePrice,
+      discount:      sale.discount,
       totalAmount:   sale.totalAmount,
       profit:        sale.profit,
       soldBy:        sale.recordedBy.username,
@@ -133,6 +134,8 @@ export async function getInvoice(req: AuthRequest, res: Response) {
     <div class="section-title">Payment</div>
     <table>
       ${row('Unit Price', `Rs ${sale.salePrice.toLocaleString()}`)}
+      ${sale.discount > 0 ? row('Subtotal', `Rs ${(sale.salePrice * sale.quantity).toLocaleString()}`) : ''}
+      ${sale.discount > 0 ? row('Discount', `- Rs ${sale.discount.toLocaleString()}`) : ''}
       ${row('Total Amount', `Rs ${sale.totalAmount.toLocaleString()}`, true)}
     </table>
 

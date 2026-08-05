@@ -50,6 +50,9 @@ export default function ImeiSearchScreen() {
           maxLength={15}
           returnKeyType="search"
           onSubmitEditing={handleSearch}
+          autoComplete="off"
+          importantForAutofill="no"
+          textContentType="none"
           autoFocus
         />
         <TouchableOpacity

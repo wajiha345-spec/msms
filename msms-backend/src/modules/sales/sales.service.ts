@@ -12,6 +12,7 @@ interface CreateSaleInput {
   productId:     string;
   quantity:      number;
   salePrice:     number;
+  discount?:     number;
   customerName?: string;
   customerPhone?: string;
   customerCnic?: string;
@@ -77,6 +78,12 @@ export async function createSale(shopId: string, data: CreateSaleInput, io: Serv
   if (data.quantity <= 0) throw new Error('Quantity must be at least 1');
   if (data.salePrice <= 0) throw new Error('Sale price must be greater than 0');
 
+  const discount = data.discount ?? 0;
+  if (discount < 0) throw new Error('Discount cannot be negative');
+  if (discount > data.salePrice * data.quantity) {
+    throw new Error('Discount cannot exceed the sale total');
+  }
+
   if (data.paymentType === 'INSTALLMENT') {
     if (!data.customerCnic) throw new Error('Customer CNIC is required for installment sales');
     if (!data.customerPhone) throw new Error('Customer phone is required for installment sales');
@@ -108,8 +115,8 @@ export async function createSale(shopId: string, data: CreateSaleInput, io: Serv
     }
 
     // 3. Calculate financials
-    const totalAmount = data.salePrice * data.quantity;
-    const profit      = (data.salePrice - product.purchasePrice) * data.quantity;
+    const totalAmount = data.salePrice * data.quantity - discount;
+    const profit      = (data.salePrice - product.purchasePrice) * data.quantity - discount;
     const invoiceNo   = await generateInvoiceNo(shopId);
 
     // 4. Create the sale record
@@ -122,6 +129,7 @@ export async function createSale(shopId: string, data: CreateSaleInput, io: Serv
         secondhandId:  data.secondhandId ?? null,
         quantity:      data.quantity,
         salePrice:     data.salePrice,
+        discount,
         totalAmount,
         profit,
         customerName:  data.customerName  ?? null,

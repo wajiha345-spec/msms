@@ -78,6 +78,7 @@ model Sale {
   secondhandId       String?
   quantity           Int
   salePrice          Float
+  discount           Float             @default(0)
   totalAmount        Float
   profit             Float
   customerName       String?

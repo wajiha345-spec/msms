@@ -18,7 +18,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#6C63FF"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -45,6 +45,14 @@
         "expo-camera",
         {
           "cameraPermission": "The app needs camera access to scan IMEI/barcodes and take seller and CNIC photos."
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "allowBackup": false
+          }
         }
       ]
     ]

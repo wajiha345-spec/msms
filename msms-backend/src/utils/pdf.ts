@@ -11,6 +11,7 @@ interface InvoiceData {
   imei?:         string;
   quantity:      number;
   salePrice:     number;
+  discount?:     number;
   totalAmount:   number;
   profit:        number;
   soldBy:        string;
@@ -193,29 +194,40 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
     const totalsY = rowBottom + 16;
     const labelX  = margin + 300;
     const valueX  = margin + 390;
+    const discount = data.discount ?? 0;
 
     doc
       .fillColor('#6B7280')
       .fontSize(10)
       .font('Helvetica')
       .text('Subtotal', labelX, totalsY)
-      .text(`Rs ${data.totalAmount.toLocaleString()}`, valueX, totalsY);
+      .text(`Rs ${(data.salePrice * data.quantity).toLocaleString()}`, valueX, totalsY);
+
+    let nextY = totalsY + 18;
+    if (discount > 0) {
+      doc
+        .fillColor('#6B7280')
+        .text('Discount', labelX, nextY)
+        .text(`- Rs ${discount.toLocaleString()}`, valueX, nextY);
+      nextY += 18;
+    }
 
     doc
       .fillColor('#6B7280')
-      .text('Tax', labelX, totalsY + 18)
-      .text('Rs 0', valueX, totalsY + 18);
+      .text('Tax', labelX, nextY)
+      .text('Rs 0', valueX, nextY);
 
     // Total box
-    doc.rect(labelX - 8, totalsY + 36, pageW - margin - labelX + 8, 32)
+    const boxY = nextY + 18;
+    doc.rect(labelX - 8, boxY, pageW - margin - labelX + 8, 32)
        .fill('#6C63FF');
 
     doc
       .fillColor('#FFFFFF')
       .fontSize(11)
       .font('Helvetica-Bold')
-      .text('TOTAL', labelX, totalsY + 47)
-      .text(`Rs ${data.totalAmount.toLocaleString()}`, valueX, totalsY + 47);
+      .text('TOTAL', labelX, boxY + 11)
+      .text(`Rs ${data.totalAmount.toLocaleString()}`, valueX, boxY + 11);
 
     // ── Footer ────────────────────────────────────────────────────
     const footerY = doc.page.height - 80;

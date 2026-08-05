@@ -20,6 +20,7 @@ import { Button } from '../../components/Buttons';
 import ScannerOverlay from '../../components/ScannerOverlay';
 import ImeiVerifyPanel from '../../components/ImeiVerifyPanel';
 import VariantPicker from '../../components/VariantPicker';
+import CategoryPicker from '../../components/CategoryPicker';
 import { ImeiVerifyResult } from '../../api/imeiVerify';
 import { secondhandApi } from '../../api/secondhand';
 import { formatCnic, formatPhone } from '../../utils/format';
@@ -30,6 +31,7 @@ const DRAFT_KEY = 'add-secondhand-draft';
 type DraftData = {
   mobileName: string;
   brand: string;
+  category: string;
   imei: string;
   sellerName: string;
   sellerCnic: string;
@@ -48,6 +50,7 @@ export default function AddSecondhandScreen() {
 
   const [mobileName, setMobileName] = useState('');
   const [brand, setBrand] = useState('');
+  const [category, setCategory] = useState('Phone');
   const [imei, setImei] = useState('');
   const [sellerName, setSellerName] = useState('');
   const [sellerCnic, setSellerCnic] = useState('');
@@ -81,6 +84,7 @@ export default function AddSecondhandScreen() {
     return {
       mobileName,
       brand,
+      category,
       imei,
       sellerName,
       sellerCnic,
@@ -107,6 +111,7 @@ export default function AddSecondhandScreen() {
     const draft: DraftData = JSON.parse(raw);
     setMobileName(draft.mobileName ?? '');
     setBrand(draft.brand ?? '');
+    setCategory(draft.category ?? 'Phone');
     setImei(draft.imei ?? '');
     setSellerName(draft.sellerName ?? '');
     setSellerCnic(draft.sellerCnic ?? '');
@@ -129,6 +134,16 @@ export default function AddSecondhandScreen() {
       console.warn('Failed to restore secondhand draft:', e?.message)
     );
   }, []);
+
+  // Clear the draft whenever the user leaves this screen for any reason
+  // (back button, swipe gesture, hardware back) so stale data never
+  // resurfaces on the next visit unless the form is actually submitted.
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', () => {
+      clearDraft().catch(() => {});
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   function validate() {
     const e: Record<string, string> = {};
@@ -239,6 +254,7 @@ export default function AddSecondhandScreen() {
       formData.append('sellerCnic', sellerCnic.trim());
       formData.append('sellerPhone', sellerPhone.trim());
       formData.append('purchasePrice', purchasePrice);
+      formData.append('category', category.trim() || 'Phone');
 
       if (imei.trim())    formData.append('imei', imei.trim());
       if (notes.trim())   formData.append('notes', notes.trim());
@@ -328,6 +344,14 @@ export default function AddSecondhandScreen() {
           error={errors.brand}
           editable={!submitting && !picking}
         />
+        <CategoryPicker
+          value={category}
+          onChange={async (value: string) => {
+            setCategory(value);
+            await saveDraft({ category: value });
+          }}
+          disabled={submitting || picking}
+        />
         <VariantPicker
           label="Storage"
           value={storage}
@@ -379,6 +403,9 @@ export default function AddSecondhandScreen() {
           keyboardType="numeric"
           maxLength={15}
           editable={!submitting && !picking}
+          autoComplete="off"
+          importantForAutofill="no"
+          textContentType="none"
         />
 
         {/* Full IMEI verification: device info + PTA DIRBS check */}
@@ -449,6 +476,9 @@ export default function AddSecondhandScreen() {
           maxLength={15}
           error={errors.sellerCnic}
           editable={!submitting && !picking}
+          autoComplete="off"
+          importantForAutofill="no"
+          textContentType="none"
         />
         <Input
           label="Seller Phone *"
@@ -463,6 +493,9 @@ export default function AddSecondhandScreen() {
           maxLength={11}
           error={errors.sellerPhone}
           editable={!submitting && !picking}
+          autoComplete="off"
+          importantForAutofill="no"
+          textContentType="none"
         />
 
         <SectionHeader title="Photos" />

@@ -13,6 +13,7 @@ export interface Sale {
   productId:     string;
   quantity:      number;
   salePrice:     number;
+  discount:      number;
   totalAmount:   number;
   profit:        number;
   customerName?: string;
@@ -32,6 +33,7 @@ export interface CreateSalePayload {
   productId:     string;
   quantity:      number;
   salePrice:     number;
+  discount?:     number;
   customerName?: string;
   customerPhone?: string;
   customerCnic?: string;

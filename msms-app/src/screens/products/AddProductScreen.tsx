@@ -9,6 +9,7 @@ import { Input }          from '../../components/Inputs';
 import { Button }         from '../../components/Buttons';
 import ScannerOverlay     from '../../components/ScannerOverlay';
 import VariantPicker      from '../../components/VariantPicker';
+import CategoryPicker     from '../../components/CategoryPicker';
 import { productsApi, CreateProductPayload } from '../../api/products';
 import { catalogApi } from '../../api/catalog';
 import ImeiVerifyPanel from '../../components/ImeiVerifyPanel';
@@ -333,12 +334,7 @@ export default function AddProductScreen() {
           onChangeText={setBrand}
           error={errors.brand}
         />
-        <Input
-          label="Category"
-          placeholder="e.g. phone, tablet, accessory"
-          value={category}
-          onChangeText={setCategory}
-        />
+        <CategoryPicker value={category} onChange={setCategory} />
 
         {/* Condition selector */}
         <Text style={styles.fieldLabel}>Condition *</Text>
@@ -385,6 +381,9 @@ export default function AddProductScreen() {
           onChangeText={setImei}
           keyboardType="numeric"
           maxLength={15}
+          autoComplete="off"
+          importantForAutofill="no"
+          textContentType="none"
         />
         {/* Auto-fill brand/model from IMEI when 15 digits entered — PRO only */}
         {!isEdit && isPro && (

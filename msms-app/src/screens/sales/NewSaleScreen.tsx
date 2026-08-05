@@ -30,6 +30,7 @@ export default function NewSaleScreen() {
   const [product,       setProduct]       = useState<Product | null>(null);
   const [quantity,      setQuantity]      = useState('1');
   const [salePrice,     setSalePrice]     = useState('');
+  const [discount,      setDiscount]      = useState('');
   const [customerName,  setCustomerName]  = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [imei,          setImei]          = useState('');
@@ -85,11 +86,13 @@ export default function NewSaleScreen() {
   }, [product]);
 
   // Live profit calculation
-  const qty     = Number(quantity)  || 0;
-  const price   = Number(salePrice) || 0;
-  const cost    = product ? product.purchasePrice * qty : 0;
-  const revenue = price * qty;
-  const profit  = revenue - cost;
+  const qty      = Number(quantity)  || 0;
+  const price    = Number(salePrice) || 0;
+  const discAmt  = Number(discount)  || 0;
+  const cost     = product ? product.purchasePrice * qty : 0;
+  const subtotal = price * qty;
+  const revenue  = subtotal - discAmt;
+  const profit   = revenue - cost;
 
   // ── Scanner handler ────────────────────────────────────────────────────────
   async function handleScanCode(code: string) {
@@ -144,6 +147,10 @@ export default function NewSaleScreen() {
     if (!salePrice || price <= 0) e.salePrice = 'Enter a valid sale price';
     if (product && qty > product.stock)
       e.quantity = `Only ${product.stock} in stock`;
+    if (discount && (isNaN(discAmt) || discAmt < 0))
+      e.discount = 'Enter a valid discount amount';
+    else if (discAmt > price * qty)
+      e.discount = 'Discount cannot exceed the sale total';
 
     if (paymentType === 'Installment') {
       if (!customerCnic.trim()) e.customerCnic = 'Customer CNIC is required';
@@ -185,6 +192,7 @@ export default function NewSaleScreen() {
         productId:     product!.id,
         quantity:      qty,
         salePrice:     price,
+        discount:      discAmt || undefined,
         customerName:  customerName  || undefined,
         customerPhone: customerPhone || undefined,
         customerCnic:  isInstallment ? customerCnic : undefined,
@@ -299,6 +307,14 @@ export default function NewSaleScreen() {
           keyboardType="numeric"
           error={errors.salePrice}
         />
+        <Input
+          label="Discount (Rs, optional)"
+          placeholder="Flat amount off the total"
+          value={discount}
+          onChangeText={setDiscount}
+          keyboardType="numeric"
+          error={errors.discount}
+        />
 
         {/* Live transaction summary */}
         {product && qty > 0 && price > 0 && (
@@ -307,6 +323,10 @@ export default function NewSaleScreen() {
             <SummaryRow label="Product"       value={product.name} />
             <SummaryRow label="Quantity"      value={String(qty)} />
             <SummaryRow label="Price/unit"    value={`Rs ${price.toLocaleString()}`} />
+            <SummaryRow label="Subtotal"      value={`Rs ${subtotal.toLocaleString()}`} />
+            {discAmt > 0 && (
+              <SummaryRow label="Discount" value={`- Rs ${discAmt.toLocaleString()}`} />
+            )}
             <SummaryRow label="Total Revenue" value={`Rs ${revenue.toLocaleString()}`} bold />
             <SummaryRow label="Total Cost"    value={`Rs ${cost.toLocaleString()}`} />
             <View style={styles.divider} />
@@ -353,6 +373,9 @@ export default function NewSaleScreen() {
           keyboardType="phone-pad"
           maxLength={11}
           error={errors.customerPhone}
+          autoComplete="off"
+          importantForAutofill="no"
+          textContentType="none"
         />
         <Input
           label="IMEI of sold unit (optional)"
@@ -361,6 +384,9 @@ export default function NewSaleScreen() {
           onChangeText={setImei}
           keyboardType="numeric"
           maxLength={15}
+          autoComplete="off"
+          importantForAutofill="no"
+          textContentType="none"
         />
 
         {paymentType === 'Installment' && (
@@ -373,6 +399,9 @@ export default function NewSaleScreen() {
               keyboardType="numeric"
               maxLength={15}
               error={errors.customerCnic}
+              autoComplete="off"
+              importantForAutofill="no"
+              textContentType="none"
             />
             <Input
               label="Installment Due Date *"
@@ -402,6 +431,9 @@ export default function NewSaleScreen() {
                   keyboardType="numeric"
                   maxLength={15}
                   error={errors[`guarantor${i}Cnic`]}
+                  autoComplete="off"
+                  importantForAutofill="no"
+                  textContentType="none"
                 />
                 <Input
                   label="Phone *"
@@ -411,6 +443,9 @@ export default function NewSaleScreen() {
                   keyboardType="phone-pad"
                   maxLength={11}
                   error={errors[`guarantor${i}Phone`]}
+                  autoComplete="off"
+                  importantForAutofill="no"
+                  textContentType="none"
                 />
               </View>
             ))}

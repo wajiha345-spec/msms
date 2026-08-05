@@ -10,6 +10,7 @@ import { Button }        from '../../components/Buttons';
 import { ProductPicker } from '../../components/ProductPicker';
 import { Product, productsApi } from '../../api/products';
 import { purchasesApi }  from '../../api/purchases';
+import { formatPhone }   from '../../utils/format';
 import { colors }        from '../../theme/colors';
 
 export default function NewPurchaseScreen() {
@@ -76,6 +77,8 @@ export default function NewPurchaseScreen() {
 
     if (!quantity || qty < 1)         e.quantity      = 'Quantity must be at least 1';
     if (!purchasePrice || price <= 0) e.purchasePrice = 'Enter a valid price';
+    if (supplierPhone.trim() && supplierPhone.length !== 11)
+      e.supplierPhone = 'Phone must be 11 digits';
 
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -86,8 +89,11 @@ export default function NewPurchaseScreen() {
     setLoading(true);
     try {
       let productId = product?.id;
+      let productName = product?.name;
 
-      // Manual mode — create the product first, then record purchase
+      // Manual mode — create the product first (with zero stock), then
+      // record the purchase like any other product so it shows up in the
+      // Purchases list and the backend adds the stock via that transaction.
       if (manualMode) {
         const res = await productsApi.create({
           name:          manualName.trim(),
@@ -96,20 +102,13 @@ export default function NewPurchaseScreen() {
           condition:     'new',
           purchasePrice: price,
           salePrice:     Number(manualSalePrice),
-          stock:         qty,
+          stock:         0,
         });
         productId = res.data.data.id;
-
-        // For manual mode the product was created with correct stock already
-        Alert.alert(
-          'Stock Added ✓',
-          `"${manualName}" added to inventory with ${qty} unit(s).`,
-          [{ text: 'OK', onPress: () => navigation.goBack() }]
-        );
-        return;
+        productName = manualName.trim();
       }
 
-      // Existing product — record purchase (backend adds stock)
+      // Record purchase (backend adds stock)
       await purchasesApi.create({
         productId:     productId!,
         quantity:      qty,
@@ -120,7 +119,7 @@ export default function NewPurchaseScreen() {
 
       Alert.alert(
         'Stock Added ✓',
-        `${qty} unit(s) of ${product!.name} added to inventory.`,
+        `${qty} unit(s) of ${productName} added to inventory.`,
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } catch (e: any) {
@@ -252,8 +251,13 @@ export default function NewPurchaseScreen() {
           label="Supplier Phone"
           placeholder="e.g. 03001234567"
           value={supplierPhone}
-          onChangeText={setSupplierPhone}
+          onChangeText={(v: string) => setSupplierPhone(formatPhone(v))}
           keyboardType="phone-pad"
+          maxLength={11}
+          error={errors.supplierPhone}
+          autoComplete="off"
+          importantForAutofill="no"
+          textContentType="none"
         />
 
         <Button
