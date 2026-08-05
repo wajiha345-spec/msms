@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,6 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -25,25 +24,6 @@ import { ImeiVerifyResult } from '../../api/imeiVerify';
 import { secondhandApi } from '../../api/secondhand';
 import { formatCnic, formatPhone } from '../../utils/format';
 import { colors } from '../../theme/colors';
-
-const DRAFT_KEY = 'add-secondhand-draft';
-
-type DraftData = {
-  mobileName: string;
-  brand: string;
-  category: string;
-  imei: string;
-  sellerName: string;
-  sellerCnic: string;
-  sellerPhone: string;
-  purchasePrice: string;
-  notes: string;
-  sellerPhotoUri?: string;
-  cnicPhotoUri?: string;
-  storage?: string;
-  color?: string;
-  ram?: string;
-};
 
 export default function AddSecondhandScreen() {
   const navigation = useNavigation<any>();
@@ -79,71 +59,6 @@ export default function AddSecondhandScreen() {
   const [cameraFacing, setCameraFacing] = useState<'back' | 'front'>('back');
   const cameraRef = useRef<CameraView>(null);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
-
-  function getDraftData(extra?: Partial<DraftData>): DraftData {
-    return {
-      mobileName,
-      brand,
-      category,
-      imei,
-      sellerName,
-      sellerCnic,
-      sellerPhone,
-      purchasePrice,
-      notes,
-      sellerPhotoUri,
-      cnicPhotoUri,
-      storage,
-      color,
-      ram,
-      ...extra,
-    };
-  }
-
-  async function saveDraft(extra?: Partial<DraftData>) {
-    await AsyncStorage.setItem(DRAFT_KEY, JSON.stringify(getDraftData(extra)));
-  }
-
-  async function loadDraft() {
-    const raw = await AsyncStorage.getItem(DRAFT_KEY);
-    if (!raw) return;
-
-    const draft: DraftData = JSON.parse(raw);
-    setMobileName(draft.mobileName ?? '');
-    setBrand(draft.brand ?? '');
-    setCategory(draft.category ?? 'Phone');
-    setImei(draft.imei ?? '');
-    setSellerName(draft.sellerName ?? '');
-    setSellerCnic(draft.sellerCnic ?? '');
-    setSellerPhone(draft.sellerPhone ?? '');
-    setPurchasePrice(draft.purchasePrice ?? '');
-    setNotes(draft.notes ?? '');
-    setSellerPhotoUri(draft.sellerPhotoUri);
-    setCnicPhotoUri(draft.cnicPhotoUri);
-    setStorage(draft.storage ?? '');
-    setColor(draft.color ?? '');
-    setRam(draft.ram ?? '');
-  }
-
-  async function clearDraft() {
-    await AsyncStorage.removeItem(DRAFT_KEY);
-  }
-
-  useEffect(() => {
-    loadDraft().catch((e) =>
-      console.warn('Failed to restore secondhand draft:', e?.message)
-    );
-  }, []);
-
-  // Clear the draft whenever the user leaves this screen for any reason
-  // (back button, swipe gesture, hardware back) so stale data never
-  // resurfaces on the next visit unless the form is actually submitted.
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('beforeRemove', () => {
-      clearDraft().catch(() => {});
-    });
-    return unsubscribe;
-  }, [navigation]);
 
   function validate() {
     const e: Record<string, string> = {};
@@ -189,10 +104,8 @@ export default function AddSecondhandScreen() {
 
       if (field === 'seller') {
         setSellerPhotoUri(uri);
-        await saveDraft({ sellerPhotoUri: uri });
       } else {
         setCnicPhotoUri(uri);
-        await saveDraft({ cnicPhotoUri: uri });
       }
     } catch (e: any) {
       Alert.alert('Camera Error', e?.message ?? 'Could not take photo');
@@ -227,10 +140,8 @@ export default function AddSecondhandScreen() {
 
         if (field === 'seller') {
           setSellerPhotoUri(uri);
-          await saveDraft({ sellerPhotoUri: uri });
         } else {
           setCnicPhotoUri(uri);
-          await saveDraft({ cnicPhotoUri: uri });
         }
       }
     } catch (e: any) {
@@ -283,7 +194,6 @@ export default function AddSecondhandScreen() {
       }
 
       await secondhandApi.create(formData);
-      await clearDraft();
 
       Alert.alert(
         'Saved',
@@ -320,16 +230,28 @@ export default function AddSecondhandScreen() {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
+        {/* ── IMEI scan banner ── */}
+        <TouchableOpacity
+          style={styles.scanBanner}
+          onPress={() => setImeiScannerOpen(true)}
+          disabled={submitting || picking}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.scanBannerIcon}>📷</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.scanBannerTitle}>Scan IMEI barcode on the phone</Text>
+            <Text style={styles.scanBannerSub}>Point camera at the IMEI barcode · auto-fills + checks PTA</Text>
+          </View>
+          <Text style={styles.scanBannerArrow}>›</Text>
+        </TouchableOpacity>
+
         <SectionHeader title="Phone Details" />
 
         <Input
           label="Phone Name *"
           placeholder="e.g. Samsung Galaxy S21"
           value={mobileName}
-          onChangeText={async (value: string) => {
-            setMobileName(value);
-            await saveDraft({ mobileName: value });
-          }}
+          onChangeText={setMobileName}
           error={errors.mobileName}
           editable={!submitting && !picking}
         />
@@ -337,19 +259,13 @@ export default function AddSecondhandScreen() {
           label="Brand *"
           placeholder="e.g. Samsung, Apple, Oppo"
           value={brand}
-          onChangeText={async (value: string) => {
-            setBrand(value);
-            await saveDraft({ brand: value });
-          }}
+          onChangeText={setBrand}
           error={errors.brand}
           editable={!submitting && !picking}
         />
         <CategoryPicker
           value={category}
-          onChange={async (value: string) => {
-            setCategory(value);
-            await saveDraft({ category: value });
-          }}
+          onChange={setCategory}
           disabled={submitting || picking}
         />
         <VariantPicker
@@ -377,29 +293,11 @@ export default function AddSecondhandScreen() {
           disabled={submitting || picking}
         />
 
-        {/* ── IMEI scan banner ── */}
-        <TouchableOpacity
-          style={styles.scanBanner}
-          onPress={() => setImeiScannerOpen(true)}
-          disabled={submitting || picking}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.scanBannerIcon}>📷</Text>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.scanBannerTitle}>Scan IMEI barcode on the phone</Text>
-            <Text style={styles.scanBannerSub}>Point camera at the IMEI barcode · auto-fills + checks PTA</Text>
-          </View>
-          <Text style={styles.scanBannerArrow}>›</Text>
-        </TouchableOpacity>
-
         <Input
           label="IMEI (recommended)"
           placeholder="15-digit number on phone · or scan above"
           value={imei}
-          onChangeText={async (value: string) => {
-            setImei(value);
-            await saveDraft({ imei: value });
-          }}
+          onChangeText={setImei}
           keyboardType="numeric"
           maxLength={15}
           editable={!submitting && !picking}
@@ -425,10 +323,7 @@ export default function AddSecondhandScreen() {
           label="Purchase Price (Rs) *"
           placeholder="Amount paid to seller"
           value={purchasePrice}
-          onChangeText={async (value: string) => {
-            setPurchasePrice(value);
-            await saveDraft({ purchasePrice: value });
-          }}
+          onChangeText={setPurchasePrice}
           keyboardType="numeric"
           error={errors.purchasePrice}
           editable={!submitting && !picking}
@@ -437,10 +332,7 @@ export default function AddSecondhandScreen() {
           label="Notes"
           placeholder="Condition, accessories, faults..."
           value={notes}
-          onChangeText={async (value: string) => {
-            setNotes(value);
-            await saveDraft({ notes: value });
-          }}
+          onChangeText={setNotes}
           multiline
           numberOfLines={3}
           style={{ height: 80, textAlignVertical: 'top' }}
@@ -456,10 +348,7 @@ export default function AddSecondhandScreen() {
           label="Seller Full Name *"
           placeholder="As on CNIC"
           value={sellerName}
-          onChangeText={async (value: string) => {
-            setSellerName(value);
-            await saveDraft({ sellerName: value });
-          }}
+          onChangeText={setSellerName}
           error={errors.sellerName}
           editable={!submitting && !picking}
         />
@@ -467,11 +356,7 @@ export default function AddSecondhandScreen() {
           label="Seller CNIC *"
           placeholder="35202-1234567-1"
           value={sellerCnic}
-          onChangeText={async (value: string) => {
-            const formatted = formatCnic(value);
-            setSellerCnic(formatted);
-            await saveDraft({ sellerCnic: formatted });
-          }}
+          onChangeText={(v: string) => setSellerCnic(formatCnic(v))}
           keyboardType="numeric"
           maxLength={15}
           error={errors.sellerCnic}
@@ -484,11 +369,7 @@ export default function AddSecondhandScreen() {
           label="Seller Phone *"
           placeholder="03001234567"
           value={sellerPhone}
-          onChangeText={async (value: string) => {
-            const formatted = formatPhone(value);
-            setSellerPhone(formatted);
-            await saveDraft({ sellerPhone: formatted });
-          }}
+          onChangeText={(v: string) => setSellerPhone(formatPhone(v))}
           keyboardType="phone-pad"
           maxLength={11}
           error={errors.sellerPhone}
@@ -505,10 +386,7 @@ export default function AddSecondhandScreen() {
           uri={sellerPhotoUri}
           onCamera={() => pickFromCamera('seller')}
           onLibrary={() => pickFromLibrary('seller')}
-          onClear={async () => {
-            setSellerPhotoUri(undefined);
-            await saveDraft({ sellerPhotoUri: undefined });
-          }}
+          onClear={() => setSellerPhotoUri(undefined)}
           disabled={picking || submitting}
         />
 
@@ -517,10 +395,7 @@ export default function AddSecondhandScreen() {
           uri={cnicPhotoUri}
           onCamera={() => pickFromCamera('cnic')}
           onLibrary={() => pickFromLibrary('cnic')}
-          onClear={async () => {
-            setCnicPhotoUri(undefined);
-            await saveDraft({ cnicPhotoUri: undefined });
-          }}
+          onClear={() => setCnicPhotoUri(undefined)}
           disabled={picking || submitting}
         />
 
@@ -547,12 +422,11 @@ export default function AddSecondhandScreen() {
       {/* IMEI scanner overlay */}
       <ScannerOverlay
         visible={imeiScannerOpen}
-        onScanned={async (code) => {
+        onScanned={(code) => {
           setImeiScannerOpen(false);
           const isImei = /^\d{15}$/.test(code);
           if (isImei) {
             setImei(code);
-            await saveDraft({ imei: code });
           } else {
             Alert.alert(
               'Not an IMEI',
@@ -830,7 +704,7 @@ const styles = StyleSheet.create({
   scanBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     backgroundColor: colors.primary, borderRadius: 12,
-    padding: 14, marginBottom: 10,
+    padding: 14, marginBottom: 14,
   },
   scanBannerIcon:  { fontSize: 24 },
   scanBannerTitle: { color: '#fff', fontSize: 15, fontWeight: '700' },
