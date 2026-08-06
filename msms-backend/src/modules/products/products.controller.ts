@@ -72,6 +72,7 @@ export async function create(req: AuthRequest, res: Response) {
       storage,
       color,
       ram,
+      branchId,
     } = req.body;
 
     if (
@@ -101,6 +102,7 @@ export async function create(req: AuthRequest, res: Response) {
       storage:  storage  ?? undefined,
       color:    color    ?? undefined,
       ram:      ram      ?? undefined,
+      branchId: branchId ?? undefined,
     });
 
     return ok(res, product);

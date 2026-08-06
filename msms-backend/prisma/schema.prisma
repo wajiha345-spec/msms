@@ -17,6 +17,24 @@ model Shop {
   sales        Sale[]
   purchases    Purchase[]
   secondhand   SecondhandRecord[]
+  accounts       Account[]
+  journalEntries JournalEntry[]
+  expenseCategories ExpenseCategory[]
+  expenses          Expense[]
+  incomeCategories  IncomeCategory[]
+  incomes           Income[]
+  salePayments      SalePayment[]
+  supplierPayments  SupplierPayment[]
+  reconciliations   Reconciliation[]
+  closingEntries    ClosingEntry[]
+  quotations        Quotation[]
+  purchaseOrders    PurchaseOrder[]
+  salesOrders       SalesOrder[]
+  rolePermissions   RolePermission[]
+  branches          Branch[]
+  customers             Customer[]
+  customerInteractions  CustomerInteraction[]
+  notifications         Notification[]
 }
 
 model User {
@@ -27,11 +45,24 @@ model User {
   email              String?
   resetOtpHash       String?
   resetOtpExpiresAt  DateTime?
+  isActive           Boolean    @default(true)
   createdAt          DateTime   @default(now())
   shop               Shop       @relation(fields: [shopId], references: [id])
   shopId             String
   sales              Sale[]
   purchases          Purchase[]
+  journalEntries     JournalEntry[]
+  expenses           Expense[]
+  incomes            Income[]
+  salePayments       SalePayment[]
+  supplierPayments   SupplierPayment[]
+  reconciliations    Reconciliation[]
+  closingEntries     ClosingEntry[]
+  quotations         Quotation[]
+  purchaseOrders     PurchaseOrder[]
+  salesOrders        SalesOrder[]
+  customerInteractions CustomerInteraction[]
+  notifications        Notification[]
 
   @@index([shopId])
 }
@@ -59,6 +90,11 @@ model Product {
   sales         Sale[]
   purchases     Purchase[]
   secondhand    SecondhandRecord?
+  quotationItems QuotationItem[]
+  purchaseOrderItems PurchaseOrderItem[]
+  salesOrderItems    SalesOrderItem[]
+  branch        Branch?           @relation(fields: [branchId], references: [id])
+  branchId      String?
 
   @@index([imei])
   @@index([barcode])
@@ -89,6 +125,11 @@ model Sale {
   installmentDueDate DateTime?
   installmentPaid    Boolean           @default(false)
   guarantors         Guarantor[]
+  payments           SalePayment[]
+  quotationItems     QuotationItem[]
+  salesOrderItems    SalesOrderItem[]
+  branch             Branch?           @relation(fields: [branchId], references: [id])
+  branchId           String?
   createdAt          DateTime          @default(now())
 
   @@unique([shopId, invoiceNo])
@@ -120,6 +161,11 @@ model Purchase {
   purchasePrice Float
   supplierName  String?
   supplierPhone String?
+  paymentType    String    @default("CASH") // "CASH" | "CREDIT" — mirrors Sale.paymentType
+  paymentDueDate DateTime? // only meaningful when paymentType = "CREDIT"
+  payments       SupplierPayment[]
+  branch        Branch?  @relation(fields: [branchId], references: [id])
+  branchId      String?
   createdAt     DateTime @default(now())
 
   @@index([shopId])
@@ -188,4 +234,465 @@ model SecondhandRecord {
   sales          Sale[]
 
   @@index([shopId])
+}
+
+// ── Business Management: Accounting Foundation ────────────────────────────────
+// Chart of Accounts + double-entry Journal Entries + General Ledger + Trial
+// Balance. Later Business Management modules (Expense, Income, Customer/
+// Supplier Ledger, Cash & Bank) post into this via accounting.service.ts's
+// postJournalEntry() rather than each maintaining their own balances.
+model Account {
+  id        String    @id @default(cuid())
+  shop      Shop      @relation(fields: [shopId], references: [id])
+  shopId    String
+  code      String
+  name      String
+  type      String    // "ASSET" | "LIABILITY" | "EQUITY" | "INCOME" | "EXPENSE"
+  parent    Account?  @relation("AccountHierarchy", fields: [parentId], references: [id])
+  parentId  String?
+  children  Account[] @relation("AccountHierarchy")
+  isSystem  Boolean   @default(false) // seeded default account; blocked from delete
+  isActive  Boolean   @default(true)
+  openingBalance     Float     @default(0)
+  openingBalanceDate DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  lines     JournalEntryLine[]
+  expensesAsExpenseAccount Expense[] @relation("ExpenseAccount")
+  expensesAsPaidFrom       Expense[] @relation("ExpensePaidFrom")
+  incomesAsIncomeAccount   Income[]  @relation("IncomeAccount")
+  incomesAsReceivedInto    Income[]  @relation("IncomeReceivedInto")
+  reconciliations          Reconciliation[]
+  closingEntries           ClosingEntry[]
+
+  @@unique([shopId, code])
+  @@index([shopId])
+  @@index([shopId, type])
+}
+
+model JournalEntry {
+  id              String   @id @default(cuid())
+  shop            Shop     @relation(fields: [shopId], references: [id])
+  shopId          String
+  entryNo         String   // e.g. JE-20260806-0001, same pattern as Sale.invoiceNo
+  date            DateTime
+  memo            String?
+  sourceType      String   @default("MANUAL") // "MANUAL" | "SYSTEM"
+  sourceModule    String?  // populated by future phases, e.g. "EXPENSE"
+  sourceId        String?
+  createdBy       User     @relation(fields: [createdByUserId], references: [id])
+  createdByUserId String
+  createdAt       DateTime @default(now())
+  lines           JournalEntryLine[]
+  expense         Expense?
+  income          Income?
+  closingEntry    ClosingEntry?
+
+  @@unique([shopId, entryNo])
+  @@index([shopId, date])
+}
+
+model JournalEntryLine {
+  id             String       @id @default(cuid())
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id])
+  journalEntryId String
+  account        Account      @relation(fields: [accountId], references: [id])
+  accountId      String
+  debit          Float        @default(0)
+  credit         Float        @default(0)
+  description    String?
+
+  @@index([journalEntryId])
+  @@index([accountId])
+}
+
+// ── Business Management: Expense & Income Management ─────────────────────────
+// Each Expense/Income posts a balanced journal entry via
+// accounting.service.ts's postJournalEntry() rather than maintaining its own
+// running total — expenseAccount/incomeAccount is the GL account debited or
+// credited on the "expense/income" side, paidFromAccount/receivedIntoAccount
+// is the GL account (Cash/Bank) on the other side.
+model ExpenseCategory {
+  id        String    @id @default(cuid())
+  shop      Shop      @relation(fields: [shopId], references: [id])
+  shopId    String
+  name      String
+  isSystem  Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  expenses  Expense[]
+
+  @@unique([shopId, name])
+  @@index([shopId])
+}
+
+model Expense {
+  id                 String           @id @default(cuid())
+  shop               Shop             @relation(fields: [shopId], references: [id])
+  shopId             String
+  category           ExpenseCategory  @relation(fields: [categoryId], references: [id])
+  categoryId         String
+  expenseAccount     Account          @relation("ExpenseAccount", fields: [expenseAccountId], references: [id])
+  expenseAccountId   String
+  paidFromAccount    Account          @relation("ExpensePaidFrom", fields: [paidFromAccountId], references: [id])
+  paidFromAccountId  String
+  amount             Float
+  date               DateTime
+  description        String?
+  billPhotoUrl       String?
+  journalEntry       JournalEntry?    @relation(fields: [journalEntryId], references: [id])
+  journalEntryId     String?          @unique
+  recordedBy         User             @relation(fields: [userId], references: [id])
+  userId             String
+  createdAt          DateTime         @default(now())
+
+  @@index([shopId])
+  @@index([shopId, date])
+}
+
+model IncomeCategory {
+  id        String   @id @default(cuid())
+  shop      Shop     @relation(fields: [shopId], references: [id])
+  shopId    String
+  name      String
+  isSystem  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  incomes   Income[]
+
+  @@unique([shopId, name])
+  @@index([shopId])
+}
+
+model Income {
+  id                    String          @id @default(cuid())
+  shop                  Shop            @relation(fields: [shopId], references: [id])
+  shopId                String
+  category              IncomeCategory  @relation(fields: [categoryId], references: [id])
+  categoryId            String
+  incomeAccount         Account         @relation("IncomeAccount", fields: [incomeAccountId], references: [id])
+  incomeAccountId       String
+  receivedIntoAccount   Account         @relation("IncomeReceivedInto", fields: [receivedIntoAccountId], references: [id])
+  receivedIntoAccountId String
+  amount                Float
+  date                  DateTime
+  description           String?
+  journalEntry          JournalEntry?   @relation(fields: [journalEntryId], references: [id])
+  journalEntryId        String?         @unique
+  recordedBy            User            @relation(fields: [userId], references: [id])
+  userId                String
+  createdAt             DateTime        @default(now())
+
+  @@index([shopId])
+  @@index([shopId, date])
+}
+
+// ── Business Management: Customer & Supplier Ledger ───────────────────────────
+// Subsidiary ledgers layered on top of the existing Sale/Purchase records —
+// no new Customer/Supplier master table, grouped by the customerPhone/
+// supplierPhone fields those models already carry. Deliberately NOT posted
+// to the GL (Sales/Purchases themselves have never posted to it either);
+// see accounting foundation notes for why full GL integration is deferred.
+model SalePayment {
+  id         String   @id @default(cuid())
+  sale       Sale     @relation(fields: [saleId], references: [id])
+  saleId     String
+  shop       Shop     @relation(fields: [shopId], references: [id])
+  shopId     String
+  amount     Float
+  method     String   @default("CASH") // informational tag: "CASH" | "BANK" | "OTHER"
+  note       String?
+  recordedBy User     @relation(fields: [userId], references: [id])
+  userId     String
+  createdAt  DateTime @default(now())
+
+  @@index([saleId])
+  @@index([shopId])
+}
+
+model SupplierPayment {
+  id         String   @id @default(cuid())
+  purchase   Purchase @relation(fields: [purchaseId], references: [id])
+  purchaseId String
+  shop       Shop     @relation(fields: [shopId], references: [id])
+  shopId     String
+  amount     Float
+  method     String   @default("CASH")
+  note       String?
+  recordedBy User     @relation(fields: [userId], references: [id])
+  userId     String
+  createdAt  DateTime @default(now())
+
+  @@index([purchaseId])
+  @@index([shopId])
+}
+
+// ── Business Management: Cash & Bank Management ───────────────────────────────
+// Deposits/Withdrawals/Transfers post directly through
+// accounting.service.ts's createJournalEntry() — no separate transaction
+// table needed. Reconciliation is the one new concept: a snapshot comparing
+// a bank statement balance to the GL's computed book balance as of a date.
+model Reconciliation {
+  id               String   @id @default(cuid())
+  shop             Shop     @relation(fields: [shopId], references: [id])
+  shopId           String
+  account          Account  @relation(fields: [accountId], references: [id])
+  accountId        String
+  statementDate    DateTime
+  statementBalance Float
+  bookBalance      Float
+  difference       Float
+  note             String?
+  createdBy        User     @relation(fields: [userId], references: [id])
+  userId           String
+  createdAt        DateTime @default(now())
+
+  @@index([shopId])
+  @@index([accountId])
+}
+
+// ── Business Management: Closing Entries ──────────────────────────────────────
+// Records which periods have been "closed" (income/expense accounts zeroed
+// into an equity account via a journal entry through the already-exported
+// createJournalEntry()) so the same period can't be closed twice, and links
+// each closing to the journal entry it produced.
+model ClosingEntry {
+  id              String       @id @default(cuid())
+  shop            Shop         @relation(fields: [shopId], references: [id])
+  shopId          String
+  periodStart     DateTime
+  periodEnd       DateTime
+  netIncome       Float
+  equityAccount   Account      @relation(fields: [equityAccountId], references: [id])
+  equityAccountId String
+  journalEntry    JournalEntry @relation(fields: [journalEntryId], references: [id])
+  journalEntryId  String       @unique
+  createdBy       User         @relation(fields: [userId], references: [id])
+  userId          String
+  createdAt       DateTime     @default(now())
+
+  @@index([shopId])
+}
+
+// ── Business Management: Quotations ───────────────────────────────────────────
+// Convert-to-sale reuses sales.service.ts's createSale() directly, one call
+// per line item — no duplicated stock-check/transaction logic, and stock is
+// re-validated for real at conversion time.
+model Quotation {
+  id            String          @id @default(cuid())
+  shop          Shop            @relation(fields: [shopId], references: [id])
+  shopId        String
+  quoteNo       String          // QUO-20260806-0001, same pattern as Sale.invoiceNo
+  customerName  String?
+  customerPhone String?
+  validUntil    DateTime?
+  status        String          @default("DRAFT") // "DRAFT" | "CONVERTED" | "CANCELLED"
+  notes         String?
+  createdBy     User            @relation(fields: [userId], references: [id])
+  userId        String
+  items         QuotationItem[]
+  createdAt     DateTime        @default(now())
+
+  @@unique([shopId, quoteNo])
+  @@index([shopId])
+}
+
+model QuotationItem {
+  id            String     @id @default(cuid())
+  quotation     Quotation  @relation(fields: [quotationId], references: [id])
+  quotationId   String
+  product       Product?   @relation(fields: [productId], references: [id])
+  productId     String?
+  description   String
+  quantity      Int
+  unitPrice     Float
+  lineTotal     Float
+  createdSale   Sale?      @relation(fields: [createdSaleId], references: [id])
+  createdSaleId String?
+
+  @@index([quotationId])
+}
+
+// ── Business Management: Purchase Orders & Sales Orders ───────────────────────
+// Receive Goods / Mark Delivered call the already-exported, unchanged
+// purchases.service.ts:createPurchase / sales.service.ts:createSale — same
+// convert-through-existing-function pattern as Quotations, extended to
+// support partial fulfillment (receiveGoods can be called repeatedly
+// against the same PO as goods arrive over time).
+model PurchaseOrder {
+  id            String              @id @default(cuid())
+  shop          Shop                @relation(fields: [shopId], references: [id])
+  shopId        String
+  poNo          String              // PO-20260806-0001
+  supplierName  String?
+  supplierPhone String?
+  status        String              @default("DRAFT") // "DRAFT" | "PARTIALLY_RECEIVED" | "RECEIVED" | "CANCELLED"
+  expectedDate  DateTime?
+  notes         String?
+  createdBy     User                @relation(fields: [userId], references: [id])
+  userId        String
+  items         PurchaseOrderItem[]
+  createdAt     DateTime            @default(now())
+
+  @@unique([shopId, poNo])
+  @@index([shopId])
+}
+
+model PurchaseOrderItem {
+  id               String        @id @default(cuid())
+  purchaseOrder    PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  purchaseOrderId  String
+  product          Product       @relation(fields: [productId], references: [id])
+  productId        String
+  description      String
+  quantityOrdered  Int
+  quantityReceived Int           @default(0)
+  unitPrice        Float
+
+  @@index([purchaseOrderId])
+}
+
+model SalesOrder {
+  id            String           @id @default(cuid())
+  shop          Shop             @relation(fields: [shopId], references: [id])
+  shopId        String
+  soNo          String           // SO-20260806-0001
+  customerName  String?
+  customerPhone String?
+  status        String           @default("PENDING") // "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED"
+  deliveryDate  DateTime?
+  notes         String?
+  createdBy     User             @relation(fields: [userId], references: [id])
+  userId        String
+  items         SalesOrderItem[]
+  createdAt     DateTime         @default(now())
+
+  @@unique([shopId, soNo])
+  @@index([shopId])
+}
+
+model SalesOrderItem {
+  id            String     @id @default(cuid())
+  salesOrder    SalesOrder @relation(fields: [salesOrderId], references: [id])
+  salesOrderId  String
+  product       Product    @relation(fields: [productId], references: [id])
+  productId     String
+  description   String
+  quantity      Int
+  unitPrice     Float
+  createdSale   Sale?      @relation(fields: [createdSaleId], references: [id])
+  createdSaleId String?
+
+  @@index([salesOrderId])
+}
+
+// ── Business Management: Multi-User Roles & Permissions ───────────────────────
+// Configurable per-role access to the Business Management route groups from
+// Phases 1-7. The existing "admin" role (shop owner, set at signup) always
+// bypasses this — it's checked directly in requirePermission(), not stored
+// here — so this table only ever governs the 5 new non-owner roles.
+model RolePermission {
+  id         String  @id @default(cuid())
+  shop       Shop    @relation(fields: [shopId], references: [id])
+  shopId     String
+  role       String  // "manager" | "cashier" | "salesperson" | "technician" | "accountant"
+  permission String  // "manage_accounting" | "manage_cash_bank" | "manage_expenses" | ...
+  allowed    Boolean @default(false)
+
+  @@unique([shopId, role, permission])
+  @@index([shopId])
+}
+
+// ── Business Management: Multi-Branch ─────────────────────────────────────────
+// Branch sits UNDER Shop (which stays the billing tenant, unchanged) rather
+// than introducing a Business entity above Shop — see plan notes. branchId
+// on Product/Sale/Purchase is nullable and never backfilled; NULL is treated
+// as "the shop's Main Branch" by branch-aware report queries in
+// branches.service.ts, so no historical row is ever touched.
+model Branch {
+  id        String     @id @default(cuid())
+  shop      Shop       @relation(fields: [shopId], references: [id])
+  shopId    String
+  name      String
+  address   String?
+  isMain    Boolean    @default(false)
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  products  Product[]
+  sales     Sale[]
+  purchases Purchase[]
+
+  @@index([shopId])
+}
+
+// ── Business Management: CRM ───────────────────────────────────────────────
+// A new master profile layered on top of the customerName/customerPhone free
+// text fields that Sale/Quotation/SalesOrder already carry — no changes to
+// those models. Sales, quotations and orders are matched to a Customer by
+// phone number at read time (crm.service.ts:getCustomerProfile), the same
+// "group by phone" approach customerLedger.service.ts already established.
+model Customer {
+  id        String   @id @default(cuid())
+  shop      Shop     @relation(fields: [shopId], references: [id])
+  shopId    String
+  name      String
+  phone     String
+  email     String?
+  cnic      String?
+  address   String?
+  tags      String[] @default([])
+  status    String   @default("lead") // "lead" | "active" | "vip" | "inactive"
+  source    String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  interactions CustomerInteraction[]
+
+  @@unique([shopId, phone])
+  @@index([shopId])
+}
+
+model CustomerInteraction {
+  id           String    @id @default(cuid())
+  shop         Shop      @relation(fields: [shopId], references: [id])
+  shopId       String
+  customer     Customer  @relation(fields: [customerId], references: [id])
+  customerId   String
+  type         String    // "NOTE" | "CALL" | "VISIT" | "FOLLOW_UP"
+  text         String
+  followUpDate DateTime?
+  completed    Boolean   @default(false)
+  createdBy    User      @relation(fields: [createdById], references: [id])
+  createdById  String
+  createdAt    DateTime  @default(now())
+
+  @@index([shopId])
+  @@index([customerId])
+}
+
+// ── Business Management: Notification System ──────────────────────────────
+// Each row is one user's inbox entry — events that should notify a specific
+// person (typically the shop owner) create one row per recipient rather than
+// a single broadcast row, so read-state never needs to be shared between
+// users. Fired from existing flows (sales, purchases, purchase orders) via
+// small fire-and-forget calls in notifications.service.ts that can never
+// throw into — or change the behavior of — the business logic that triggers
+// them. Time-based alerts (overdue installments, overdue CRM follow-ups)
+// are NOT persisted here — they're computed on read in
+// notifications.service.ts:getAttentionItems, the same on-the-fly approach
+// dashboard.service.ts already uses for installmentAlerts.
+model Notification {
+  id         String   @id @default(cuid())
+  shop       Shop     @relation(fields: [shopId], references: [id])
+  shopId     String
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  type       String   // "LOW_STOCK" | "SALE_RECORDED" | "PURCHASE_RECORDED" | "PURCHASE_ORDER_RECEIVED"
+  title      String
+  message    String
+  entityType String?
+  entityId   String?
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([shopId])
+  @@index([userId])
 }

@@ -6,6 +6,7 @@ import {
   getPurchaseById,
   createPurchase,
 } from './purchases.service';
+import { notifyPurchaseRecorded } from '../notifications/notifications.service';
 
 function getQueryValue(value: unknown): string | undefined {
   if (typeof value === 'string') return value;
@@ -46,6 +47,9 @@ export async function create(req: AuthRequest, res: Response) {
       purchasePrice,
       supplierName,
       supplierPhone,
+      paymentType,
+      paymentDueDate,
+      branchId,
     } = req.body;
 
     if (!productId) return fail(res, 'productId is required');
@@ -62,10 +66,25 @@ export async function create(req: AuthRequest, res: Response) {
         purchasePrice: Number(purchasePrice),
         supplierName,
         supplierPhone,
+        paymentType,
+        paymentDueDate,
+        branchId: branchId ?? undefined,
         userId: req.user!.userId,
       },
       io
     );
+
+    // Fire-and-forget — manual "New Purchase" entry only; PO receiveGoods
+    // calls createPurchase directly and fires its own distinct
+    // PURCHASE_ORDER_RECEIVED notification instead, so this doesn't
+    // double-notify per line item on a received PO.
+    notifyPurchaseRecorded(req.user!.shopId, {
+      purchaseId:  purchase.id,
+      productId:   purchase.productId,
+      quantity:    purchase.quantity,
+      actorUserId: req.user!.userId,
+      actorRole:   req.user!.role,
+    }).catch(() => {});
 
     return ok(res, purchase);
   } catch (e: any) {

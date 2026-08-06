@@ -8,6 +8,9 @@ interface CreatePurchaseInput {
   purchasePrice: number;
   supplierName?: string;
   supplierPhone?: string;
+  paymentType?:  string; // "CASH" | "CREDIT" — defaults to CASH, same as before
+  paymentDueDate?: string | Date;
+  branchId?:     string; // optional — unset means "Main Branch" (see branches.service.ts)
   userId:        string;
 }
 
@@ -56,6 +59,11 @@ export async function createPurchase(shopId: string, data: CreatePurchaseInput, 
         purchasePrice: data.purchasePrice,
         supplierName:  data.supplierName,
         supplierPhone: data.supplierPhone,
+        paymentType:    data.paymentType === 'CREDIT' ? 'CREDIT' : 'CASH',
+        paymentDueDate: data.paymentType === 'CREDIT' && data.paymentDueDate
+          ? new Date(data.paymentDueDate)
+          : null,
+        branchId: data.branchId ?? null,
       },
     });
 

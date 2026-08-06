@@ -42,6 +42,7 @@ export interface CreateSalePayload {
   paymentType:   'CASH' | 'INSTALLMENT';
   installmentDueDate?: string;
   guarantors?:   Guarantor[];
+  branchId?:     string;
 }
 
 export interface ImportSaleRow {

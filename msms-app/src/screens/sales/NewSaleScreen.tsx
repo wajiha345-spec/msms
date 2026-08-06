@@ -11,8 +11,10 @@ import { Button }          from '../../components/Buttons';
 import { ProductPicker }   from '../../components/ProductPicker';
 import VariantPicker       from '../../components/VariantPicker';
 import ScannerOverlay      from '../../components/ScannerOverlay';
+import { BranchPicker }    from '../../components/BranchPicker';
 import { Product, productsApi } from '../../api/products';
 import { salesApi, Guarantor }  from '../../api/sales';
+import { Branch }          from '../../api/branches';
 import { invoicesApi }     from '../../api/invoices';
 import { formatCnic, formatPhone, formatDateInput, parseDDMMYYYY } from '../../utils/format';
 import { colors }          from '../../theme/colors';
@@ -34,6 +36,7 @@ export default function NewSaleScreen() {
   const [customerName,  setCustomerName]  = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [imei,          setImei]          = useState('');
+  const [branch,        setBranch]        = useState<Branch | null>(null);
   const [loading,       setLoading]       = useState(false);
   const [errors,        setErrors]        = useState<Record<string, string>>({});
 
@@ -201,6 +204,7 @@ export default function NewSaleScreen() {
         paymentType:   isInstallment ? 'INSTALLMENT' : 'CASH',
         installmentDueDate: dueDate ? dueDate.toISOString() : undefined,
         guarantors:    isInstallment ? guarantors : undefined,
+        branchId:      branch?.id || undefined,
       });
 
       const invoiceUrl = invoicesApi.getUrl(sale.data.data.id);
@@ -315,6 +319,8 @@ export default function NewSaleScreen() {
           keyboardType="numeric"
           error={errors.discount}
         />
+
+        <BranchPicker value={branch} onChange={setBranch} />
 
         {/* Live transaction summary */}
         {product && qty > 0 && price > 0 && (

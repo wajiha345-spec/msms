@@ -8,9 +8,12 @@ import { useNavigation } from '@react-navigation/native';
 import { Input }         from '../../components/Inputs';
 import { Button }        from '../../components/Buttons';
 import { ProductPicker } from '../../components/ProductPicker';
+import VariantPicker     from '../../components/VariantPicker';
+import { BranchPicker }  from '../../components/BranchPicker';
 import { Product, productsApi } from '../../api/products';
 import { purchasesApi }  from '../../api/purchases';
-import { formatPhone }   from '../../utils/format';
+import { Branch }        from '../../api/branches';
+import { formatPhone, formatDateInput, parseDDMMYYYY } from '../../utils/format';
 import { colors }        from '../../theme/colors';
 
 export default function NewPurchaseScreen() {
@@ -30,6 +33,9 @@ export default function NewPurchaseScreen() {
   const [purchasePrice, setPurchasePrice] = useState('');
   const [supplierName,  setSupplierName]  = useState('');
   const [supplierPhone, setSupplierPhone] = useState('');
+  const [paymentType,   setPaymentType]   = useState<'Cash' | 'Credit'>('Cash');
+  const [paymentDueDate, setPaymentDueDate] = useState('');
+  const [branch,        setBranch]        = useState<Branch | null>(null);
   const [loading,       setLoading]       = useState(false);
   const [errors,        setErrors]        = useState<Record<string, string>>({});
 
@@ -79,6 +85,10 @@ export default function NewPurchaseScreen() {
     if (!purchasePrice || price <= 0) e.purchasePrice = 'Enter a valid price';
     if (supplierPhone.trim() && supplierPhone.length !== 11)
       e.supplierPhone = 'Phone must be 11 digits';
+    if (paymentType === 'Credit') {
+      if (!paymentDueDate.trim())            e.paymentDueDate = 'Due date is required';
+      else if (!parseDDMMYYYY(paymentDueDate)) e.paymentDueDate = 'Enter a valid date (DD/MM/YYYY)';
+    }
 
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -108,6 +118,9 @@ export default function NewPurchaseScreen() {
         productName = manualName.trim();
       }
 
+      const isCredit = paymentType === 'Credit';
+      const dueDate  = isCredit ? parseDDMMYYYY(paymentDueDate) : null;
+
       // Record purchase (backend adds stock)
       await purchasesApi.create({
         productId:     productId!,
@@ -115,6 +128,9 @@ export default function NewPurchaseScreen() {
         purchasePrice: price,
         supplierName:  supplierName  || undefined,
         supplierPhone: supplierPhone || undefined,
+        paymentType:    isCredit ? 'CREDIT' : 'CASH',
+        paymentDueDate: dueDate ? dueDate.toISOString() : undefined,
+        branchId:       branch?.id || undefined,
       });
 
       Alert.alert(
@@ -214,6 +230,28 @@ export default function NewPurchaseScreen() {
           keyboardType="numeric"
           error={errors.purchasePrice}
         />
+
+        <VariantPicker
+          label="Payment Type *"
+          value={paymentType}
+          onChange={(v) => setPaymentType(v === 'Credit' ? 'Credit' : 'Cash')}
+          options={['Cash', 'Credit']}
+          placeholder="Select payment type"
+          required
+        />
+        {paymentType === 'Credit' && (
+          <Input
+            label="Payment Due Date *"
+            placeholder="DD/MM/YYYY"
+            value={paymentDueDate}
+            onChangeText={(v) => setPaymentDueDate(formatDateInput(v))}
+            keyboardType="numeric"
+            maxLength={10}
+            error={errors.paymentDueDate}
+          />
+        )}
+
+        <BranchPicker value={branch} onChange={setBranch} />
 
         {/* ── Purchase summary ── */}
         {displayProduct && qty > 0 && price > 0 && (

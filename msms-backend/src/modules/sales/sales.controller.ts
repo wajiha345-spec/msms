@@ -3,6 +3,7 @@ import { AuthRequest } from '../../middleware/auth';
 import { ok, fail } from '../../utils/response';
 import { getSales, getSaleById, createSale, markInstallmentPaid, createHistoricalSale } from './sales.service';
 import { EVENTS } from '../../socket/events';
+import { notifySaleRecorded } from '../notifications/notifications.service';
 
 function getQueryValue(value: unknown): string | undefined {
   if (typeof value === 'string') return value;
@@ -52,6 +53,7 @@ export async function create(req: AuthRequest, res: Response) {
       paymentType,
       installmentDueDate,
       guarantors,
+      branchId,
     } = req.body;
 
     if (!productId) return fail(res, 'productId is required');
@@ -76,9 +78,21 @@ export async function create(req: AuthRequest, res: Response) {
         paymentType: paymentType === 'INSTALLMENT' ? 'INSTALLMENT' : 'CASH',
         installmentDueDate: installmentDueDate ? new Date(installmentDueDate) : undefined,
         guarantors: Array.isArray(guarantors) ? guarantors : undefined,
+        branchId: branchId ?? undefined,
       },
       io
     );
+
+    // Fire-and-forget — manual "New Sale" entry only; conversions from
+    // quotations/sales orders call sales.service.ts directly and don't
+    // pass through this controller, so they don't double-notify.
+    notifySaleRecorded(req.user!.shopId, {
+      saleId:      sale.id,
+      invoiceNo:   sale.invoiceNo,
+      totalAmount: sale.totalAmount,
+      actorUserId: req.user!.userId,
+      actorRole:   req.user!.role,
+    }).catch(() => {});
 
     return ok(res, sale);
   } catch (e: any) {

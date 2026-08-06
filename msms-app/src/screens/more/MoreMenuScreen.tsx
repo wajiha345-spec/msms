@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
+import { notificationsApi } from '../../api/notifications';
 import { colors } from '../../theme/colors';
 
 interface MenuItemProps {
@@ -13,9 +14,10 @@ interface MenuItemProps {
   onPress: () => void;
   proOnly?: boolean;
   isPro?: boolean;
+  unreadCount?: number;
 }
 
-function MenuItem({ icon, label, subtitle, onPress, proOnly, isPro }: MenuItemProps) {
+function MenuItem({ icon, label, subtitle, onPress, proOnly, isPro, unreadCount }: MenuItemProps) {
   const locked = proOnly && !isPro;
   return (
     <TouchableOpacity
@@ -28,6 +30,9 @@ function MenuItem({ icon, label, subtitle, onPress, proOnly, isPro }: MenuItemPr
         <View style={styles.itemLabelRow}>
           <Text style={[styles.itemLabel, locked && styles.itemLabelLocked]}>{label}</Text>
           {locked && <View style={styles.proBadge}><Text style={styles.proBadgeText}>PRO</Text></View>}
+          {!locked && !!unreadCount && (
+            <View style={styles.unreadBadge}><Text style={styles.unreadBadgeText}>{unreadCount}</Text></View>
+          )}
         </View>
         <Text style={styles.itemSub}>{subtitle}</Text>
       </View>
@@ -57,6 +62,15 @@ export default function MoreMenuScreen() {
   const { user, logout, hasProAccess } = useAuth();
 
   const isPro = hasProAccess;
+  const isOwner = user?.role === 'admin';
+
+  const [unreadCount, setUnreadCount] = useState(0);
+  useFocusEffect(useCallback(() => {
+    if (!isPro) return;
+    notificationsApi.getUnreadCount()
+      .then((res) => setUnreadCount(res.data.data.count))
+      .catch(() => {});
+  }, [isPro]));
 
   function handleLogout() {
     Alert.alert('Logout', 'Are you sure you want to logout?', [
@@ -94,6 +108,15 @@ export default function MoreMenuScreen() {
 
         <Text style={styles.sectionLabel}>Features</Text>
 
+        <MenuItem
+          icon="🔔"
+          label="Notifications"
+          subtitle="Low stock, team activity & overdue reminders"
+          proOnly
+          isPro={isPro}
+          unreadCount={unreadCount}
+          onPress={() => handleProFeature('Notifications', () => navigation.navigate('Notifications'))}
+        />
         <MenuItem
           icon="📱"
           label="2nd Hand Records"
@@ -134,6 +157,116 @@ export default function MoreMenuScreen() {
           isPro={isPro}
           onPress={() => handleProFeature('Product Catalog', () => navigation.navigate('Catalog'))}
         />
+        <MenuItem
+          icon="🧾"
+          label="Expenses"
+          subtitle="Record and categorize business expenses"
+          proOnly
+          isPro={isPro}
+          onPress={() => handleProFeature('Expenses', () => navigation.navigate('ExpensesList'))}
+        />
+        <MenuItem
+          icon="💵"
+          label="Income"
+          subtitle="Record service, rental & other income"
+          proOnly
+          isPro={isPro}
+          onPress={() => handleProFeature('Income', () => navigation.navigate('IncomeList'))}
+        />
+        <MenuItem
+          icon="👤"
+          label="Customers (CRM)"
+          subtitle="Profiles, tags, notes & follow-up reminders"
+          proOnly
+          isPro={isPro}
+          onPress={() => handleProFeature('Customers (CRM)', () => navigation.navigate('CustomersList'))}
+        />
+        <MenuItem
+          icon="🧑‍🤝‍🧑"
+          label="Customer Ledger"
+          subtitle="Credit sales, payments & outstanding balances"
+          proOnly
+          isPro={isPro}
+          onPress={() => handleProFeature('Customer Ledger', () => navigation.navigate('CustomerLedgerList'))}
+        />
+        <MenuItem
+          icon="🚚"
+          label="Supplier Ledger"
+          subtitle="Credit purchases, payments & outstanding balances"
+          proOnly
+          isPro={isPro}
+          onPress={() => handleProFeature('Supplier Ledger', () => navigation.navigate('SupplierLedgerList'))}
+        />
+        <MenuItem
+          icon="📋"
+          label="Quotations"
+          subtitle="Create quotes and convert them to sales"
+          proOnly
+          isPro={isPro}
+          onPress={() => handleProFeature('Quotations', () => navigation.navigate('QuotationsList'))}
+        />
+        <MenuItem
+          icon="📥"
+          label="Purchase Orders"
+          subtitle="Order stock from suppliers, receive goods (partial OK)"
+          proOnly
+          isPro={isPro}
+          onPress={() => handleProFeature('Purchase Orders', () => navigation.navigate('PurchaseOrdersList'))}
+        />
+        <MenuItem
+          icon="📤"
+          label="Sales Orders"
+          subtitle="Track confirmed orders through delivery"
+          proOnly
+          isPro={isPro}
+          onPress={() => handleProFeature('Sales Orders', () => navigation.navigate('SalesOrdersList'))}
+        />
+
+        {isOwner && (
+          <>
+            <Text style={styles.sectionLabel}>Business Management</Text>
+            <MenuItem
+              icon="💼"
+              label="Business Management"
+              subtitle="Chart of accounts, journal entries & trial balance"
+              proOnly
+              isPro={isPro}
+              onPress={() => handleProFeature('Business Management', () => navigation.navigate('BusinessManagement'))}
+            />
+            <MenuItem
+              icon="🏦"
+              label="Cash & Bank"
+              subtitle="Deposits, withdrawals, transfers & reconciliation"
+              proOnly
+              isPro={isPro}
+              onPress={() => handleProFeature('Cash & Bank', () => navigation.navigate('CashBankList'))}
+            />
+            <MenuItem
+              icon="👥"
+              label="Team Members"
+              subtitle="Add staff accounts and manage their roles"
+              proOnly
+              isPro={isPro}
+              onPress={() => handleProFeature('Team Members', () => navigation.navigate('TeamMembersList'))}
+            />
+            <MenuItem
+              icon="🔐"
+              label="Role Permissions"
+              subtitle="Choose what each role can access"
+              proOnly
+              isPro={isPro}
+              onPress={() => handleProFeature('Role Permissions', () => navigation.navigate('RolePermissions'))}
+            />
+            <MenuItem
+              icon="🏬"
+              label="Branches"
+              subtitle="Manage locations, branch reports & stock assignment"
+              proOnly
+              isPro={isPro}
+              onPress={() => handleProFeature('Branches', () => navigation.navigate('BranchesList'))}
+            />
+          </>
+        )}
 
         <Text style={styles.sectionLabel}>Account</Text>
 
@@ -199,6 +332,13 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#fde68a',
   },
   proBadgeText: { fontSize: 10, fontWeight: '800', color: '#92400e', letterSpacing: 0.5 },
+
+  unreadBadge: {
+    backgroundColor: colors.danger, borderRadius: 10,
+    minWidth: 18, height: 18, paddingHorizontal: 5,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  unreadBadgeText: { fontSize: 10, fontWeight: '800', color: '#fff' },
 
   planBadgeSimple: {
     color: colors.textMuted,

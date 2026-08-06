@@ -19,6 +19,58 @@ import SecondhandListScreen   from '../screens/secondhand/SecondhandListScreen';
 import AddSecondhandScreen    from '../screens/secondhand/AddSecondhandScreen';
 import SecondhandDetailScreen from '../screens/secondhand/SecondhandDetailScreen';
 import ImeiSearchScreen       from '../screens/imei/ImeiSearchScreen';
+import BusinessManagementScreen from '../screens/accounting/BusinessManagementScreen';
+import ChartOfAccountsScreen  from '../screens/accounting/ChartOfAccountsScreen';
+import NewAccountScreen       from '../screens/accounting/NewAccountScreen';
+import JournalEntriesScreen   from '../screens/accounting/JournalEntriesScreen';
+import NewJournalEntryScreen  from '../screens/accounting/NewJournalEntryScreen';
+import GeneralLedgerScreen    from '../screens/accounting/GeneralLedgerScreen';
+import TrialBalanceScreen     from '../screens/accounting/TrialBalanceScreen';
+import BalanceSheetScreen     from '../screens/accounting/BalanceSheetScreen';
+import ProfitLossScreen       from '../screens/accounting/ProfitLossScreen';
+import CashFlowScreen         from '../screens/accounting/CashFlowScreen';
+import ClosingEntryScreen     from '../screens/accounting/ClosingEntryScreen';
+import ExpensesListScreen     from '../screens/expenses/ExpensesListScreen';
+import NewExpenseScreen       from '../screens/expenses/NewExpenseScreen';
+import ExpenseReportScreen    from '../screens/expenses/ExpenseReportScreen';
+import IncomeListScreen       from '../screens/income/IncomeListScreen';
+import NewIncomeScreen        from '../screens/income/NewIncomeScreen';
+import IncomeReportScreen     from '../screens/income/IncomeReportScreen';
+import CustomerLedgerListScreen    from '../screens/customerLedger/CustomerLedgerListScreen';
+import CustomerStatementScreen     from '../screens/customerLedger/CustomerStatementScreen';
+import RecordCustomerPaymentScreen from '../screens/customerLedger/RecordCustomerPaymentScreen';
+import SupplierLedgerListScreen    from '../screens/supplierLedger/SupplierLedgerListScreen';
+import SupplierStatementScreen     from '../screens/supplierLedger/SupplierStatementScreen';
+import RecordSupplierPaymentScreen from '../screens/supplierLedger/RecordSupplierPaymentScreen';
+import CashBankListScreen    from '../screens/cashBank/CashBankListScreen';
+import NewDepositScreen      from '../screens/cashBank/NewDepositScreen';
+import NewWithdrawalScreen   from '../screens/cashBank/NewWithdrawalScreen';
+import NewTransferScreen     from '../screens/cashBank/NewTransferScreen';
+import ReconciliationScreen  from '../screens/cashBank/ReconciliationScreen';
+import QuotationsListScreen  from '../screens/quotations/QuotationsListScreen';
+import NewQuotationScreen    from '../screens/quotations/NewQuotationScreen';
+import QuotationDetailScreen from '../screens/quotations/QuotationDetailScreen';
+import PurchaseOrdersListScreen  from '../screens/purchaseOrders/PurchaseOrdersListScreen';
+import NewPurchaseOrderScreen    from '../screens/purchaseOrders/NewPurchaseOrderScreen';
+import PurchaseOrderDetailScreen from '../screens/purchaseOrders/PurchaseOrderDetailScreen';
+import ReceiveGoodsScreen        from '../screens/purchaseOrders/ReceiveGoodsScreen';
+import SalesOrdersListScreen  from '../screens/salesOrders/SalesOrdersListScreen';
+import NewSalesOrderScreen    from '../screens/salesOrders/NewSalesOrderScreen';
+import SalesOrderDetailScreen from '../screens/salesOrders/SalesOrderDetailScreen';
+import TeamMembersScreen      from '../screens/users/TeamMembersScreen';
+import NewTeamMemberScreen    from '../screens/users/NewTeamMemberScreen';
+import TeamMemberDetailScreen from '../screens/users/TeamMemberDetailScreen';
+import RolePermissionsScreen  from '../screens/users/RolePermissionsScreen';
+import BranchesListScreen     from '../screens/branches/BranchesListScreen';
+import NewBranchScreen        from '../screens/branches/NewBranchScreen';
+import BranchDetailScreen     from '../screens/branches/BranchDetailScreen';
+import BranchReportScreen     from '../screens/branches/BranchReportScreen';
+import AssignProductsScreen   from '../screens/branches/AssignProductsScreen';
+import CustomersListScreen    from '../screens/crm/CustomersListScreen';
+import NewCustomerScreen      from '../screens/crm/NewCustomerScreen';
+import CustomerProfileScreen  from '../screens/crm/CustomerProfileScreen';
+import FollowUpsScreen        from '../screens/crm/FollowUpsScreen';
+import NotificationsScreen    from '../screens/notifications/NotificationsScreen';
 
 import { colors } from '../theme/colors';
 
@@ -68,6 +120,78 @@ function MoreStack() {
       <MStack.Screen name="SecondhandDetail" component={SecondhandDetailScreen} />
       <MStack.Screen name="ImeiSearch"       component={ImeiSearchScreen} />
       <MStack.Screen name="Catalog"          component={CatalogScreen} />
+
+      {/* Business Management — Accounting Foundation */}
+      <MStack.Screen name="BusinessManagement" component={BusinessManagementScreen} />
+      <MStack.Screen name="ChartOfAccounts"    component={ChartOfAccountsScreen} />
+      <MStack.Screen name="NewAccount"         component={NewAccountScreen} />
+      <MStack.Screen name="JournalEntries"     component={JournalEntriesScreen} />
+      <MStack.Screen name="NewJournalEntry"    component={NewJournalEntryScreen} />
+      <MStack.Screen name="GeneralLedger"      component={GeneralLedgerScreen} />
+      <MStack.Screen name="TrialBalance"       component={TrialBalanceScreen} />
+      <MStack.Screen name="BalanceSheet"       component={BalanceSheetScreen} />
+      <MStack.Screen name="ProfitLoss"         component={ProfitLossScreen} />
+      <MStack.Screen name="CashFlow"           component={CashFlowScreen} />
+      <MStack.Screen name="ClosingEntry"       component={ClosingEntryScreen} />
+
+      {/* Business Management — Expense & Income Management */}
+      <MStack.Screen name="ExpensesList"  component={ExpensesListScreen} />
+      <MStack.Screen name="NewExpense"    component={NewExpenseScreen} />
+      <MStack.Screen name="ExpenseReport" component={ExpenseReportScreen} />
+      <MStack.Screen name="IncomeList"    component={IncomeListScreen} />
+      <MStack.Screen name="NewIncome"     component={NewIncomeScreen} />
+      <MStack.Screen name="IncomeReport"  component={IncomeReportScreen} />
+
+      {/* Business Management — Customer & Supplier Ledger */}
+      <MStack.Screen name="CustomerLedgerList"    component={CustomerLedgerListScreen} />
+      <MStack.Screen name="CustomerStatement"     component={CustomerStatementScreen} />
+      <MStack.Screen name="RecordCustomerPayment" component={RecordCustomerPaymentScreen} />
+      <MStack.Screen name="SupplierLedgerList"    component={SupplierLedgerListScreen} />
+      <MStack.Screen name="SupplierStatement"     component={SupplierStatementScreen} />
+      <MStack.Screen name="RecordSupplierPayment" component={RecordSupplierPaymentScreen} />
+
+      {/* Business Management — Cash & Bank Management */}
+      <MStack.Screen name="CashBankList"   component={CashBankListScreen} />
+      <MStack.Screen name="NewDeposit"     component={NewDepositScreen} />
+      <MStack.Screen name="NewWithdrawal"  component={NewWithdrawalScreen} />
+      <MStack.Screen name="NewTransfer"    component={NewTransferScreen} />
+      <MStack.Screen name="Reconciliation" component={ReconciliationScreen} />
+
+      {/* Business Management — Quotations */}
+      <MStack.Screen name="QuotationsList"   component={QuotationsListScreen} />
+      <MStack.Screen name="NewQuotation"     component={NewQuotationScreen} />
+      <MStack.Screen name="QuotationDetail"  component={QuotationDetailScreen} />
+
+      {/* Business Management — Purchase Orders & Sales Orders */}
+      <MStack.Screen name="PurchaseOrdersList"   component={PurchaseOrdersListScreen} />
+      <MStack.Screen name="NewPurchaseOrder"     component={NewPurchaseOrderScreen} />
+      <MStack.Screen name="PurchaseOrderDetail"  component={PurchaseOrderDetailScreen} />
+      <MStack.Screen name="ReceiveGoods"         component={ReceiveGoodsScreen} />
+      <MStack.Screen name="SalesOrdersList"      component={SalesOrdersListScreen} />
+      <MStack.Screen name="NewSalesOrder"        component={NewSalesOrderScreen} />
+      <MStack.Screen name="SalesOrderDetail"     component={SalesOrderDetailScreen} />
+
+      {/* Business Management — Multi-User Roles & Permissions */}
+      <MStack.Screen name="TeamMembersList"  component={TeamMembersScreen} />
+      <MStack.Screen name="NewTeamMember"    component={NewTeamMemberScreen} />
+      <MStack.Screen name="TeamMemberDetail" component={TeamMemberDetailScreen} />
+      <MStack.Screen name="RolePermissions"  component={RolePermissionsScreen} />
+
+      {/* Business Management — Multi-Branch */}
+      <MStack.Screen name="BranchesList"    component={BranchesListScreen} />
+      <MStack.Screen name="NewBranch"       component={NewBranchScreen} />
+      <MStack.Screen name="BranchDetail"    component={BranchDetailScreen} />
+      <MStack.Screen name="BranchReport"    component={BranchReportScreen} />
+      <MStack.Screen name="AssignProducts"  component={AssignProductsScreen} />
+
+      {/* Business Management — CRM */}
+      <MStack.Screen name="CustomersList"   component={CustomersListScreen} />
+      <MStack.Screen name="NewCustomer"     component={NewCustomerScreen} />
+      <MStack.Screen name="CustomerProfile" component={CustomerProfileScreen} />
+      <MStack.Screen name="FollowUps"       component={FollowUpsScreen} />
+
+      {/* Business Management — Notification System */}
+      <MStack.Screen name="Notifications"   component={NotificationsScreen} />
     </MStack.Navigator>
   );
 }

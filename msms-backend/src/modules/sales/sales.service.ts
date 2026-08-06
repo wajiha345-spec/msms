@@ -1,6 +1,7 @@
 import { prisma } from '../../config/db';
 import { Server } from 'socket.io';
 import { EVENTS } from '../../socket/events';
+import { notifyLowStock } from '../notifications/notifications.service';
 
 interface GuarantorInput {
   name?: string;
@@ -22,6 +23,7 @@ interface CreateSaleInput {
   paymentType:   string; // "CASH" | "INSTALLMENT"
   installmentDueDate?: Date;
   guarantors?:   GuarantorInput[];
+  branchId?:     string; // optional — unset means "Main Branch" (see branches.service.ts)
 }
 
 // Build invoice number: INV-20240118-0001 (unique per shop, not globally)
@@ -136,6 +138,7 @@ export async function createSale(shopId: string, data: CreateSaleInput, io: Serv
         customerPhone: data.customerPhone ?? null,
         customerCnic:  data.customerCnic  ?? null,
         imei:          data.imei          ?? null,
+        branchId:      data.branchId      ?? null,
         paymentType:   data.paymentType,
         installmentDueDate: data.paymentType === 'INSTALLMENT' ? data.installmentDueDate : null,
         guarantors: data.paymentType === 'INSTALLMENT' && data.guarantors
@@ -183,6 +186,16 @@ export async function createSale(shopId: string, data: CreateSaleInput, io: Serv
     stock:     result.updatedStock,
   });
   io.to(room).emit(EVENTS.DASHBOARD_REFRESH, {});
+
+  // Fire-and-forget — never let a notification failure surface as a sale
+  // failure. Caller-agnostic: fires the same way whether this sale came
+  // from the manual New Sale screen, a converted quotation, or a fulfilled
+  // sales order.
+  notifyLowStock(shopId, {
+    productId:   data.productId,
+    productName: result.productName,
+    stock:       result.updatedStock,
+  }).catch(() => {});
 
   return result.sale;
 }

@@ -14,6 +14,7 @@ interface CreateProductInput {
   storage?: string;
   color?: string;
   ram?: string;
+  branchId?: string; // optional — unset means "Main Branch" (see branches.service.ts)
 }
 
 interface UpdateProductInput extends Partial<CreateProductInput> {}

@@ -18,6 +18,9 @@ export interface CreatePurchasePayload {
   purchasePrice: number;
   supplierName?: string;
   supplierPhone?: string;
+  paymentType?:    'CASH' | 'CREDIT';
+  paymentDueDate?: string;
+  branchId?:       string;
 }
 
 export const purchasesApi = {

@@ -18,6 +18,8 @@ export async function loginUser(username: string, password: string) {
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) throw new Error('Invalid username or password');
 
+  if (!user.isActive) throw new Error('This account has been deactivated. Contact your shop owner.');
+
   const trialEndsAt = user.shop.trialEndsAt ? user.shop.trialEndsAt.toISOString() : null;
 
   const token = jwt.sign(
