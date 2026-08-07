@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MSMS - Mobile Shop Management System</title>
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -17,9 +18,9 @@
       --text: #132235;
       --muted: #596777;
       --muted-soft: #7b8896;
-      --brand: #0f766e;
-      --brand-strong: #0b5e58;
-      --brand-soft: #d5f1ec;
+      --brand: #4B2FC4;
+      --brand-strong: #34208C;
+      --brand-soft: #EDE6FB;
       --accent: #f59e0b;
       --accent-soft: #ffe9bf;
       --success: #13804f;
@@ -37,7 +38,7 @@
       color: var(--text);
       min-height: 100vh;
       background:
-        radial-gradient(circle at top left, rgba(15, 118, 110, 0.16), transparent 30%),
+        radial-gradient(circle at top left, rgba(75, 47, 196, 0.16), transparent 30%),
         radial-gradient(circle at top right, rgba(245, 158, 11, 0.14), transparent 26%),
         linear-gradient(180deg, #fcfaf5 0%, var(--bg) 52%, #f7f3eb 100%);
     }
@@ -88,45 +89,18 @@
     }
 
     .logo-mark {
-      width: 46px;
-      height: 46px;
-      border-radius: 14px;
-      background: linear-gradient(145deg, var(--brand), #0c4f56);
-      color: #fff;
+      height: 60px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: 18px;
-      font-weight: 700;
-      letter-spacing: -0.04em;
-      box-shadow: 0 12px 24px rgba(15, 118, 110, 0.26);
       flex-shrink: 0;
     }
 
-    .logo-copy {
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-      min-width: 0;
-    }
-
-    .logo-name {
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--text);
-      letter-spacing: -0.04em;
-      line-height: 1;
-    }
-
-    .logo-tag {
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--muted-soft);
-      white-space: nowrap;
+    .logo-mark img {
+      height: 100%;
+      width: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 8px 16px rgba(75, 47, 196, 0.3));
     }
 
     .nav-ticker {
@@ -178,7 +152,7 @@
       border-radius: 999px;
       font-size: 14px;
       font-weight: 700;
-      box-shadow: 0 14px 26px rgba(15, 118, 110, 0.24);
+      box-shadow: 0 14px 26px rgba(75, 47, 196, 0.24);
     }
 
     .nav-cta:hover,
@@ -186,7 +160,7 @@
     .plan-btn-primary:hover,
     .submit-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 18px 32px rgba(15, 118, 110, 0.24);
+      box-shadow: 0 18px 32px rgba(75, 47, 196, 0.24);
     }
 
     .hero {
@@ -210,7 +184,7 @@
       gap: 10px;
       background: rgba(255, 253, 249, 0.78);
       color: var(--brand-strong);
-      border: 1px solid rgba(15, 118, 110, 0.18);
+      border: 1px solid rgba(75, 47, 196, 0.18);
       box-shadow: 0 8px 20px rgba(19, 34, 53, 0.05);
       font-size: 13px;
       font-weight: 700;
@@ -269,7 +243,7 @@
     .submit-btn {
       background: linear-gradient(135deg, var(--brand), var(--brand-strong));
       color: #fff;
-      box-shadow: 0 16px 30px rgba(15, 118, 110, 0.2);
+      box-shadow: 0 16px 30px rgba(75, 47, 196, 0.2);
     }
 
     .btn-secondary,
@@ -283,7 +257,7 @@
     .btn-secondary:hover,
     .plan-btn-secondary:hover {
       transform: translateY(-2px);
-      border-color: rgba(15, 118, 110, 0.22);
+      border-color: rgba(75, 47, 196, 0.22);
       box-shadow: 0 16px 28px rgba(19, 34, 53, 0.08);
     }
 
@@ -319,7 +293,7 @@
     .hero-panel {
       background:
         linear-gradient(180deg, rgba(255, 252, 248, 0.93), rgba(255, 253, 251, 0.86)),
-        linear-gradient(135deg, rgba(15, 118, 110, 0.025), rgba(245, 158, 11, 0.03));
+        linear-gradient(135deg, rgba(75, 47, 196, 0.025), rgba(245, 158, 11, 0.03));
       border: 1px solid rgba(255, 255, 255, 0.65);
       border-radius: 34px;
       box-shadow: var(--shadow-lg);
@@ -339,7 +313,7 @@
     }
 
     .panel-card.primary {
-      background: linear-gradient(145deg, #4a667d, #6f9f95);
+      background: linear-gradient(145deg, #4B2FC4, #7720B6);
       color: #fff;
       min-height: 220px;
     }
@@ -508,7 +482,7 @@
       align-items: center;
       justify-content: center;
       margin: 0 0 18px;
-      box-shadow: 0 12px 24px rgba(15, 118, 110, 0.2);
+      box-shadow: 0 12px 24px rgba(75, 47, 196, 0.2);
     }
 
     .step h3 {
@@ -549,19 +523,19 @@
       inset: 0 auto auto 0;
       width: 100%;
       height: 120px;
-      background: linear-gradient(180deg, rgba(15, 118, 110, 0.08), transparent);
+      background: linear-gradient(180deg, rgba(75, 47, 196, 0.08), transparent);
       pointer-events: none;
     }
 
     .plan-card:hover {
       transform: translateY(-4px);
-      border-color: rgba(15, 118, 110, 0.28);
+      border-color: rgba(75, 47, 196, 0.28);
       box-shadow: 0 26px 56px rgba(19, 34, 53, 0.12);
     }
 
     .plan-card.popular {
-      background: linear-gradient(180deg, rgba(15, 118, 110, 0.08), rgba(255, 255, 255, 0.86));
-      border-color: rgba(15, 118, 110, 0.28);
+      background: linear-gradient(180deg, rgba(75, 47, 196, 0.08), rgba(255, 255, 255, 0.86));
+      border-color: rgba(75, 47, 196, 0.28);
       transform: scale(1.01);
     }
 
@@ -711,7 +685,7 @@
     footer {
       width: min(calc(100% - 32px), var(--maxw));
       margin: 12px auto 28px;
-      background: linear-gradient(135deg, #132235, #1c3f49);
+      background: linear-gradient(135deg, #132235, #2b1a52);
       color: rgba(255, 255, 255, 0.72);
       text-align: center;
       padding: 36px 24px;
@@ -987,8 +961,8 @@
     }
 
     .form-input:focus {
-      border-color: rgba(15, 118, 110, 0.42);
-      box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.1);
+      border-color: rgba(75, 47, 196, 0.42);
+      box-shadow: 0 0 0 4px rgba(75, 47, 196, 0.1);
     }
 
     .form-error {
@@ -1018,9 +992,9 @@
     }
 
     .plan-select-btn.selected {
-      border-color: rgba(15, 118, 110, 0.34);
+      border-color: rgba(75, 47, 196, 0.34);
       background: rgba(213, 241, 236, 0.65);
-      box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(75, 47, 196, 0.08);
     }
 
     .plan-select-btn .ps-name { font-weight: 800; font-size: 16px; }
@@ -1028,7 +1002,7 @@
     .plan-select-btn.selected .ps-price { color: var(--brand); }
 
     .payment-box {
-      background: linear-gradient(180deg, rgba(15, 118, 110, 0.06), rgba(255, 255, 255, 0.92));
+      background: linear-gradient(180deg, rgba(75, 47, 196, 0.06), rgba(255, 255, 255, 0.92));
       border: 1px solid rgba(19, 34, 53, 0.1);
       border-radius: 22px;
       padding: 22px;
@@ -1057,7 +1031,7 @@
     }
 
     .pm-tab.active {
-      border-color: rgba(15, 118, 110, 0.32);
+      border-color: rgba(75, 47, 196, 0.32);
       background: rgba(213, 241, 236, 0.7);
       color: var(--brand-strong);
     }
@@ -1173,18 +1147,10 @@
         top: 0;
       }
 
-      .nav-logo { font-size: 24px; }
       .nav-cta { padding: 11px 18px; }
 
       .logo-mark {
-        width: 40px;
-        height: 40px;
-        border-radius: 12px;
-        font-size: 16px;
-      }
-
-      .logo-name {
-        font-size: 24px;
+        height: 44px;
       }
 
       .hero {
@@ -1241,11 +1207,7 @@
 <!-- Navigation -->
 <nav>
   <div class="nav-logo">
-    <div class="logo-mark">MS</div>
-    <div class="logo-copy">
-      <div class="logo-name">MSMS</div>
-      <div class="logo-tag">Shop Management</div>
-    </div>
+    <div class="logo-mark"><img src="assets/smartshop-full.png" alt="SmartShop logo" /></div>
   </div>
   <div class="nav-ticker">
     <div class="ticker-track">
@@ -1471,7 +1433,7 @@
 
 <!-- Footer -->
 <footer>
-  <p><strong>MSMS</strong> - Mobile Shop Management System</p>
+  <p><strong>SmartShop</strong> - Run your Shop Smartly</p>
   <p style="margin-top:8px">Questions? Contact us at <strong id="footer-email">support@msms.pk</strong></p>
   <p style="margin-top:12px;font-size:12px">© 2025 MSMS. All rights reserved.</p>
 </footer>

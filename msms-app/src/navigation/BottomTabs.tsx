@@ -230,7 +230,7 @@ export default function BottomTabs() {
         options={{ tabBarLabel: 'Dashboard',
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>📊</Text> }} />
       <Tab.Screen name="ProductsTab"   component={ProductsStack}
-        options={{ tabBarLabel: 'Inventory',
+        options={{ tabBarLabel: 'Products',
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>📦</Text> }} />
       <Tab.Screen name="SalesTab"      component={SalesStack}
         options={{ tabBarLabel: 'Sales',

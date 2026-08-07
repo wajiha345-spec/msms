@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet,
+  View, Text, Image, ScrollView, StyleSheet,
   RefreshControl, TouchableOpacity,
   ActivityIndicator, Alert
 } from 'react-native';
@@ -26,9 +26,12 @@ function SimpleHomeScreen({ user, logout }: { user: any; logout: () => void }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Hi, {user?.username} 👋</Text>
-          <Text style={styles.liveText}>{user?.shopName}</Text>
+        <View style={styles.headerLeft}>
+          <Image source={require('../../../assets/smartshop-mark.png')} style={styles.headerLogo} />
+          <View>
+            <Text style={styles.greeting}>Hi, {user?.username} 👋</Text>
+            <Text style={styles.liveText}>{user?.shopName}</Text>
+          </View>
         </View>
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
           <Text style={styles.logoutText}>Logout</Text>
@@ -187,18 +190,21 @@ function ProDashboard() {
     >
       {/* ── Header ── */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>
-            Good {getTimeOfDay()}, {user?.username} 👋
-          </Text>
-          <View style={styles.liveRow}>
-            <View style={[
-              styles.liveDot,
-              { backgroundColor: connected ? colors.success : colors.textMuted }
-            ]} />
-            <Text style={styles.liveText}>
-              {connected ? 'Live updates on' : 'Offline'}
+        <View style={styles.headerLeft}>
+          <Image source={require('../../../assets/smartshop-mark.png')} style={styles.headerLogo} />
+          <View>
+            <Text style={styles.greeting}>
+              Good {getTimeOfDay()}, {user?.username} 👋
             </Text>
+            <View style={styles.liveRow}>
+              <View style={[
+                styles.liveDot,
+                { backgroundColor: connected ? colors.success : colors.textMuted }
+              ]} />
+              <Text style={styles.liveText}>
+                {connected ? 'Live updates on' : 'Offline'}
+              </Text>
+            </View>
           </View>
         </View>
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
@@ -532,6 +538,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  headerLeft:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  headerLogo:  { width: 34, height: 34 },
   greeting:    { fontSize: 17, fontWeight: '700', color: colors.text },
   liveRow:     { flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 5 },
   liveDot:     { width: 7, height: 7, borderRadius: 4 },

@@ -84,14 +84,13 @@ export default function NewPurchaseScreen() {
     if (!quantity || qty < 1)         e.quantity      = 'Quantity must be at least 1';
     if (!purchasePrice || price <= 0) e.purchasePrice = 'Enter a valid price';
 
+    if (!supplierName.trim())  e.supplierName  = 'Supplier name is required';
+    if (!supplierPhone.trim()) e.supplierPhone = 'Supplier phone is required';
+    else if (supplierPhone.length !== 11) e.supplierPhone = 'Phone must be 11 digits';
+
     if (paymentType === 'Credit') {
-      if (!supplierName.trim())  e.supplierName  = 'Supplier name is required for credit purchases';
-      if (!supplierPhone.trim()) e.supplierPhone = 'Supplier phone is required for credit purchases';
-      else if (supplierPhone.length !== 11) e.supplierPhone = 'Phone must be 11 digits';
       if (!paymentDueDate.trim())            e.paymentDueDate = 'Due date is required';
       else if (!parseDDMMYYYY(paymentDueDate)) e.paymentDueDate = 'Enter a valid date (DD/MM/YYYY)';
-    } else if (supplierPhone.trim() && supplierPhone.length !== 11) {
-      e.supplierPhone = 'Phone must be 11 digits';
     }
 
     setErrors(e);
@@ -282,18 +281,16 @@ export default function NewPurchaseScreen() {
         )}
 
         {/* ── Supplier info ── */}
-        <Text style={styles.sectionLabel}>
-          Supplier Info {paymentType === 'Credit' ? '' : '(optional)'}
-        </Text>
+        <Text style={styles.sectionLabel}>Supplier Info</Text>
         <Input
-          label={paymentType === 'Credit' ? 'Supplier Name *' : 'Supplier Name'}
+          label="Supplier Name *"
           placeholder="e.g. Malik Traders"
           value={supplierName}
           onChangeText={setSupplierName}
           error={errors.supplierName}
         />
         <Input
-          label={paymentType === 'Credit' ? 'Supplier Phone *' : 'Supplier Phone'}
+          label="Supplier Phone *"
           placeholder="e.g. 03001234567"
           value={supplierPhone}
           onChangeText={(v: string) => setSupplierPhone(formatPhone(v))}

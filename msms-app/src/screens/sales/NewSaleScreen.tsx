@@ -155,15 +155,14 @@ export default function NewSaleScreen() {
     else if (discAmt > price * qty)
       e.discount = 'Discount cannot exceed the sale total';
 
-    if (paymentType === 'Installment') {
-      if (!customerName.trim()) e.customerName = 'Customer name is required';
+    if (!customerName.trim())  e.customerName  = 'Customer name is required';
+    if (!customerPhone.trim()) e.customerPhone = 'Customer phone is required';
+    else if (customerPhone.length !== 11) e.customerPhone = 'Phone must be 11 digits';
 
+    if (paymentType === 'Installment') {
       if (!customerCnic.trim()) e.customerCnic = 'Customer CNIC is required';
       else if (customerCnic.replace(/\D/g, '').length !== 13)
         e.customerCnic = 'CNIC must be 13 digits (XXXXX-XXXXXXX-X)';
-
-      if (!customerPhone.trim()) e.customerPhone = 'Customer phone is required';
-      else if (customerPhone.length !== 11) e.customerPhone = 'Phone must be 11 digits';
 
       if (!installmentDueDate.trim()) e.installmentDueDate = 'Due date is required';
       else if (!parseDDMMYYYY(installmentDueDate)) e.installmentDueDate = 'Enter a valid date (DD/MM/YYYY)';
@@ -364,18 +363,16 @@ export default function NewSaleScreen() {
           required
         />
 
-        <Text style={styles.sectionLabel}>
-          Customer Info {paymentType === 'Cash' ? '(optional)' : ''}
-        </Text>
+        <Text style={styles.sectionLabel}>Customer Info</Text>
         <Input
-          label={paymentType === 'Installment' ? 'Customer Name *' : 'Customer Name'}
+          label="Customer Name *"
           placeholder="e.g. Ahmed Khan"
           value={customerName}
           onChangeText={setCustomerName}
           error={errors.customerName}
         />
         <Input
-          label={paymentType === 'Installment' ? 'Customer Phone *' : 'Customer Phone'}
+          label="Customer Phone *"
           placeholder="e.g. 03001234567"
           value={customerPhone}
           onChangeText={(v) => setCustomerPhone(formatPhone(v))}

@@ -59,6 +59,12 @@ export async function create(req: AuthRequest, res: Response) {
     if (!productId) return fail(res, 'productId is required');
     if (!quantity) return fail(res, 'quantity is required');
     if (!salePrice) return fail(res, 'salePrice is required');
+    // Manual "New Sale" entry only — always requires customer info,
+    // regardless of payment type. Quotation/sales-order conversions call
+    // sales.service.ts:createSale directly and don't pass through here, so
+    // they're unaffected (those forms don't collect customer info at all).
+    if (!customerName?.trim())  return fail(res, 'Customer name is required');
+    if (!customerPhone?.trim()) return fail(res, 'Customer phone is required');
 
     const io = req.app.get('io');
 

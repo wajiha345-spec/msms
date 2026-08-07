@@ -165,7 +165,7 @@ export default function ProductListScreen() {
           style={styles.addBtn}
           onPress={() => navigation.navigate("AddProduct")}
         >
-          <Text style={styles.addBtnText}>+ Add</Text>
+          <Text style={styles.addBtnText}>Add New Product</Text>
         </TouchableOpacity>
       </View>
 
@@ -220,7 +220,7 @@ export default function ProductListScreen() {
           <View style={styles.empty}>
             <Text style={styles.emptyText}>No products found.</Text>
             <Text style={styles.emptyHint}>
-              Tap "+ Add" to add your first product.
+              Tap "Add New Product" to add your first product.
             </Text>
           </View>
         }
