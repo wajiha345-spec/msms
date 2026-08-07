@@ -3,6 +3,7 @@ import { AuthRequest } from '../../middleware/auth';
 import { fail } from '../../utils/response';
 import { prisma } from '../../config/db';
 import { generateInvoicePdf } from '../../utils/pdf';
+import { getSettingsOrDefault } from '../settings/settings.service';
 
 function getParamValue(value: unknown): string {
   if (typeof value === 'string' && value.trim()) return value;
@@ -24,6 +25,8 @@ export async function getInvoice(req: AuthRequest, res: Response) {
     if (!sale) return fail(res, 'Sale not found', 404);
     if (!sale.product) return fail(res, 'Product not found for this sale', 404);
 
+    const settings = await getSettingsOrDefault(sale.shopId);
+
     const pdfBuffer = await generateInvoicePdf({
       invoiceNo:     sale.invoiceNo,
       createdAt:     sale.createdAt,
@@ -38,6 +41,9 @@ export async function getInvoice(req: AuthRequest, res: Response) {
       totalAmount:   sale.totalAmount,
       profit:        sale.profit,
       soldBy:        sale.recordedBy.username,
+      shopAddress:   settings.shopAddress    ?? undefined,
+      shopPhone:     settings.shopPhone      ?? undefined,
+      footerNote:    settings.invoiceFooterNote ?? undefined,
     });
 
     // ?download=1 → send raw PDF as a file download
@@ -114,6 +120,7 @@ export async function getInvoice(req: AuthRequest, res: Response) {
       <div class="inv-title">SALES INVOICE</div>
       <div class="inv-no"># ${sale.invoiceNo}</div>
       <div class="inv-date">${date}</div>
+      ${(settings.shopAddress || settings.shopPhone) ? `<div class="inv-date">${[settings.shopAddress, settings.shopPhone].filter(Boolean).join(' · ')}</div>` : ''}
     </div>
 
     <div class="section-title">Product</div>
@@ -144,6 +151,7 @@ export async function getInvoice(req: AuthRequest, res: Response) {
       ${row('Staff', sale.recordedBy.username)}
       ${row('Date', date)}
     </table>
+    ${settings.invoiceFooterNote ? `<div style="padding:14px 16px;color:#94a3b8;font-size:12px;font-style:italic;text-align:center">${settings.invoiceFooterNote}</div>` : ''}
   </div>
 </body>
 </html>`;

@@ -15,6 +15,7 @@ interface CreateProductInput {
   color?: string;
   ram?: string;
   branchId?: string; // optional — unset means "Main Branch" (see branches.service.ts)
+  reorderPoint?: number | null; // optional — unset means "use the shop-wide default" (see inventory.service.ts)
 }
 
 interface UpdateProductInput extends Partial<CreateProductInput> {}

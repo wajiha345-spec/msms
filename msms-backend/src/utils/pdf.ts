@@ -15,6 +15,9 @@ interface InvoiceData {
   totalAmount:   number;
   profit:        number;
   soldBy:        string;
+  shopAddress?:  string;
+  shopPhone?:    string;
+  footerNote?:   string;
 }
 
 // Generates a PDF invoice and returns it as a Buffer
@@ -46,6 +49,15 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
       .fontSize(10)
       .font('Helvetica')
       .text('Management System', margin, 54);
+
+    const contactLine = [data.shopAddress, data.shopPhone].filter(Boolean).join('  ·  ');
+    if (contactLine) {
+      doc
+        .fillColor('#DDD6FE')
+        .fontSize(8)
+        .font('Helvetica')
+        .text(contactLine, margin, 68, { width: 220 });
+    }
 
     doc
       .fillColor('#FFFFFF')
@@ -254,6 +266,14 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
         { align: 'center', width: pageW - margin * 2 }
       );
 
+    if (data.footerNote) {
+      doc
+        .fillColor('#9CA3AF')
+        .fontSize(8)
+        .font('Helvetica-Oblique')
+        .text(data.footerNote, margin, footerY + 44, { align: 'center', width: pageW - margin * 2 });
+    }
+
     doc.end();
   });
 }
@@ -275,6 +295,9 @@ interface QuotationData {
   totalAmount:   number;
   createdBy:     string;
   notes?:        string;
+  shopAddress?:  string;
+  shopPhone?:    string;
+  footerNote?:   string;
 }
 
 // Generates a PDF quotation and returns it as a Buffer. Adapts the same
@@ -308,6 +331,15 @@ export function generateQuotationPdf(data: QuotationData): Promise<Buffer> {
       .fontSize(10)
       .font('Helvetica')
       .text('Management System', margin, 54);
+
+    const quoteContactLine = [data.shopAddress, data.shopPhone].filter(Boolean).join('  ·  ');
+    if (quoteContactLine) {
+      doc
+        .fillColor('#DDD6FE')
+        .fontSize(8)
+        .font('Helvetica')
+        .text(quoteContactLine, margin, 68, { width: 220 });
+    }
 
     doc
       .fillColor('#FFFFFF')
@@ -481,6 +513,14 @@ export function generateQuotationPdf(data: QuotationData): Promise<Buffer> {
         margin, footerY + 28,
         { align: 'center', width: pageW - margin * 2 }
       );
+
+    if (data.footerNote) {
+      doc
+        .fillColor('#9CA3AF')
+        .fontSize(8)
+        .font('Helvetica-Oblique')
+        .text(data.footerNote, margin, footerY + 44, { align: 'center', width: pageW - margin * 2 });
+    }
 
     doc.end();
   });

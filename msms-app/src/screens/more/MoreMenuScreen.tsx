@@ -221,6 +221,30 @@ export default function MoreMenuScreen() {
           isPro={isPro}
           onPress={() => handleProFeature('Sales Orders', () => navigation.navigate('SalesOrdersList'))}
         />
+        <MenuItem
+          icon="📉"
+          label="Low Stock"
+          subtitle="Products at or below their reorder point"
+          proOnly
+          isPro={isPro}
+          onPress={() => handleProFeature('Low Stock', () => navigation.navigate('LowStock'))}
+        />
+        <MenuItem
+          icon="🔀"
+          label="Transfer Stock"
+          subtitle="Move stock between branches"
+          proOnly
+          isPro={isPro}
+          onPress={() => handleProFeature('Transfer Stock', () => navigation.navigate('TransferStock'))}
+        />
+        <MenuItem
+          icon="📑"
+          label="Reports"
+          subtitle="Sales, financial, expense/income & inventory reports"
+          proOnly
+          isPro={isPro}
+          onPress={() => handleProFeature('Reports', () => navigation.navigate('ReportsHub'))}
+        />
 
         {isOwner && (
           <>
@@ -264,6 +288,22 @@ export default function MoreMenuScreen() {
               proOnly
               isPro={isPro}
               onPress={() => handleProFeature('Branches', () => navigation.navigate('BranchesList'))}
+            />
+            <MenuItem
+              icon="💾"
+              label="Backup & Export"
+              subtitle="Download a full backup of your shop data"
+              proOnly
+              isPro={isPro}
+              onPress={() => handleProFeature('Backup & Export', () => navigation.navigate('Backup'))}
+            />
+            <MenuItem
+              icon="⚙️"
+              label="Settings"
+              subtitle="Low stock alerts, shop contact info & invoice notes"
+              proOnly
+              isPro={isPro}
+              onPress={() => handleProFeature('Settings', () => navigation.navigate('Settings'))}
             />
           </>
         )}

@@ -29,6 +29,10 @@ import userRoutes           from './modules/users/users.routes';
 import branchRoutes         from './modules/branches/branches.routes';
 import crmRoutes            from './modules/crm/crm.routes';
 import notificationRoutes   from './modules/notifications/notifications.routes';
+import backupRoutes         from './modules/backup/backup.routes';
+import settingsRoutes       from './modules/settings/settings.routes';
+import inventoryRoutes      from './modules/inventory/inventory.routes';
+import reportsRoutes        from './modules/reports/reports.routes';
 import { downloadApp, downloadTrialApk } from './modules/licenses/licenses.controller';
 import { authenticate, requirePlan, checkTrialExpiry, requireRole, requirePermission } from './middleware/auth';
 
@@ -92,6 +96,23 @@ app.use('/api/crm',         authenticate, checkTrialExpiry, requirePlan('PRO'), 
 // ── Business Management: Notifications (PRO; every user sees only their own
 // userId-scoped inbox, so no permission grant is needed on top of PRO) ─────
 app.use('/api/notifications', authenticate, checkTrialExpiry, requirePlan('PRO'), notificationRoutes);
+
+// ── Business Management: Data Backup (PRO + shop owner only) ───────────────
+app.use('/api/backup',      authenticate, checkTrialExpiry, requirePlan('PRO'), requireRole('admin'), backupRoutes);
+
+// ── Business Management: Settings (PRO + shop owner only) ──────────────────
+app.use('/api/settings',    authenticate, checkTrialExpiry, requirePlan('PRO'), requireRole('admin'), settingsRoutes);
+
+// ── Business Management: Inventory Enhancements (PRO; low-stock list is open
+// to any team member, reorder-point edits & stock transfer are admin-only,
+// gated inside inventory.routes.ts) ─────────────────────────────────────────
+app.use('/api/inventory',   authenticate, checkTrialExpiry, requirePlan('PRO'), inventoryRoutes);
+
+// ── Business Management: Reports (PRO + owner or granted permission) ───────
+// Reuses manage_accounting — the same gate the existing financial statements
+// (Balance Sheet, P&L, Cash Flow, Trial Balance) already use, since this is
+// conceptually the same report surface rather than a new permission tier.
+app.use('/api/reports',     authenticate, checkTrialExpiry, requirePlan('PRO'), requirePermission('manage_accounting'), reportsRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });

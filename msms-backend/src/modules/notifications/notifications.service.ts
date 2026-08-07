@@ -1,4 +1,5 @@
 import { prisma } from '../../config/db';
+import { getSettingsOrDefault } from '../settings/settings.service';
 
 // ── Notification System ─────────────────────────────────────────────────────
 // Each row is one specific user's inbox entry. Triggers live as small,
@@ -43,10 +44,10 @@ async function notifyAdmin(shopId: string, data: CreateNotificationInput, exclud
 
 // ── Triggers ─────────────────────────────────────────────────────────────────
 
-const LOW_STOCK_THRESHOLD = 2;
-
-export async function notifyLowStock(shopId: string, data: { productId: string; productName: string; stock: number }) {
-  if (data.stock > LOW_STOCK_THRESHOLD) return;
+export async function notifyLowStock(shopId: string, data: { productId: string; productName: string; stock: number; reorderPoint?: number | null }) {
+  const { lowStockThreshold } = await getSettingsOrDefault(shopId);
+  const threshold = data.reorderPoint ?? lowStockThreshold;
+  if (data.stock > threshold) return;
   await notifyAdmin(shopId, {
     type:       'LOW_STOCK',
     title:      'Low stock alert',

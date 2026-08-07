@@ -168,8 +168,9 @@ export async function createSale(shopId: string, data: CreateSaleInput, io: Serv
 
     return {
       sale,
-      productName:  product.name,
-      updatedStock: updated.stock,
+      productName:   product.name,
+      updatedStock:  updated.stock,
+      reorderPoint:  product.reorderPoint,
     };
   });
 
@@ -193,9 +194,10 @@ export async function createSale(shopId: string, data: CreateSaleInput, io: Serv
   // from the manual New Sale screen, a converted quotation, or a fulfilled
   // sales order.
   notifyLowStock(shopId, {
-    productId:   data.productId,
-    productName: result.productName,
-    stock:       result.updatedStock,
+    productId:    data.productId,
+    productName:  result.productName,
+    stock:        result.updatedStock,
+    reorderPoint: result.reorderPoint,
   }).catch(() => {});
 
   return result.sale;

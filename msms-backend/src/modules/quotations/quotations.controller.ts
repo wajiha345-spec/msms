@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { AuthRequest } from '../../middleware/auth';
 import { ok, fail } from '../../utils/response';
 import { generateQuotationPdf } from '../../utils/pdf';
+import { getSettingsOrDefault } from '../settings/settings.service';
 import {
   listQuotations,
   getQuotationById,
@@ -76,6 +77,7 @@ export async function getQuotationViewHandler(req: Request, res: Response) {
   try {
     const id = getParamValue(req.params.id);
     const quotation = await getQuotationForView(id);
+    const settings  = await getSettingsOrDefault(quotation.shopId);
 
     const pdfBuffer = await generateQuotationPdf({
       quoteNo:       quotation.quoteNo,
@@ -92,6 +94,9 @@ export async function getQuotationViewHandler(req: Request, res: Response) {
       totalAmount: quotation.items.reduce((sum, item) => sum + item.lineTotal, 0),
       createdBy:   quotation.createdBy.username,
       notes:       quotation.notes ?? undefined,
+      shopAddress: settings.shopAddress    ?? undefined,
+      shopPhone:   settings.shopPhone      ?? undefined,
+      footerNote:  settings.invoiceFooterNote ?? undefined,
     });
 
     if (req.query.download === '1') {
@@ -172,6 +177,7 @@ export async function getQuotationViewHandler(req: Request, res: Response) {
       <div class="inv-title">QUOTATION</div>
       <div class="inv-no"># ${quotation.quoteNo}</div>
       <div class="inv-date">${date}${quotation.validUntil ? ` · Valid until ${new Date(quotation.validUntil).toLocaleDateString('en-PK')}` : ''}</div>
+      ${(settings.shopAddress || settings.shopPhone) ? `<div class="inv-date">${[settings.shopAddress, settings.shopPhone].filter(Boolean).join(' · ')}</div>` : ''}
     </div>
 
     ${quotation.customerName || quotation.customerPhone ? `
@@ -196,6 +202,7 @@ export async function getQuotationViewHandler(req: Request, res: Response) {
       ${row('Staff', quotation.createdBy.username)}
       ${row('Date', date)}
     </table>
+    ${settings.invoiceFooterNote ? `<div style="padding:14px 16px;color:#94a3b8;font-size:12px;font-style:italic;text-align:center">${settings.invoiceFooterNote}</div>` : ''}
   </div>
 </body>
 </html>`;

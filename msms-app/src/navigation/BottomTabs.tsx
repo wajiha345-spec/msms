@@ -71,6 +71,12 @@ import NewCustomerScreen      from '../screens/crm/NewCustomerScreen';
 import CustomerProfileScreen  from '../screens/crm/CustomerProfileScreen';
 import FollowUpsScreen        from '../screens/crm/FollowUpsScreen';
 import NotificationsScreen    from '../screens/notifications/NotificationsScreen';
+import BackupScreen           from '../screens/backup/BackupScreen';
+import SettingsScreen         from '../screens/settings/SettingsScreen';
+import LowStockScreen         from '../screens/inventory/LowStockScreen';
+import TransferStockScreen    from '../screens/inventory/TransferStockScreen';
+import ReportsHubScreen       from '../screens/reports/ReportsHubScreen';
+import SalesSummaryScreen     from '../screens/reports/SalesSummaryScreen';
 
 import { colors } from '../theme/colors';
 
@@ -192,6 +198,20 @@ function MoreStack() {
 
       {/* Business Management — Notification System */}
       <MStack.Screen name="Notifications"   component={NotificationsScreen} />
+
+      {/* Business Management — Data Backup */}
+      <MStack.Screen name="Backup"          component={BackupScreen} />
+
+      {/* Business Management — Settings */}
+      <MStack.Screen name="Settings"        component={SettingsScreen} />
+
+      {/* Business Management — Inventory Enhancements */}
+      <MStack.Screen name="LowStock"        component={LowStockScreen} />
+      <MStack.Screen name="TransferStock"   component={TransferStockScreen} />
+
+      {/* Business Management — Reports Hub */}
+      <MStack.Screen name="ReportsHub"      component={ReportsHubScreen} />
+      <MStack.Screen name="SalesSummary"    component={SalesSummaryScreen} />
     </MStack.Navigator>
   );
 }
