@@ -47,7 +47,7 @@ app.use('/api/orders',        orderRoutes);      // website order form
 app.use('/api/admin',         adminRoutes);      // protected by ADMIN_SECRET query param
 app.use('/api/licenses',      licenseRoutes);    // key validation for app setup
 app.use('/api/setup',         setupRoutes);      // first-time app registration + authenticated upgrade
-app.use('/api/trial',         trialRoutes);      // 48-hour free trial signup, no license key needed
+app.use('/api/trial',         trialRoutes);      // 5-day free trial signup, no license key needed
 app.get('/api/download/:key', downloadApp);      // APK download (license key = access token)
 app.get('/api/download-trial', downloadTrialApk); // APK download for trial signups (no key needed)
 app.use('/api/invoices',      invoiceRoutes);    // PDF invoices (invoice UUID = access token)

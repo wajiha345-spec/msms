@@ -19,7 +19,7 @@ export default function WelcomeScreen() {
           onPress={() => navigation.navigate('TrialSignup')}
           activeOpacity={0.85}
         >
-          <Text style={styles.trialBtnText}>🎁 Try Free for 48 Hours</Text>
+          <Text style={styles.trialBtnText}>🎁 Try Free for 5 Days</Text>
           <Text style={styles.trialBtnSub}>All PRO features, no license key needed</Text>
         </TouchableOpacity>
 

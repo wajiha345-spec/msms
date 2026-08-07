@@ -65,11 +65,11 @@ export default function TrialSignupScreen() {
 
         <View style={styles.card}>
           <View style={styles.trialBadge}>
-            <Text style={styles.trialBadgeText}>🎁 Free 48-Hour Trial — All PRO Features</Text>
+            <Text style={styles.trialBadgeText}>🎁 Free 5-Day Trial — All PRO Features</Text>
           </View>
           <Text style={styles.cardTitle}>Start Your Free Trial</Text>
           <Text style={styles.cardSub}>
-            No license key needed. Your account unlocks instantly and stays active for 48 hours.
+            No license key needed. Your account unlocks instantly and stays active for 5 days.
           </Text>
 
           <Input

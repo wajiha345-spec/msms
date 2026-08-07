@@ -47,7 +47,7 @@ export default function TrialExpiredScreen() {
           <View style={styles.lockBadge}>
             <Text style={styles.lockBadgeText}>🔒 Trial Ended</Text>
           </View>
-          <Text style={styles.cardTitle}>Your 48-Hour Trial Has Ended</Text>
+          <Text style={styles.cardTitle}>Your 5-Day Trial Has Ended</Text>
           <Text style={styles.cardSub}>
             Enter a license key to unlock your account. All the data you saved during your trial
             (products, sales, and more) will stay exactly as you left it.

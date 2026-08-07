@@ -45,7 +45,7 @@ export async function downloadApp(req: Request, res: Response) {
 }
 
 // GET /api/download-trial
-// Public download for the 48-hour free trial — no license key required.
+// Public download for the 5-day free trial — no license key required.
 // Always serves the PRO build since the trial unlocks all PRO features;
 // access is gated server-side by the trial account's JWT, not the binary.
 export async function downloadTrialApk(_req: Request, res: Response) {

@@ -424,15 +424,17 @@ function TrialBanner({ trialEndsAt }: { trialEndsAt: string }) {
   }, []);
 
   const msLeft = new Date(trialEndsAt).getTime() - now;
-  const hoursLeft = Math.max(0, Math.floor(msLeft / (60 * 60 * 1000)));
+  const daysLeft  = Math.max(0, Math.floor(msLeft / (24 * 60 * 60 * 1000)));
+  const hoursLeft = Math.max(0, Math.floor((msLeft % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000)));
   const minsLeft  = Math.max(0, Math.floor((msLeft % (60 * 60 * 1000)) / (60 * 1000)));
+  const timeLeftLabel = daysLeft > 0 ? `${daysLeft}d ${hoursLeft}h left` : `${hoursLeft}h ${minsLeft}m left`;
 
   return (
     <View style={trialStyles.banner}>
       <Text style={trialStyles.icon}>⏳</Text>
       <View style={{ flex: 1 }}>
         <Text style={trialStyles.title}>
-          Free Trial — {hoursLeft}h {minsLeft}m left
+          Free Trial — {timeLeftLabel}
         </Text>
         <Text style={trialStyles.sub}>
           Purchase a license anytime to keep your data and unlock permanently.

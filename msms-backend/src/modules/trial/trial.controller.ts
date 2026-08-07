@@ -4,11 +4,11 @@ import jwt from 'jsonwebtoken';
 import { ok, fail } from '../../utils/response';
 import { prisma } from '../../config/db';
 
-const TRIAL_DURATION_MS = 48 * 60 * 60 * 1000;
+const TRIAL_DURATION_MS = 5 * 24 * 60 * 60 * 1000;
 
 // POST /api/trial/start
 // Lets a brand-new customer create a real Shop + admin User with no license
-// key at all, unlocked for 48 hours with full PRO access. If they pay before
+// key at all, unlocked for 5 days with full PRO access. If they pay before
 // or after it expires, POST /api/setup/upgrade converts this SAME shop to a
 // paid plan in place — trial data is never touched or migrated.
 export async function startTrial(req: Request, res: Response) {

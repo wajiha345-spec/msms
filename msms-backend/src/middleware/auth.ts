@@ -27,7 +27,7 @@ function isActiveTrial(user: { plan: string; trialEndsAt: string | null }) {
   return user.plan === 'TRIAL' && !!user.trialEndsAt && new Date(user.trialEndsAt) > new Date();
 }
 
-// Blocks ALL access once a TRIAL shop's 48-hour window has passed.
+// Blocks ALL access once a TRIAL shop's 5-day window has passed.
 // Must run AFTER authenticate. Deliberately NOT applied to the upgrade route,
 // since that's the only action a shop with an expired trial is still allowed to take.
 export function checkTrialExpiry(req: AuthRequest, res: Response, next: NextFunction) {
