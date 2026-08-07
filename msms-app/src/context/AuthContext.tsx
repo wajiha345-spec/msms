@@ -56,7 +56,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function refreshInstallmentStatus() {
     try {
       const res = await licenseInstallmentsApi.getStatus();
-      setInstallmentPlan(res.data.data);
+      const plan = res.data.data;
+      setInstallmentPlan(plan);
+
+      // Self-heal the stale session: installment #1 gets approved by an
+      // admin, not by a request from this device, so the locally stored user
+      // object (and isTrialExpired, which is computed from it) would
+      // otherwise stay stuck showing "trial expired" forever even after the
+      // shop is unlocked server-side. Patch it the same way a real
+      // upgradeAccount() response would.
+      const installment1Paid = !!plan?.installments.some(
+        (i) => i.installmentNumber === 1 && i.status === 'PAID'
+      );
+      if (installment1Paid) {
+        setUser((prev) => {
+          if (!prev || prev.plan !== 'TRIAL') return prev;
+          const updated = { ...prev, plan: plan!.plan, trialEndsAt: null };
+          AsyncStorage.setItem('auth_user', JSON.stringify(updated)).catch(() => {});
+          return updated;
+        });
+      }
     } catch {
       // silent — non-critical, next poll retries
     }
