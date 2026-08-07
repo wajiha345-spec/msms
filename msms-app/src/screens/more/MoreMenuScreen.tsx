@@ -59,7 +59,7 @@ function ProUpgradeBanner() {
 
 export default function MoreMenuScreen() {
   const navigation = useNavigation<any>();
-  const { user, logout, hasProAccess } = useAuth();
+  const { user, logout, hasProAccess, installmentPlan } = useAuth();
 
   const isPro = hasProAccess;
   const isOwner = user?.role === 'admin';
@@ -305,6 +305,14 @@ export default function MoreMenuScreen() {
               isPro={isPro}
               onPress={() => handleProFeature('Settings', () => navigation.navigate('Settings'))}
             />
+            {!!installmentPlan && (
+              <MenuItem
+                icon="💳"
+                label="Billing"
+                subtitle="Track your license installment payments"
+                onPress={() => navigation.navigate('BillingStatus')}
+              />
+            )}
           </>
         )}
 

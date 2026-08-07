@@ -27,9 +27,16 @@ export interface OverdueFollowUp {
   customer:      { id: string; name: string; phone: string };
 }
 
+export interface UpcomingLicenseInstallment {
+  installmentNumber: number;
+  amount:             number;
+  dueDate:            string | null;
+}
+
 export interface AttentionItems {
   overdueInstallments: OverdueInstallment[];
   overdueFollowUps:    OverdueFollowUp[];
+  upcomingLicenseInstallment: UpcomingLicenseInstallment | null;
 }
 
 export const notificationsApi = {

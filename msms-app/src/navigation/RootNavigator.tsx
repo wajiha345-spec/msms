@@ -9,13 +9,14 @@ import WelcomeScreen from '../screens/onboarding/WelcomeScreen';
 import SetupScreen  from '../screens/onboarding/SetupScreen';
 import TrialSignupScreen  from '../screens/onboarding/TrialSignupScreen';
 import TrialExpiredScreen from '../screens/onboarding/TrialExpiredScreen';
+import InstallmentPaymentScreen from '../screens/billing/InstallmentPaymentScreen';
 import BottomTabs   from './BottomTabs';
 import { colors }   from '../theme/colors';
 
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
-  const { token, loading, isNewInstall, isTrialExpired } = useAuth();
+  const { token, loading, isNewInstall, isTrialExpired, isInstallmentOverdue } = useAuth();
 
   if (loading) {
     return (
@@ -29,9 +30,13 @@ export default function RootNavigator() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {token ? (
-          isTrialExpired ? (
-            // Trial ran out — lock the app until a license key is entered
-            <Stack.Screen name="TrialExpired" component={TrialExpiredScreen} />
+          isTrialExpired || isInstallmentOverdue ? (
+            // Trial ran out, or a license installment is overdue — lock the
+            // app until a license key is entered or a payment is submitted
+            <>
+              <Stack.Screen name="TrialExpired" component={TrialExpiredScreen} />
+              <Stack.Screen name="InstallmentPayment" component={InstallmentPaymentScreen} />
+            </>
           ) : (
             // Authenticated — show main app
             <Stack.Screen name="Main" component={BottomTabs} />

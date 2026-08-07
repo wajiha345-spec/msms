@@ -82,7 +82,11 @@ export default function NotificationsScreen() {
   }
 
   const unreadCount = feed.filter((n) => !n.isRead).length;
-  const hasAttention = attention && (attention.overdueInstallments.length > 0 || attention.overdueFollowUps.length > 0);
+  const hasAttention = !!attention && (
+    attention.overdueInstallments.length > 0 ||
+    attention.overdueFollowUps.length > 0 ||
+    !!attention.upcomingLicenseInstallment
+  );
 
   if (loading) {
     return (
@@ -137,6 +141,25 @@ export default function NotificationsScreen() {
                   <Badge label="Overdue" type="danger" />
                 </TouchableOpacity>
               ))}
+
+              {attention!.upcomingLicenseInstallment && (
+                <TouchableOpacity
+                  style={styles.attentionCard}
+                  onPress={() => navigation.navigate('BillingStatus')}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.attentionIcon}>💳</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.attentionTitle}>
+                      License installment #{attention!.upcomingLicenseInstallment.installmentNumber} due soon
+                    </Text>
+                    <Text style={styles.attentionSub}>
+                      Rs {attention!.upcomingLicenseInstallment.amount.toLocaleString()} · due {fmtDate(attention!.upcomingLicenseInstallment.dueDate)}
+                    </Text>
+                  </View>
+                  <Badge label="Due Soon" type="warning" />
+                </TouchableOpacity>
+              )}
 
               {attention!.overdueFollowUps.map((it) => (
                 <TouchableOpacity

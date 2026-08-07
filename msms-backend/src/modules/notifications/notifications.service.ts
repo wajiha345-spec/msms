@@ -124,11 +124,16 @@ export async function markAllAsRead(shopId: string, userId: string) {
 
 // Computed, not persisted — the same on-the-fly approach
 // dashboard.service.ts already uses for installmentAlerts, reused here for
-// overdue installments, plus overdue CRM follow-ups.
+// overdue installments, overdue CRM follow-ups, plus (below) an upcoming
+// license installment payment — NOT the same thing as overdueInstallments
+// above, which is the shop's own customers buying on installment; this one
+// is the shop paying its own MSMS license in installments (see
+// licenseInstallments.service.ts).
 export async function getAttentionItems(shopId: string) {
   const now = new Date();
+  const weekOut = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-  const [overdueInstallments, overdueFollowUps] = await Promise.all([
+  const [overdueInstallments, overdueFollowUps, licensePlan] = await Promise.all([
     prisma.sale.findMany({
       where: { shopId, paymentType: 'INSTALLMENT', installmentPaid: false, installmentDueDate: { lt: now } },
       orderBy: { installmentDueDate: 'asc' },
@@ -142,7 +147,15 @@ export async function getAttentionItems(shopId: string) {
       orderBy: { followUpDate: 'asc' },
       include: { customer: { select: { id: true, name: true, phone: true } } },
     }),
+    prisma.licenseInstallmentPlan.findUnique({
+      where: { shopId },
+      include: { installments: { orderBy: { installmentNumber: 'asc' } } },
+    }),
   ]);
+
+  const upcomingLicenseInstallment = licensePlan?.status === 'ACTIVE'
+    ? licensePlan.installments.find((i) => i.status === 'PENDING' && i.dueDate && i.dueDate >= now && i.dueDate <= weekOut) ?? null
+    : null;
 
   return {
     overdueInstallments: overdueInstallments.map((s) => ({
@@ -152,5 +165,10 @@ export async function getAttentionItems(shopId: string) {
     overdueFollowUps: overdueFollowUps.map((f) => ({
       interactionId: f.id, text: f.text, followUpDate: f.followUpDate, customer: f.customer,
     })),
+    upcomingLicenseInstallment: upcomingLicenseInstallment && {
+      installmentNumber: upcomingLicenseInstallment.installmentNumber,
+      amount: upcomingLicenseInstallment.amount,
+      dueDate: upcomingLicenseInstallment.dueDate,
+    },
   };
 }

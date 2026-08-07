@@ -33,6 +33,7 @@ import backupRoutes         from './modules/backup/backup.routes';
 import settingsRoutes       from './modules/settings/settings.routes';
 import inventoryRoutes      from './modules/inventory/inventory.routes';
 import reportsRoutes        from './modules/reports/reports.routes';
+import licenseInstallmentRoutes from './modules/licenseInstallments/licenseInstallments.routes';
 import { downloadApp, downloadTrialApk } from './modules/licenses/licenses.controller';
 import { authenticate, requirePlan, checkTrialExpiry, requireRole, requirePermission } from './middleware/auth';
 
@@ -52,6 +53,11 @@ app.get('/api/download/:key', downloadApp);      // APK download (license key = 
 app.get('/api/download-trial', downloadTrialApk); // APK download for trial signups (no key needed)
 app.use('/api/invoices',      invoiceRoutes);    // PDF invoices (invoice UUID = access token)
 app.use('/api/quotations',    quotationRoutes);  // :id/view is public (quote UUID = access token); CRUD gated inside the router
+
+// Pay-in-installments for the license itself (authenticated but deliberately
+// no checkTrialExpiry — a locked-out shop must still be able to pay, same
+// carve-out reasoning as /api/setup/upgrade above).
+app.use('/api/license-installments', authenticate, licenseInstallmentRoutes);
 
 // ── SIMPLE + PRO: both plans can access these ────────────────────────────────
 app.use('/api/products', authenticate, checkTrialExpiry, productRoutes);  // import route gated inside

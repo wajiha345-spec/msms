@@ -286,3 +286,99 @@ export async function sendImeiApiAlertEmail(issue: {
     `,
   });
 }
+
+// ── Notify admin of a new/renewed license installment payment ────────────────
+export async function sendAdminNewLicenseInstallmentEmail(installment: {
+  installmentId: string;
+  shopName: string;
+  installmentNumber: number;
+  amount: number;
+  transactionId: string;
+  screenshotUrl: string;
+}) {
+  const secret     = encodeURIComponent(process.env.ADMIN_SECRET ?? '');
+  const approveUrl = `${process.env.BACKEND_URL}/api/admin/license-installments/${installment.installmentId}/approve?secret=${secret}`;
+
+  await getResend().emails.send({
+    from:    FROM_ORDERS,
+    to:      process.env.ADMIN_EMAIL!,
+    subject: `License Installment #${installment.installmentNumber} — Rs ${installment.amount.toLocaleString()} — ${installment.shopName}`,
+    html: `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+                  max-width:540px;margin:0 auto;color:#1e293b">
+        <h2 style="margin:0 0 4px">Installment Payment Submitted</h2>
+        <p style="color:#64748b;font-size:14px;margin:0 0 20px">
+          Verify the payment below and click Approve.
+          ${installment.installmentNumber === 1
+            ? 'This will unlock the shop\'s full PRO access immediately.'
+            : 'This will keep the shop unlocked and schedule the next installment.'}
+        </p>
+
+        <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:24px">
+          <tr style="background:#f8fafc">
+            <td style="padding:10px 12px;color:#64748b;width:36%">Shop</td>
+            <td style="padding:10px 12px;font-weight:600">${installment.shopName}</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 12px;color:#64748b">Installment</td>
+            <td style="padding:10px 12px;font-weight:700;color:#0f766e">#${installment.installmentNumber} of 3</td>
+          </tr>
+          <tr style="background:#f8fafc">
+            <td style="padding:10px 12px;color:#64748b">Amount</td>
+            <td style="padding:10px 12px;font-weight:700">Rs ${installment.amount.toLocaleString()}</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 12px;color:#64748b">Transaction ID</td>
+            <td style="padding:10px 12px;font-family:monospace">${installment.transactionId}</td>
+          </tr>
+        </table>
+
+        <div style="margin-bottom:24px">
+          <p style="font-size:13px;font-weight:700;color:#1e293b;margin:0 0 8px">
+            Payment Screenshot (verify before approving):
+          </p>
+          <a href="${installment.screenshotUrl}" target="_blank">
+            <img src="${installment.screenshotUrl}"
+                 alt="Payment screenshot"
+                 style="max-width:100%;border-radius:10px;border:2px solid #e2e8f0;display:block" />
+          </a>
+        </div>
+
+        <a href="${approveUrl}"
+           style="display:inline-block;background:#16a34a;color:#fff;
+                  padding:13px 28px;border-radius:9px;text-decoration:none;
+                  font-weight:700;font-size:15px">
+          Approve Installment
+        </a>
+      </div>
+    `,
+  });
+}
+
+// ── Remind shop owner an installment is due soon ──────────────────────────────
+export async function sendInstallmentDueReminderEmail(customer: {
+  email: string;
+  name: string;
+  installmentNumber: number;
+  amount: number;
+  dueDate: Date;
+}) {
+  await getResend().emails.send({
+    from: FROM_SUPPORT,
+    to:   customer.email,
+    subject: `Reminder — Installment #${customer.installmentNumber} of Rs ${customer.amount.toLocaleString()} due soon`,
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto">
+        <h2 style="color:#1e293b">Hi ${customer.name},</h2>
+        <p>
+          Your next license installment (<strong>#${customer.installmentNumber} of 3</strong>,
+          Rs ${customer.amount.toLocaleString()}) is due on
+          <strong>${customer.dueDate.toDateString()}</strong>.
+        </p>
+        <p>You can submit your payment proof any time from the Billing section inside the MSMS app.
+           If it isn't paid by the due date, the app will lock again until this installment is settled.</p>
+        <p style="color:#64748b;font-size:13px">If you've already paid, you can ignore this email once it's approved.</p>
+      </div>
+    `,
+  });
+}

@@ -36,6 +36,7 @@ model Shop {
   customerInteractions  CustomerInteraction[]
   notifications         Notification[]
   settings              ShopSettings?
+  licenseInstallmentPlan LicenseInstallmentPlan?
 }
 
 model User {
@@ -198,6 +199,40 @@ model LicenseKey {
   activatedAt   DateTime?
   shopName      String?
   createdAt     DateTime  @default(now())
+}
+
+// ── License installment payments ──────────────────────────────────────────────
+// A shop paying for its own PRO license in installments (NOT the unrelated
+// "installment sales" feature on Sale/Guarantor, which is a shop's own
+// customers buying phones on installment). One plan per shop.
+model LicenseInstallmentPlan {
+  id                String    @id @default(cuid())
+  shop              Shop      @relation(fields: [shopId], references: [id])
+  shopId            String    @unique
+  plan              String    // "PRO" — plan unlocked once installment 1 is approved
+  installmentAmount Int
+  totalInstallments Int       @default(3)
+  status            String    @default("ACTIVE") // "ACTIVE" | "COMPLETED"
+  createdAt         DateTime  @default(now())
+  installments      LicenseInstallment[]
+}
+
+model LicenseInstallment {
+  id                String    @id @default(cuid())
+  plan              LicenseInstallmentPlan @relation(fields: [planId], references: [id])
+  planId            String
+  installmentNumber Int
+  amount            Int
+  dueDate           DateTime?
+  status            String    @default("PENDING") // "PENDING" | "SUBMITTED" | "PAID"
+  transactionId     String?
+  screenshotUrl     String?
+  submittedAt       DateTime?
+  paidAt            DateTime?
+  reminderSentAt    DateTime?
+  createdAt         DateTime  @default(now())
+
+  @@index([planId])
 }
 
 // ── Shared product catalog ────────────────────────────────────────────────────

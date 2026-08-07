@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiClient, setUnauthorizedHandler } from '../api/client';
+import { licenseInstallmentsApi, LicenseInstallmentPlan } from '../api/licenseInstallments';
 
 interface AuthUser {
   id:       string;
@@ -18,6 +19,9 @@ interface AuthContextType {
   isNewInstall: boolean;
   isTrialExpired: boolean;
   hasProAccess: boolean;
+  isInstallmentOverdue: boolean;
+  installmentPlan: LicenseInstallmentPlan | null;
+  refreshInstallmentStatus: () => Promise<void>;
   login:       (username: string, password: string) => Promise<void>;
   setupShop:   (data: { licenseKey: string; shopName: string; username: string; password: string }) => Promise<void>;
   startTrial:  (data: { shopName: string; username: string; password: string; email: string }) => Promise<void>;
@@ -35,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading,      setLoading]      = useState(true);
   const [isNewInstall, setIsNewInstall] = useState(false);
   const [now,          setNow]          = useState(() => Date.now());
+  const [installmentPlan, setInstallmentPlan] = useState<LicenseInstallmentPlan | null>(null);
 
   // Re-check the trial deadline every minute so the app locks itself
   // automatically once time's up, without requiring a restart.
@@ -42,6 +47,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const id = setInterval(() => setNow(Date.now()), 60 * 1000);
     return () => clearInterval(id);
   }, []);
+
+  // Poll license installment status every minute too. This is a real server
+  // round trip (unlike isTrialExpired, which is computed from the JWT) since
+  // a shop's installment #1 gets approved by an admin clicking an emailed
+  // link, not by a request from this session — so due dates/overdue status
+  // can change without this device ever being told directly.
+  async function refreshInstallmentStatus() {
+    try {
+      const res = await licenseInstallmentsApi.getStatus();
+      setInstallmentPlan(res.data.data);
+    } catch {
+      // silent — non-critical, next poll retries
+    }
+  }
+
+  useEffect(() => {
+    if (!token) { setInstallmentPlan(null); return; }
+    refreshInstallmentStatus();
+    const id = setInterval(refreshInstallmentStatus, 60 * 1000);
+    return () => clearInterval(id);
+  }, [token]);
+
+  const isInstallmentOverdue = !!installmentPlan?.overdueInstallment;
 
   const isTrialExpired = !!(
     user?.plan === 'TRIAL' && user.trialEndsAt && new Date(user.trialEndsAt).getTime() <= now
@@ -148,7 +176,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, isNewInstall, isTrialExpired, hasProAccess, login, setupShop, startTrial, upgradeAccount, forgotPassword, resetPassword, logout }}>
+    <AuthContext.Provider value={{
+      user, token, loading, isNewInstall, isTrialExpired, hasProAccess,
+      isInstallmentOverdue, installmentPlan, refreshInstallmentStatus,
+      login, setupShop, startTrial, upgradeAccount, forgotPassword, resetPassword, logout,
+    }}>
       {children}
     </AuthContext.Provider>
   );

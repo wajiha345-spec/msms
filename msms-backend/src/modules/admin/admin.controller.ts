@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { ok, fail } from '../../utils/response';
 import { getOrders, getOrderById } from '../orders/orders.service';
+import { listSubmittedInstallments, getInstallmentById, approveInstallment } from '../licenseInstallments/licenseInstallments.service';
 import { prisma } from '../../config/db';
 import { sendLicenseEmail } from '../../utils/email';
 import crypto from 'crypto';
@@ -233,6 +234,59 @@ export async function cancelOrder(req: Request, res: Response) {
       data:  { status: 'CANCELLED', updatedAt: new Date() },
     });
     return ok(res, { message: 'Order cancelled' });
+  } catch (e: any) {
+    return fail(res, e.message);
+  }
+}
+
+// GET /api/admin/license-installments?secret=...&status=SUBMITTED
+export async function listLicenseInstallments(req: Request, res: Response) {
+  try {
+    const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+    const installments = await listSubmittedInstallments(status);
+    return ok(res, installments);
+  } catch (e: any) {
+    return fail(res, e.message);
+  }
+}
+
+// GET|POST /api/admin/license-installments/:id/approve?secret=...
+// Works as GET so the admin can click the link directly from email. Reuses
+// the exact same manual-verification approve pattern as approveOrder above.
+export async function approveLicenseInstallment(req: Request, res: Response) {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const installment = await getInstallmentById(id);
+
+    if (installment.status === 'PAID') {
+      return res.send(adminPageHtml(`
+        <span class="icon">ℹ️</span>
+        <h2>Already Approved</h2>
+        <p>Installment #${installment.installmentNumber} for <strong>${escapeHtml(installment.plan.shop.name)}</strong> is already marked paid.</p>
+      `));
+    }
+
+    const updated = await approveInstallment(id);
+
+    const unlockNote = installment.installmentNumber === 1
+      ? `<div class="ok">This was installment #1 — <strong>${escapeHtml(installment.plan.shop.name)}</strong> now has full PRO access.</div>`
+      : `<div class="ok">Installment #${installment.installmentNumber} approved for <strong>${escapeHtml(installment.plan.shop.name)}</strong>.</div>`;
+
+    const nextNote = updated.plan.status === 'COMPLETED'
+      ? `<p>All 3 installments are now paid — this plan is complete, no further payments are due.</p>`
+      : `<p>Next installment (#${installment.installmentNumber + 1}) is now due in 30 days.</p>`;
+
+    return res.send(adminPageHtml(`
+      <span class="icon">✅</span>
+      <h2>Installment Approved</h2>
+      ${unlockNote}
+      <table>
+        <tr><td>Shop</td><td>${escapeHtml(installment.plan.shop.name)}</td></tr>
+        <tr><td>Installment</td><td>#${installment.installmentNumber} of ${installment.plan.totalInstallments}</td></tr>
+        <tr><td>Amount</td><td>Rs ${installment.amount.toLocaleString()}</td></tr>
+      </table>
+      ${nextNote}
+    `));
   } catch (e: any) {
     return fail(res, e.message);
   }

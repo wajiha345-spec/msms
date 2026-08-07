@@ -1,9 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { checkPermission } from '../modules/users/users.service';
+import { getInstallmentGate } from '../modules/licenseInstallments/licenseInstallments.service';
 
 export interface AuthRequest extends Request {
   user?: { userId: string; role: string; plan: string; shopId: string; trialEndsAt: string | null };
+  installmentGate?: Awaited<ReturnType<typeof getInstallmentGate>>;
 }
 
 export function authenticate(req: AuthRequest, res: Response, next: NextFunction) {
@@ -27,40 +29,83 @@ function isActiveTrial(user: { plan: string; trialEndsAt: string | null }) {
   return user.plan === 'TRIAL' && !!user.trialEndsAt && new Date(user.trialEndsAt) > new Date();
 }
 
-// Blocks ALL access once a TRIAL shop's 5-day window has passed.
-// Must run AFTER authenticate. Deliberately NOT applied to the upgrade route,
-// since that's the only action a shop with an expired trial is still allowed to take.
-export function checkTrialExpiry(req: AuthRequest, res: Response, next: NextFunction) {
+// Blocks ALL access once a TRIAL shop's 5-day window has passed, and also
+// once a license-installment payment has gone overdue. Must run AFTER
+// authenticate. Deliberately NOT applied to the upgrade route or to
+// /api/license-installments, since paying is the one thing a locked-out shop
+// must still be able to do.
+//
+// Also handles a subtlety of the installment feature: a shop's first
+// installment gets approved by an admin clicking an emailed link, not by a
+// request from the shop's own session — so that shop's JWT keeps saying
+// `plan: 'TRIAL'` (now expired) forever, since nothing ever re-issues it a
+// fresh token. getInstallmentGate() checks live DB state so that shop isn't
+// stuck locked out after having paid.
+export async function checkTrialExpiry(req: AuthRequest, res: Response, next: NextFunction) {
   if (!req.user) {
     return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
-  if (req.user.plan === 'TRIAL' && !isActiveTrial(req.user)) {
+
+  let gate: Awaited<ReturnType<typeof getInstallmentGate>> = null;
+  try {
+    gate = await getInstallmentGate(req.user.shopId);
+  } catch {
+    gate = null; // fail open — a transient DB hiccup must never lock out every user
+  }
+  req.installmentGate = gate; // let requirePlan reuse this instead of querying again
+
+  const trialLooksExpired = req.user.plan === 'TRIAL' && !isActiveTrial(req.user);
+  if (trialLooksExpired && !gate?.installment1Paid) {
     return res.status(402).json({
       success: false,
       error: 'Your free trial has ended. Please purchase a license to continue.',
       trialExpired: true,
     });
   }
+
+  if (gate?.overdue) {
+    return res.status(402).json({
+      success: false,
+      error: `Your installment payment of Rs ${gate.overdue.amount.toLocaleString()} was due on ${gate.overdue.dueDate?.toDateString()}. Please pay to continue using the app.`,
+      installmentOverdue: true,
+      installment: gate.overdue,
+    });
+  }
+
   next();
 }
 
 // Middleware factory — gates a route to users whose plan matches.
 // An active (non-expired) trial counts as PRO, since trials unlock every PRO feature.
+// A shop that has paid its first license installment also counts as PRO, for
+// the same stale-JWT reason documented on checkTrialExpiry above — reuses
+// req.installmentGate if that already ran (every route mount pairs the two),
+// falling back to its own DB check so this middleware stays correct standalone.
 // Must be placed AFTER authenticate so req.user is populated.
 // Usage:  router.use(authenticate, requirePlan('PRO'), handler)
 export function requirePlan(requiredPlan: 'PRO') {
-  return (req: AuthRequest, res: Response, next: NextFunction) => {
+  return async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
-    const hasAccess = req.user.plan === requiredPlan || isActiveTrial(req.user);
-    if (!hasAccess) {
-      return res.status(403).json({
-        success: false,
-        error: `This feature requires the ${requiredPlan} plan. Please upgrade your license.`,
-      });
+    if (req.user.plan === requiredPlan || isActiveTrial(req.user)) {
+      return next();
     }
-    next();
+    let gate = req.installmentGate;
+    if (gate === undefined) {
+      try {
+        gate = await getInstallmentGate(req.user.shopId);
+      } catch {
+        gate = null;
+      }
+    }
+    if (gate?.installment1Paid) {
+      return next();
+    }
+    return res.status(403).json({
+      success: false,
+      error: `This feature requires the ${requiredPlan} plan. Please upgrade your license.`,
+    });
   };
 }
 
