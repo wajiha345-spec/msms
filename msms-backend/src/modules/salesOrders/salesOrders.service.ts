@@ -28,12 +28,12 @@ interface SoItemInput {
 }
 
 interface CreateSoInput {
-  customerName?:  string;
-  customerPhone?: string;
-  deliveryDate?:  string | Date;
-  notes?:         string;
-  items:          SoItemInput[];
-  userId:         string;
+  customerName:  string;
+  customerPhone: string;
+  deliveryDate?: string | Date;
+  notes?:        string;
+  items:         SoItemInput[];
+  userId:        string;
 }
 
 const SO_INCLUDE = {
@@ -56,6 +56,8 @@ export async function getSalesOrderById(shopId: string, id: string) {
 }
 
 export async function createSalesOrder(shopId: string, data: CreateSoInput) {
+  if (!data.customerName?.trim())  throw new Error('Customer name is required');
+  if (!data.customerPhone?.trim()) throw new Error('Customer phone is required');
   if (!Array.isArray(data.items) || data.items.length === 0) {
     throw new Error('At least one line item is required');
   }

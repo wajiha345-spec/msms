@@ -45,6 +45,10 @@ export async function createPurchase(shopId: string, data: CreatePurchaseInput, 
   if (!product) throw new Error('Product not found');
   if (data.quantity <= 0) throw new Error('Quantity must be at least 1');
   if (data.purchasePrice <= 0) throw new Error('Purchase price must be greater than 0');
+  if (data.paymentType === 'CREDIT') {
+    if (!data.supplierName?.trim())  throw new Error('Supplier name is required for credit purchases');
+    if (!data.supplierPhone?.trim()) throw new Error('Supplier phone is required for credit purchases');
+  }
 
   // --- ATOMIC TRANSACTION ---
   // Both the Purchase record AND the stock increment happen together.

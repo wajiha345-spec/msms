@@ -156,6 +156,8 @@ export default function NewSaleScreen() {
       e.discount = 'Discount cannot exceed the sale total';
 
     if (paymentType === 'Installment') {
+      if (!customerName.trim()) e.customerName = 'Customer name is required';
+
       if (!customerCnic.trim()) e.customerCnic = 'Customer CNIC is required';
       else if (customerCnic.replace(/\D/g, '').length !== 13)
         e.customerCnic = 'CNIC must be 13 digits (XXXXX-XXXXXXX-X)';
@@ -366,10 +368,11 @@ export default function NewSaleScreen() {
           Customer Info {paymentType === 'Cash' ? '(optional)' : ''}
         </Text>
         <Input
-          label="Customer Name"
+          label={paymentType === 'Installment' ? 'Customer Name *' : 'Customer Name'}
           placeholder="e.g. Ahmed Khan"
           value={customerName}
           onChangeText={setCustomerName}
+          error={errors.customerName}
         />
         <Input
           label={paymentType === 'Installment' ? 'Customer Phone *' : 'Customer Phone'}

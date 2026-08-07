@@ -87,6 +87,7 @@ export async function createSale(shopId: string, data: CreateSaleInput, io: Serv
   }
 
   if (data.paymentType === 'INSTALLMENT') {
+    if (!data.customerName?.trim()) throw new Error('Customer name is required for installment sales');
     if (!data.customerCnic) throw new Error('Customer CNIC is required for installment sales');
     if (!data.customerPhone) throw new Error('Customer phone is required for installment sales');
     if (!data.installmentDueDate) throw new Error('Installment due date is required');

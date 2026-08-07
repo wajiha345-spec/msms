@@ -27,12 +27,12 @@ interface PoItemInput {
 }
 
 interface CreatePoInput {
-  supplierName?:  string;
-  supplierPhone?: string;
-  expectedDate?:  string | Date;
-  notes?:         string;
-  items:          PoItemInput[];
-  userId:         string;
+  supplierName:  string;
+  supplierPhone: string;
+  expectedDate?: string | Date;
+  notes?:        string;
+  items:         PoItemInput[];
+  userId:        string;
 }
 
 const PO_INCLUDE = {
@@ -55,6 +55,8 @@ export async function getPurchaseOrderById(shopId: string, id: string) {
 }
 
 export async function createPurchaseOrder(shopId: string, data: CreatePoInput) {
+  if (!data.supplierName?.trim())  throw new Error('Supplier name is required');
+  if (!data.supplierPhone?.trim()) throw new Error('Supplier phone is required');
   if (!Array.isArray(data.items) || data.items.length === 0) {
     throw new Error('At least one line item is required');
   }

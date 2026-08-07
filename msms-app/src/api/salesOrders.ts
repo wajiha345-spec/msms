@@ -33,11 +33,11 @@ export interface SoItemPayload {
 }
 
 export interface CreateSalesOrderPayload {
-  customerName?:  string;
-  customerPhone?: string;
-  deliveryDate?:  string;
-  notes?:         string;
-  items:          SoItemPayload[];
+  customerName:  string;
+  customerPhone: string;
+  deliveryDate?: string;
+  notes?:        string;
+  items:         SoItemPayload[];
 }
 
 export const salesOrdersApi = {

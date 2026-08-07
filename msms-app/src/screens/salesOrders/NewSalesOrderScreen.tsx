@@ -33,6 +33,7 @@ export default function NewSalesOrderScreen() {
   const [lines,         setLines]         = useState<DraftLine[]>([newLine()]);
   const [loading,       setLoading]       = useState(false);
   const [error,         setError]         = useState('');
+  const [errors,        setErrors]        = useState<Record<string, string>>({});
 
   function updateLine(key: string, patch: Partial<DraftLine>) {
     setLines((prev) => prev.map((l) => (l.key === key ? { ...l, ...patch } : l)));
@@ -48,8 +49,18 @@ export default function NewSalesOrderScreen() {
 
   const total = lines.reduce((sum, l) => sum + (Number(l.quantity) || 0) * (Number(l.unitPrice) || 0), 0);
 
+  function validate() {
+    const e: Record<string, string> = {};
+    if (!customerName.trim())  e.customerName  = 'Customer name is required';
+    if (!customerPhone.trim()) e.customerPhone = 'Customer phone is required';
+    else if (customerPhone.length !== 11) e.customerPhone = 'Phone must be 11 digits';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  }
+
   async function handleSubmit() {
     setError('');
+    if (!validate()) return;
     if (lines.some((l) => !l.product)) { setError('Every line needs a product'); return; }
     if (lines.some((l) => !l.quantity || Number(l.quantity) <= 0)) { setError('Every line needs a valid quantity'); return; }
     if (lines.some((l) => !l.unitPrice || Number(l.unitPrice) <= 0)) { setError('Every line needs a valid price'); return; }
@@ -60,8 +71,8 @@ export default function NewSalesOrderScreen() {
     setLoading(true);
     try {
       await salesOrdersApi.create({
-        customerName:  customerName.trim()  || undefined,
-        customerPhone: customerPhone.trim() || undefined,
+        customerName:  customerName.trim(),
+        customerPhone: customerPhone.trim(),
         deliveryDate:  delDate ? delDate.toISOString() : undefined,
         notes:         notes.trim() || undefined,
         items: lines.map((l) => ({
@@ -90,20 +101,22 @@ export default function NewSalesOrderScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
-        <Text style={styles.sectionLabel}>Customer Info (optional)</Text>
+        <Text style={styles.sectionLabel}>Customer Info</Text>
         <Input
-          label="Customer Name"
+          label="Customer Name *"
           placeholder="e.g. Bilal Ahmed"
           value={customerName}
           onChangeText={setCustomerName}
+          error={errors.customerName}
         />
         <Input
-          label="Customer Phone"
+          label="Customer Phone *"
           placeholder="03001234567"
           value={customerPhone}
           onChangeText={(v: string) => setCustomerPhone(formatPhone(v))}
           keyboardType="phone-pad"
           maxLength={11}
+          error={errors.customerPhone}
           autoComplete="off"
           importantForAutofill="no"
           textContentType="none"

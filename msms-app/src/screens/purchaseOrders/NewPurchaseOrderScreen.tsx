@@ -33,6 +33,7 @@ export default function NewPurchaseOrderScreen() {
   const [lines,         setLines]         = useState<DraftLine[]>([newLine()]);
   const [loading,       setLoading]       = useState(false);
   const [error,         setError]         = useState('');
+  const [errors,        setErrors]        = useState<Record<string, string>>({});
 
   function updateLine(key: string, patch: Partial<DraftLine>) {
     setLines((prev) => prev.map((l) => (l.key === key ? { ...l, ...patch } : l)));
@@ -48,8 +49,18 @@ export default function NewPurchaseOrderScreen() {
 
   const total = lines.reduce((sum, l) => sum + (Number(l.quantity) || 0) * (Number(l.unitPrice) || 0), 0);
 
+  function validate() {
+    const e: Record<string, string> = {};
+    if (!supplierName.trim())  e.supplierName  = 'Supplier name is required';
+    if (!supplierPhone.trim()) e.supplierPhone = 'Supplier phone is required';
+    else if (supplierPhone.length !== 11) e.supplierPhone = 'Phone must be 11 digits';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  }
+
   async function handleSubmit() {
     setError('');
+    if (!validate()) return;
     if (lines.some((l) => !l.product)) { setError('Every line needs a product'); return; }
     if (lines.some((l) => !l.quantity || Number(l.quantity) <= 0)) { setError('Every line needs a valid quantity'); return; }
     if (lines.some((l) => !l.unitPrice || Number(l.unitPrice) <= 0)) { setError('Every line needs a valid price'); return; }
@@ -60,8 +71,8 @@ export default function NewPurchaseOrderScreen() {
     setLoading(true);
     try {
       await purchaseOrdersApi.create({
-        supplierName:  supplierName.trim()  || undefined,
-        supplierPhone: supplierPhone.trim() || undefined,
+        supplierName:  supplierName.trim(),
+        supplierPhone: supplierPhone.trim(),
         expectedDate:  expDate ? expDate.toISOString() : undefined,
         notes:         notes.trim() || undefined,
         items: lines.map((l) => ({
@@ -90,20 +101,22 @@ export default function NewPurchaseOrderScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
-        <Text style={styles.sectionLabel}>Supplier Info (optional)</Text>
+        <Text style={styles.sectionLabel}>Supplier Info</Text>
         <Input
-          label="Supplier Name"
+          label="Supplier Name *"
           placeholder="e.g. Malik Traders"
           value={supplierName}
           onChangeText={setSupplierName}
+          error={errors.supplierName}
         />
         <Input
-          label="Supplier Phone"
+          label="Supplier Phone *"
           placeholder="03001234567"
           value={supplierPhone}
           onChangeText={(v: string) => setSupplierPhone(formatPhone(v))}
           keyboardType="phone-pad"
           maxLength={11}
+          error={errors.supplierPhone}
           autoComplete="off"
           importantForAutofill="no"
           textContentType="none"

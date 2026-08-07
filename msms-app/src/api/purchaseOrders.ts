@@ -33,11 +33,11 @@ export interface PoItemPayload {
 }
 
 export interface CreatePurchaseOrderPayload {
-  supplierName?:  string;
-  supplierPhone?: string;
-  expectedDate?:  string;
-  notes?:         string;
-  items:          PoItemPayload[];
+  supplierName:  string;
+  supplierPhone: string;
+  expectedDate?: string;
+  notes?:        string;
+  items:         PoItemPayload[];
 }
 
 export interface ReceiveGoodsPayload {
