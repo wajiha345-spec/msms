@@ -35,6 +35,9 @@ export default function ImeiSearchScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={styles.backBtn}>← Back</Text>
+        </TouchableOpacity>
         <Text style={styles.title}>IMEI Search</Text>
       </View>
 
@@ -212,6 +215,7 @@ const styles = StyleSheet.create({
   container:      { flex: 1, backgroundColor: colors.background },
   center:         { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 40 },
   header: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
     paddingHorizontal: 16,
     paddingTop:        54,
     paddingBottom:     14,
@@ -219,6 +223,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  backBtn:        { color: colors.primary, fontSize: 15, fontWeight: '500' },
   title:          { fontSize: 20, fontWeight: '700', color: colors.text },
   searchBox: {
     flexDirection:   'row',

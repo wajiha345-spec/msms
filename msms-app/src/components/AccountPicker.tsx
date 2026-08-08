@@ -11,9 +11,10 @@ interface AccountPickerProps {
   onChange:    (account: Account) => void;
   label?:      string;
   filterType?: AccountType; // when set, only accounts of this type are shown/selectable
+  excludeCodes?: string[];  // when set, these account codes are hidden (e.g. tracking-only accounts)
 }
 
-export function AccountPicker({ value, onChange, label = 'Account', filterType }: AccountPickerProps) {
+export function AccountPicker({ value, onChange, label = 'Account', filterType, excludeCodes }: AccountPickerProps) {
   const [open,     setOpen]     = useState(false);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [search,   setSearch]   = useState('');
@@ -23,14 +24,16 @@ export function AccountPicker({ value, onChange, label = 'Account', filterType }
     setLoading(true);
     try {
       const res = await accountingApi.listAccounts();
-      const active = res.data.data.filter((a) => a.isActive);
-      setAccounts(filterType ? active.filter((a) => a.type === filterType) : active);
+      let active = res.data.data.filter((a) => a.isActive);
+      if (filterType)    active = active.filter((a) => a.type === filterType);
+      if (excludeCodes)  active = active.filter((a) => !excludeCodes.includes(a.code));
+      setAccounts(active);
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(() => { if (open) load(); }, [open, filterType]);
+  useEffect(() => { if (open) load(); }, [open, filterType, excludeCodes]);
 
   const filtered = accounts.filter((a) => {
     const q = search.trim().toLowerCase();

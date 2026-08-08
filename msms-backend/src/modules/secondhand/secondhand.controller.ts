@@ -50,6 +50,7 @@ export async function create(req: AuthRequest, res: Response) {
       sellerName, sellerCnic, sellerPhone,
       purchasePrice, notes,
       storage, color, ram,
+      paymentMethod, cashAmount, accountId, accountAmount,
     } = req.body;
 
     if (!mobileName) return fail(res, 'mobileName is required');
@@ -99,6 +100,10 @@ export async function create(req: AuthRequest, res: Response) {
         storage: storage ?? undefined,
         color:   color   ?? undefined,
         ram:     ram     ?? undefined,
+        paymentMethod,
+        cashAmount:    cashAmount    !== undefined ? Number(cashAmount)    : undefined,
+        accountId,
+        accountAmount: accountAmount !== undefined ? Number(accountAmount) : undefined,
       },
       io
     );

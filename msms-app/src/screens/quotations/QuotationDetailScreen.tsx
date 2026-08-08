@@ -7,7 +7,9 @@ import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/nativ
 import * as WebBrowser from 'expo-web-browser';
 import { Button } from '../../components/Buttons';
 import { Badge } from '../../components/Badge';
+import { PaymentMethodPicker } from '../../components/PaymentMethodPicker';
 import { quotationsApi, Quotation, QuotationStatus } from '../../api/quotations';
+import { PaymentFields } from '../../api/payment';
 import { colors } from '../../theme/colors';
 
 const STATUS_BADGE: Record<QuotationStatus, 'default' | 'success' | 'danger'> = {
@@ -24,6 +26,8 @@ export default function QuotationDetailScreen() {
   const [quotation, setQuotation] = useState<Quotation | null>(null);
   const [loading,   setLoading]   = useState(true);
   const [busy,      setBusy]      = useState(false);
+  const [payment,      setPayment]      = useState<PaymentFields>({});
+  const [paymentError, setPaymentError] = useState('');
 
   async function fetchQuotation() {
     try {
@@ -46,6 +50,15 @@ export default function QuotationDetailScreen() {
   }
 
   async function handleConvert() {
+    setPaymentError('');
+    if (!payment.paymentMethod) { setPaymentError('Select how the payment was received'); return; }
+    if (payment.paymentMethod !== 'CASH' && !payment.accountId) { setPaymentError('Select an account'); return; }
+    if (payment.paymentMethod === 'SPLIT' && quotation) {
+      const quoteTotal = quotation.items.reduce((sum, i) => sum + i.lineTotal, 0);
+      const sum = (payment.cashAmount ?? 0) + (payment.accountAmount ?? 0);
+      if (Math.abs(sum - quoteTotal) > 0.01) { setPaymentError('Split amounts must add up to the total'); return; }
+    }
+
     Alert.alert(
       'Convert to Sale',
       'This will create a sale for each line item and deduct stock. Continue?',
@@ -55,7 +68,7 @@ export default function QuotationDetailScreen() {
           text: 'Convert', onPress: async () => {
             setBusy(true);
             try {
-              await quotationsApi.convert(id);
+              await quotationsApi.convert(id, payment);
               Alert.alert('Converted ✓', 'Sales have been created.', [{ text: 'OK', onPress: fetchQuotation }]);
             } catch (e: any) {
               Alert.alert('Error', e?.response?.data?.error || 'Could not convert quotation');
@@ -160,7 +173,14 @@ export default function QuotationDetailScreen() {
         <Button label="View / Share PDF" variant="outline" onPress={openView} style={{ marginBottom: 10 }} />
 
         {canConvert && (
-          <Button label="Convert to Sale" onPress={handleConvert} loading={busy} style={{ marginBottom: 10 }} />
+          <>
+            <View style={styles.card}>
+              <Text style={styles.cardLabel}>Payment (on conversion)</Text>
+              <PaymentMethodPicker total={total} value={payment} onChange={setPayment} />
+              {paymentError ? <Text style={styles.paymentError}>{paymentError}</Text> : null}
+            </View>
+            <Button label="Convert to Sale" onPress={handleConvert} loading={busy} style={{ marginBottom: 10 }} />
+          </>
         )}
         {canCancel && (
           <Button label="Cancel Quotation" variant="danger" onPress={handleCancel} loading={busy} />
@@ -217,4 +237,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#fffbeb', padding: 10, borderRadius: 8,
     borderWidth: 1, borderColor: '#fde68a',
   },
+  paymentError: { color: colors.danger, fontSize: 12, marginTop: -4 },
 });

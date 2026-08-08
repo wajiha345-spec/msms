@@ -60,12 +60,16 @@ export async function cancelPurchaseOrderHandler(req: AuthRequest, res: Response
 export async function receiveGoodsHandler(req: AuthRequest, res: Response) {
   try {
     const id = getParamValue(req.params.id);
-    const { receipts, paymentType } = req.body;
+    const { receipts, paymentType, paymentMethod, cashAmount, accountId, accountAmount } = req.body;
     if (!receipts) return fail(res, 'receipts is required');
 
     const io = req.app.get('io');
     const order = await receiveGoods(req.user!.shopId, id, {
       receipts, paymentType, userId: req.user!.userId,
+      paymentMethod,
+      cashAmount:    cashAmount    !== undefined ? Number(cashAmount)    : undefined,
+      accountId,
+      accountAmount: accountAmount !== undefined ? Number(accountAmount) : undefined,
     }, io);
     return ok(res, order);
   } catch (e: any) {

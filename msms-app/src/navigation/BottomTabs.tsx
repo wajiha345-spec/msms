@@ -36,6 +36,7 @@ import ExpenseReportScreen    from '../screens/expenses/ExpenseReportScreen';
 import IncomeListScreen       from '../screens/income/IncomeListScreen';
 import NewIncomeScreen        from '../screens/income/NewIncomeScreen';
 import IncomeReportScreen     from '../screens/income/IncomeReportScreen';
+import DueInstallmentsScreen       from '../screens/sales/DueInstallmentsScreen';
 import CustomerLedgerListScreen    from '../screens/customerLedger/CustomerLedgerListScreen';
 import CustomerStatementScreen     from '../screens/customerLedger/CustomerStatementScreen';
 import RecordCustomerPaymentScreen from '../screens/customerLedger/RecordCustomerPaymentScreen';
@@ -151,6 +152,7 @@ function MoreStack() {
       <MStack.Screen name="IncomeReport"  component={IncomeReportScreen} />
 
       {/* Business Management — Customer & Supplier Ledger */}
+      <MStack.Screen name="DueInstallments"       component={DueInstallmentsScreen} />
       <MStack.Screen name="CustomerLedgerList"    component={CustomerLedgerListScreen} />
       <MStack.Screen name="CustomerStatement"     component={CustomerStatementScreen} />
       <MStack.Screen name="RecordCustomerPayment" component={RecordCustomerPaymentScreen} />

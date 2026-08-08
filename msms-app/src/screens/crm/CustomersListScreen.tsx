@@ -73,6 +73,9 @@ export default function CustomersListScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={styles.backBtn}>← Back</Text>
+        </TouchableOpacity>
         <Text style={styles.title}>Customers</Text>
         <TouchableOpacity style={styles.addBtn} onPress={() => navigation.navigate('NewCustomer')}>
           <Text style={styles.addBtnText}>+ Add</Text>
@@ -136,6 +139,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderBottomWidth: 1, borderBottomColor: colors.border,
   },
+  backBtn: { color: colors.primary, fontSize: 15, fontWeight: '500' },
   title: { fontSize: 20, fontWeight: '700', color: colors.text },
   addBtn: { backgroundColor: colors.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
   addBtnText: { color: '#fff', fontWeight: '600', fontSize: 14 },

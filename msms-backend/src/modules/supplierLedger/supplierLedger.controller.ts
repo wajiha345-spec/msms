@@ -44,12 +44,15 @@ export async function getAgingHandler(req: AuthRequest, res: Response) {
 
 export async function recordPaymentHandler(req: AuthRequest, res: Response) {
   try {
-    const { purchaseId, amount, method, note } = req.body;
+    const { purchaseId, amount, method, note, cashAmount, accountId, accountAmount } = req.body;
     if (!purchaseId) return fail(res, 'purchaseId is required');
     if (!amount) return fail(res, 'amount is required');
 
     const result = await recordPayment(req.user!.shopId, {
       purchaseId, amount: Number(amount), method, note, userId: req.user!.userId,
+      cashAmount:    cashAmount    !== undefined ? Number(cashAmount)    : undefined,
+      accountId,
+      accountAmount: accountAmount !== undefined ? Number(accountAmount) : undefined,
     });
     return ok(res, result);
   } catch (e: any) {

@@ -16,6 +16,13 @@ export function formatDateInput(text: string): string {
   return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
 }
 
+// Formats a Date as "DD/MM/YYYY" — the inverse of parseDDMMYYYY below.
+export function formatDDMMYYYY(date: Date): string {
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  return `${dd}/${mm}/${date.getFullYear()}`;
+}
+
 // Parses a "DD/MM/YYYY" string into a Date, returning null if invalid.
 export function parseDDMMYYYY(text: string): Date | null {
   const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(text);

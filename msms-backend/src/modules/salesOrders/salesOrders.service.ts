@@ -1,6 +1,14 @@
 import { prisma } from '../../config/db';
 import { Server } from 'socket.io';
 import { createSale } from '../sales/sales.service';
+import { validatePaymentSplit, apportionSplit } from '../accounting/accounting.service';
+
+interface PaymentInput {
+  paymentMethod?: string; // "CASH" | "ACCOUNT" | "SPLIT"
+  cashAmount?:    number;
+  accountId?:     string;
+  accountAmount?: number;
+}
 
 const ADVANCEABLE_STATUSES = ['PENDING', 'PROCESSING', 'SHIPPED'];
 
@@ -114,17 +122,25 @@ export async function cancelSalesOrder(shopId: string, id: string) {
   return prisma.salesOrder.update({ where: { id }, data: { status: 'CANCELLED' } });
 }
 
-export async function markDelivered(shopId: string, userId: string, id: string, io: Server) {
+export async function markDelivered(shopId: string, userId: string, id: string, io: Server, payment: PaymentInput) {
   const so = await prisma.salesOrder.findFirst({ where: { id, shopId }, include: { items: true } });
   if (!so) throw new Error('Sales order not found');
   if (so.status === 'DELIVERED') throw new Error('Order has already been delivered');
   if (so.status === 'CANCELLED') throw new Error('Cannot deliver a cancelled order');
 
+  const itemTotals = so.items.map((item) => item.quantity * item.unitPrice);
+  const grandTotal  = itemTotals.reduce((s, a) => s + a, 0);
+  validatePaymentSplit(payment.paymentMethod, grandTotal, payment.cashAmount, payment.accountId, payment.accountAmount);
+  const perItemSplit = payment.paymentMethod === 'SPLIT'
+    ? apportionSplit(itemTotals, payment.cashAmount ?? 0, payment.accountAmount ?? 0)
+    : null;
+
   // Reuses sales.service.ts's createSale() unchanged — one call per line
   // item, same shape Quotations' convert step already uses, including its
-  // existing real-time stock check.
+  // existing real-time stock check. The one payment choice made for the
+  // whole delivery is proportionally apportioned across items when Split.
   const createdSales = [];
-  for (const item of so.items) {
+  for (const [i, item] of so.items.entries()) {
     const sale = await createSale(
       shopId,
       {
@@ -135,6 +151,10 @@ export async function markDelivered(shopId: string, userId: string, id: string, 
         customerName:  so.customerName  ?? undefined,
         customerPhone: so.customerPhone ?? undefined,
         userId,
+        paymentMethod: payment.paymentMethod,
+        accountId:     payment.accountId,
+        cashAmount:    perItemSplit ? perItemSplit[i].cashAmount    : undefined,
+        accountAmount: perItemSplit ? perItemSplit[i].accountAmount : undefined,
       },
       io
     );

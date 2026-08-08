@@ -18,6 +18,7 @@ export interface OverdueInstallment {
   customerPhone: string | null;
   pendingAmount: number;
   dueDate:       string | null;
+  installmentNumber: number;
 }
 
 export interface OverdueFollowUp {
@@ -35,6 +36,7 @@ export interface UpcomingLicenseInstallment {
 
 export interface AttentionItems {
   overdueInstallments: OverdueInstallment[];
+  dueSoonInstallments: OverdueInstallment[];
   overdueFollowUps:    OverdueFollowUp[];
   upcomingLicenseInstallment: UpcomingLicenseInstallment | null;
 }

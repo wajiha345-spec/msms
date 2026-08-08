@@ -1,6 +1,10 @@
 import { prisma } from '../../config/db';
 import { Server } from 'socket.io';
 import { markInstallmentPaid } from '../sales/sales.service';
+import {
+  postJournalEntry, buildCashAccountLines, validatePaymentSplit,
+  getSystemAccountId, SYSTEM_ACCOUNT_CODES,
+} from '../accounting/accounting.service';
 
 const TOLERANCE = 0.01;
 
@@ -171,9 +175,12 @@ export async function getAgingReport(shopId: string) {
 interface RecordPaymentInput {
   saleId:  string;
   amount:  number;
-  method?: string;
+  method?: string; // "CASH" | "ACCOUNT" | "SPLIT" — Cash/Account ledger wiring
   note?:   string;
   userId:  string;
+  cashAmount?:    number;
+  accountId?:     string;
+  accountAmount?: number;
 }
 
 export async function recordPayment(shopId: string, data: RecordPaymentInput, io: Server) {
@@ -193,6 +200,13 @@ export async function recordPayment(shopId: string, data: RecordPaymentInput, io
     throw new Error(`Payment of ${data.amount.toFixed(2)} exceeds outstanding balance of ${outstanding.toFixed(2)}`);
   }
 
+  // method is optional here (unlike Sale/Purchase creation) — this endpoint
+  // predates the Cash/Account ledger wiring and is still reachable without
+  // it; only validate/post to the ledger when the caller opts in.
+  if (data.method) {
+    validatePaymentSplit(data.method, data.amount, data.cashAmount, data.accountId, data.accountAmount);
+  }
+
   const payment = await prisma.salePayment.create({
     data: {
       saleId:  data.saleId,
@@ -203,6 +217,38 @@ export async function recordPayment(shopId: string, data: RecordPaymentInput, io
       userId:  data.userId,
     },
   });
+
+  // This free-form payment settles part of the Accounts Receivable accrued
+  // when the installment sale was recorded (see sales.service.ts:createSale)
+  // — same Debit Cash/Account / Credit AR treatment as
+  // saleInstallments.service.ts:markInstallmentPaid uses for the structured
+  // 1st/2nd/3rd flow, since a shop owner can use either path to pay down the
+  // same sale. Best-effort/logged; skipped entirely if no method was given.
+  if (data.method) {
+    try {
+      const arAccountId = await getSystemAccountId(shopId, SYSTEM_ACCOUNT_CODES.ACCOUNTS_RECEIVABLE);
+      const debitLines = await buildCashAccountLines(shopId, {
+        paymentMethod: data.method,
+        cashAmount: data.cashAmount,
+        accountId: data.accountId,
+        accountAmount: data.accountAmount,
+        amount: data.amount,
+        description: `Payment for sale ${data.saleId}`,
+        side: 'debit',
+      });
+      await postJournalEntry(shopId, data.userId, {
+        memo: `Customer payment (${sale.customerName ?? sale.invoiceNo})`,
+        sourceModule: 'SALE_PAYMENT',
+        sourceId: payment.id,
+        lines: [
+          ...debitLines,
+          { accountId: arAccountId, credit: data.amount, description: `Payment for sale ${data.saleId}` },
+        ],
+      });
+    } catch (err: any) {
+      console.error('[SalePayment] ledger posting failed for', payment.id, err?.message);
+    }
+  }
 
   const newOutstanding = outstanding - data.amount;
   if (newOutstanding <= TOLERANCE && !sale.installmentPaid) {

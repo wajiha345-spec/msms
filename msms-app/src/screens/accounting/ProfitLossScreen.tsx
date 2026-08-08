@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  ActivityIndicator, Alert,
+  ActivityIndicator, Alert, TouchableOpacity,
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Input }  from '../../components/Inputs';
 import { Button } from '../../components/Buttons';
 import { accountingApi, ProfitAndLoss, ProfitAndLossRow } from '../../api/accounting';
@@ -31,6 +31,7 @@ function Section({ title, rows, total, color }: { title: string; rows: ProfitAnd
 }
 
 export default function ProfitLossScreen() {
+  const navigation = useNavigation<any>();
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo,   setDateTo]   = useState('');
   const [pl,       setPl]       = useState<ProfitAndLoss | null>(null);
@@ -61,6 +62,9 @@ export default function ProfitLossScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={styles.backBtn}>← Back</Text>
+        </TouchableOpacity>
         <Text style={styles.title}>Profit & Loss</Text>
       </View>
 
@@ -101,10 +105,12 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center:    { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
     paddingHorizontal: 16, paddingTop: 54, paddingBottom: 12,
     backgroundColor: colors.card,
     borderBottomWidth: 1, borderBottomColor: colors.border,
   },
+  backBtn: { color: colors.primary, fontSize: 15, fontWeight: '500' },
   title: { fontSize: 20, fontWeight: '700', color: colors.text },
   filterRow: {
     flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 12,

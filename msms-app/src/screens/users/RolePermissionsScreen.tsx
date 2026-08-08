@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  Switch, ActivityIndicator, Alert,
+  Switch, ActivityIndicator, Alert, TouchableOpacity,
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import VariantPicker from '../../components/VariantPicker';
 import {
   usersApi, RolePermissionRow,
@@ -15,6 +15,7 @@ import { colors } from '../../theme/colors';
 const ROLE_OPTIONS = ASSIGNABLE_ROLES.map((r) => r.charAt(0).toUpperCase() + r.slice(1));
 
 export default function RolePermissionsScreen() {
+  const navigation = useNavigation<any>();
   const [roleLabel,    setRoleLabel]    = useState(ROLE_OPTIONS[0]);
   const [rows,         setRows]         = useState<RolePermissionRow[]>([]);
   const [loading,      setLoading]      = useState(true);
@@ -63,6 +64,9 @@ export default function RolePermissionsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtnRow}>
+          <Text style={styles.backBtn}>← Back</Text>
+        </TouchableOpacity>
         <Text style={styles.title}>Role Permissions</Text>
         <Text style={styles.subtitle}>Choose what each role can access</Text>
       </View>
@@ -112,6 +116,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderBottomWidth: 1, borderBottomColor: colors.border,
   },
+  backBtnRow: { marginBottom: 8 },
+  backBtn:  { color: colors.primary, fontSize: 15, fontWeight: '500' },
   title:    { fontSize: 20, fontWeight: '700', color: colors.text },
   subtitle: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   pickerRow: { padding: 16, paddingBottom: 0, backgroundColor: colors.card },

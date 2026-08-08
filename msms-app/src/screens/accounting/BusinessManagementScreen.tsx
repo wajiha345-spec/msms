@@ -29,6 +29,9 @@ export default function BusinessManagementScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtnRow}>
+          <Text style={styles.backBtn}>← Back</Text>
+        </TouchableOpacity>
         <Text style={styles.title}>Business Management</Text>
         <Text style={styles.subtitle}>Accounting & financial records</Text>
       </View>
@@ -96,6 +99,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  backBtnRow: { marginBottom: 10 },
+  backBtn:  { color: colors.primary, fontSize: 15, fontWeight: '500' },
   title:    { fontSize: 22, fontWeight: '800', color: colors.text },
   subtitle: { fontSize: 13, color: colors.textMuted, marginTop: 4 },
   scroll: { padding: 16, paddingBottom: 40 },

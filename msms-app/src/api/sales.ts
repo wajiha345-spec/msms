@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import { PaymentFields } from './payment';
 
 export interface Guarantor {
   id?:   string;
@@ -29,7 +30,7 @@ export interface Sale {
   recordedBy:    { username: string };
 }
 
-export interface CreateSalePayload {
+export interface CreateSalePayload extends PaymentFields {
   productId:     string;
   quantity:      number;
   salePrice:     number;

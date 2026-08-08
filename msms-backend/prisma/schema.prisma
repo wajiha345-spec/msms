@@ -129,15 +129,56 @@ model Sale {
   installmentPaid    Boolean           @default(false)
   guarantors         Guarantor[]
   payments           SalePayment[]
+  installments       SaleInstallment[]
   quotationItems     QuotationItem[]
   salesOrderItems    SalesOrderItem[]
   branch             Branch?           @relation(fields: [branchId], references: [id])
   branchId           String?
+  // Cash/Account ledger wiring (Business Management) — only set for CASH
+  // sales at creation time; INSTALLMENT sales post an Accounts Receivable
+  // accrual entry instead (see journalEntryId) and cash lands later via
+  // SaleInstallment.journalEntryId on each mark-paid.
+  paymentMethod      String?           // "CASH" | "ACCOUNT" | "SPLIT"
+  cashAmount         Float?
+  account            Account?          @relation("SaleAccount", fields: [accountId], references: [id])
+  accountId          String?
+  accountAmount      Float?
+  journalEntry       JournalEntry?     @relation(fields: [journalEntryId], references: [id])
+  journalEntryId     String?           @unique
   createdAt          DateTime          @default(now())
 
   @@unique([shopId, invoiceNo])
   @@index([paymentType, installmentPaid, installmentDueDate])
   @@index([shopId])
+}
+
+// ── Business Management: Sale Installment schedule (1st/2nd/3rd) ─────────────
+// Splits an INSTALLMENT Sale's totalAmount into 3 equal tracked payments,
+// layered on top of the existing Sale.installmentDueDate/installmentPaid
+// (which stay pointed at installment #1 / "all 3 paid" respectively, so every
+// pre-existing consumer keeps working unchanged). Marking one paid also
+// writes a SalePayment row so customerLedger.service.ts's existing
+// outstanding-balance math (which sums SalePayment) stays correct for free.
+model SaleInstallment {
+  id                String        @id @default(cuid())
+  sale              Sale          @relation(fields: [saleId], references: [id])
+  saleId            String
+  installmentNumber Int           // 1, 2, 3
+  amount            Float
+  dueDate           DateTime
+  status            String        @default("PENDING") // "PENDING" | "PAID"
+  paidAt            DateTime?
+  paymentMethod     String?       // "CASH" | "ACCOUNT" | "SPLIT" — set on mark-paid
+  cashAmount        Float?
+  account           Account?      @relation("SaleInstallmentAccount", fields: [accountId], references: [id])
+  accountId         String?
+  accountAmount     Float?
+  journalEntry      JournalEntry? @relation(fields: [journalEntryId], references: [id])
+  journalEntryId    String?       @unique
+  createdAt         DateTime      @default(now())
+
+  @@index([saleId])
+  @@index([status, dueDate])
 }
 
 model Guarantor {
@@ -169,6 +210,16 @@ model Purchase {
   payments       SupplierPayment[]
   branch        Branch?  @relation(fields: [branchId], references: [id])
   branchId      String?
+  // Cash/Account ledger wiring — only set for CASH purchases at creation;
+  // CREDIT purchases post an Accounts Payable accrual entry instead and cash
+  // lands later via SupplierPayment.journalEntryId on each settlement.
+  paymentMethod  String?  // "CASH" | "ACCOUNT" | "SPLIT"
+  cashAmount     Float?
+  account        Account? @relation("PurchaseAccount", fields: [accountId], references: [id])
+  accountId      String?
+  accountAmount  Float?
+  journalEntry   JournalEntry? @relation(fields: [journalEntryId], references: [id])
+  journalEntryId String?  @unique
   createdAt     DateTime @default(now())
 
   @@index([shopId])
@@ -269,6 +320,16 @@ model SecondhandRecord {
   isSold         Boolean  @default(false)
   createdAt      DateTime @default(now())
   sales          Sale[]
+  // Cash/Account ledger wiring — secondhand buys are always immediate cash
+  // (no credit concept here), so these are set at creation time same as a
+  // cash purchase.
+  paymentMethod  String?  // "CASH" | "ACCOUNT" | "SPLIT"
+  cashAmount     Float?
+  account        Account? @relation("SecondhandAccount", fields: [accountId], references: [id])
+  accountId      String?
+  accountAmount  Float?
+  journalEntry   JournalEntry? @relation(fields: [journalEntryId], references: [id])
+  journalEntryId String?  @unique
 
   @@index([shopId])
 }
@@ -301,6 +362,11 @@ model Account {
   incomesAsReceivedInto    Income[]  @relation("IncomeReceivedInto")
   reconciliations          Reconciliation[]
   closingEntries           ClosingEntry[]
+  salesAsAccount           Sale[]             @relation("SaleAccount")
+  purchasesAsAccount       Purchase[]         @relation("PurchaseAccount")
+  secondhandAsAccount      SecondhandRecord[] @relation("SecondhandAccount")
+  supplierPaymentsAsAccount SupplierPayment[] @relation("SupplierPaymentAccount")
+  saleInstallmentsAsAccount SaleInstallment[] @relation("SaleInstallmentAccount")
 
   @@unique([shopId, code])
   @@index([shopId])
@@ -324,6 +390,11 @@ model JournalEntry {
   expense         Expense?
   income          Income?
   closingEntry    ClosingEntry?
+  sale             Sale?
+  purchase         Purchase?
+  secondhandRecord SecondhandRecord?
+  supplierPayment  SupplierPayment?
+  saleInstallment  SaleInstallment?
 
   @@unique([shopId, entryNo])
   @@index([shopId, date])
@@ -452,11 +523,20 @@ model SupplierPayment {
   shop       Shop     @relation(fields: [shopId], references: [id])
   shopId     String
   amount     Float
-  method     String   @default("CASH")
+  method     String   @default("CASH") // "CASH" | "ACCOUNT" | "SPLIT" (Cash/Account ledger wiring)
   note       String?
   recordedBy User     @relation(fields: [userId], references: [id])
   userId     String
   createdAt  DateTime @default(now())
+  // Cash/Account ledger wiring — settling a credit purchase posts Debit
+  // Accounts Payable / Credit Cash-or-Account, same pattern as
+  // SaleInstallment's mark-paid.
+  cashAmount     Float?
+  account        Account? @relation("SupplierPaymentAccount", fields: [accountId], references: [id])
+  accountId      String?
+  accountAmount  Float?
+  journalEntry   JournalEntry? @relation(fields: [journalEntryId], references: [id])
+  journalEntryId String?  @unique
 
   @@index([purchaseId])
   @@index([shopId])

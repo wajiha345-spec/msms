@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, FlatList, StyleSheet,
-  RefreshControl, ActivityIndicator, Alert,
+  RefreshControl, ActivityIndicator, Alert, TouchableOpacity,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { incomeApi, Income } from '../../api/income';
@@ -59,6 +59,9 @@ export default function IncomeListScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={styles.backBtn}>← Back</Text>
+        </TouchableOpacity>
         <Text style={styles.title}>Income</Text>
         <Button
           label="+ New Income"
@@ -115,6 +118,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderBottomWidth: 1, borderBottomColor: colors.border,
   },
+  backBtn: { color: colors.primary, fontSize: 15, fontWeight: '500' },
   title: { fontSize: 20, fontWeight: '700', color: colors.text },
   todayStrip: {
     flexDirection: 'row', alignItems: 'center',

@@ -1,6 +1,14 @@
 import { prisma } from '../../config/db';
 import { Server } from 'socket.io';
 import { createSale } from '../sales/sales.service';
+import { validatePaymentSplit, apportionSplit } from '../accounting/accounting.service';
+
+interface PaymentInput {
+  paymentMethod?: string; // "CASH" | "ACCOUNT" | "SPLIT"
+  cashAmount?:    number;
+  accountId?:     string;
+  accountAmount?: number;
+}
 
 // Build quote number like QUO-20260806-0001 — same per-shop-per-day counter
 // pattern as sales.service.ts:generateInvoiceNo.
@@ -110,7 +118,9 @@ export async function cancelQuotation(shopId: string, id: string) {
   return prisma.quotation.update({ where: { id }, data: { status: 'CANCELLED' } });
 }
 
-export async function convertQuotationToSales(shopId: string, userId: string, id: string, io: Server) {
+export async function convertQuotationToSales(
+  shopId: string, userId: string, id: string, io: Server, payment: PaymentInput
+) {
   const quotation = await prisma.quotation.findFirst({
     where:   { id, shopId },
     include: { items: true },
@@ -126,11 +136,20 @@ export async function convertQuotationToSales(shopId: string, userId: string, id
     );
   }
 
+  const itemTotals = quotation.items.map((item) => item.quantity * item.unitPrice);
+  const grandTotal  = itemTotals.reduce((s, a) => s + a, 0);
+  validatePaymentSplit(payment.paymentMethod, grandTotal, payment.cashAmount, payment.accountId, payment.accountAmount);
+  const perItemSplit = payment.paymentMethod === 'SPLIT'
+    ? apportionSplit(itemTotals, payment.cashAmount ?? 0, payment.accountAmount ?? 0)
+    : null;
+
   // Reuses sales.service.ts's createSale() unchanged — one call per line
   // item, so stock is re-checked for real at conversion time and no
-  // stock-decrement/transaction logic is duplicated here.
+  // stock-decrement/transaction logic is duplicated here. The one payment
+  // choice made for the whole conversion is proportionally apportioned
+  // across items when Split, so each item's own ledger entry still balances.
   const createdSales = [];
-  for (const item of quotation.items) {
+  for (const [i, item] of quotation.items.entries()) {
     const sale = await createSale(
       shopId,
       {
@@ -141,6 +160,10 @@ export async function convertQuotationToSales(shopId: string, userId: string, id
         customerName:  quotation.customerName  ?? undefined,
         customerPhone: quotation.customerPhone ?? undefined,
         userId,
+        paymentMethod: payment.paymentMethod,
+        accountId:     payment.accountId,
+        cashAmount:    perItemSplit ? perItemSplit[i].cashAmount    : undefined,
+        accountAmount: perItemSplit ? perItemSplit[i].accountAmount : undefined,
       },
       io
     );

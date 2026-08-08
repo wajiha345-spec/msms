@@ -1,13 +1,14 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, FlatList, StyleSheet,
-  ActivityIndicator, Alert,
+  ActivityIndicator, Alert, TouchableOpacity,
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { accountingApi, TrialBalance, TrialBalanceRow } from '../../api/accounting';
 import { colors } from '../../theme/colors';
 
 export default function TrialBalanceScreen() {
+  const navigation = useNavigation<any>();
   const [trialBalance, setTrialBalance] = useState<TrialBalance | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -50,6 +51,9 @@ export default function TrialBalanceScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={styles.backBtn}>← Back</Text>
+        </TouchableOpacity>
         <Text style={styles.title}>Trial Balance</Text>
       </View>
 
@@ -91,10 +95,12 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center:    { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
     paddingHorizontal: 16, paddingTop: 54, paddingBottom: 12,
     backgroundColor: colors.card,
     borderBottomWidth: 1, borderBottomColor: colors.border,
   },
+  backBtn: { color: colors.primary, fontSize: 15, fontWeight: '500' },
   title: { fontSize: 20, fontWeight: '700', color: colors.text },
 
   columnHeader: {

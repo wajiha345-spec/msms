@@ -6,7 +6,9 @@ import {
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { Button } from '../../components/Buttons';
 import { Badge } from '../../components/Badge';
+import { PaymentMethodPicker } from '../../components/PaymentMethodPicker';
 import { salesOrdersApi, SalesOrder, SalesOrderStatus } from '../../api/salesOrders';
+import { PaymentFields } from '../../api/payment';
 import { colors } from '../../theme/colors';
 
 const STATUS_BADGE: Record<SalesOrderStatus, 'default' | 'info' | 'warning' | 'success' | 'danger'> = {
@@ -25,6 +27,8 @@ export default function SalesOrderDetailScreen() {
   const [order,   setOrder]   = useState<SalesOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy,    setBusy]    = useState(false);
+  const [payment, setPayment] = useState<PaymentFields>({});
+  const [paymentError, setPaymentError] = useState('');
 
   async function fetchOrder() {
     try {
@@ -52,6 +56,15 @@ export default function SalesOrderDetailScreen() {
   }
 
   async function handleDeliver() {
+    setPaymentError('');
+    if (!payment.paymentMethod) { setPaymentError('Select how the payment was received'); return; }
+    if (payment.paymentMethod !== 'CASH' && !payment.accountId) { setPaymentError('Select an account'); return; }
+    if (payment.paymentMethod === 'SPLIT' && order) {
+      const orderTotal = order.items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
+      const sum = (payment.cashAmount ?? 0) + (payment.accountAmount ?? 0);
+      if (Math.abs(sum - orderTotal) > 0.01) { setPaymentError('Split amounts must add up to the total'); return; }
+    }
+
     Alert.alert(
       'Mark Delivered',
       'This will create a sale for each line item and deduct stock. Continue?',
@@ -61,7 +74,7 @@ export default function SalesOrderDetailScreen() {
           text: 'Confirm', onPress: async () => {
             setBusy(true);
             try {
-              await salesOrdersApi.deliver(id);
+              await salesOrdersApi.deliver(id, payment);
               Alert.alert('Delivered ✓', 'Sales have been created.', [{ text: 'OK', onPress: fetchOrder }]);
             } catch (e: any) {
               Alert.alert('Error', e?.response?.data?.error || 'Could not mark as delivered');
@@ -161,6 +174,11 @@ export default function SalesOrderDetailScreen() {
             {(order.status === 'PENDING' || order.status === 'PROCESSING') && (
               <Button label="Mark Shipped" variant="outline" onPress={() => handleAdvance('SHIPPED')} loading={busy} style={{ marginBottom: 10 }} />
             )}
+            <View style={styles.card}>
+              <Text style={styles.cardLabel}>Payment (on delivery)</Text>
+              <PaymentMethodPicker total={total} value={payment} onChange={setPayment} />
+              {paymentError ? <Text style={styles.paymentError}>{paymentError}</Text> : null}
+            </View>
             <Button label="Mark Delivered" onPress={handleDeliver} loading={busy} style={{ marginBottom: 10 }} />
           </>
         )}
@@ -213,4 +231,5 @@ const styles = StyleSheet.create({
   totalValue: { fontSize: 16, fontWeight: '800', color: colors.text },
 
   notes: { fontSize: 13, color: colors.text, lineHeight: 19 },
+  paymentError: { color: colors.danger, fontSize: 12, marginTop: -4 },
 });

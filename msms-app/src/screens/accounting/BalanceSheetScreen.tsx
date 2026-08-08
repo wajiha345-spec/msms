@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  ActivityIndicator, Alert,
+  ActivityIndicator, Alert, TouchableOpacity,
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { accountingApi, BalanceSheet, BalanceSheetRow } from '../../api/accounting';
 import { colors } from '../../theme/colors';
 
@@ -26,6 +26,7 @@ function Section({ title, rows, total }: { title: string; rows: BalanceSheetRow[
 }
 
 export default function BalanceSheetScreen() {
+  const navigation = useNavigation<any>();
   const [sheet,   setSheet]   = useState<BalanceSheet | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -58,6 +59,9 @@ export default function BalanceSheetScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtnRow}>
+          <Text style={styles.backBtn}>← Back</Text>
+        </TouchableOpacity>
         <Text style={styles.title}>Balance Sheet</Text>
         <Text style={styles.subtitle}>As of today</Text>
       </View>
@@ -85,6 +89,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderBottomWidth: 1, borderBottomColor: colors.border,
   },
+  backBtnRow: { marginBottom: 8 },
+  backBtn:  { color: colors.primary, fontSize: 15, fontWeight: '500' },
   title:    { fontSize: 20, fontWeight: '700', color: colors.text },
   subtitle: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   scroll: { padding: 16, paddingBottom: 40 },

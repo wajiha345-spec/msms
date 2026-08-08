@@ -190,6 +190,14 @@ export default function MoreMenuScreen() {
           onPress={() => handleProFeature('Customer Ledger', () => navigation.navigate('CustomerLedgerList'))}
         />
         <MenuItem
+          icon="🗓️"
+          label="Due Installments"
+          subtitle="1st/2nd/3rd installment payments, mark paid"
+          proOnly
+          isPro={isPro}
+          onPress={() => handleProFeature('Due Installments', () => navigation.navigate('DueInstallments'))}
+        />
+        <MenuItem
           icon="🚚"
           label="Supplier Ledger"
           subtitle="Credit purchases, payments & outstanding balances"

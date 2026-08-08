@@ -74,7 +74,13 @@ export async function markDeliveredHandler(req: AuthRequest, res: Response) {
   try {
     const id = getParamValue(req.params.id);
     const io = req.app.get('io');
-    const sales = await markDelivered(req.user!.shopId, req.user!.userId, id, io);
+    const { paymentMethod, cashAmount, accountId, accountAmount } = req.body;
+    const sales = await markDelivered(req.user!.shopId, req.user!.userId, id, io, {
+      paymentMethod,
+      cashAmount:    cashAmount    !== undefined ? Number(cashAmount)    : undefined,
+      accountId,
+      accountAmount: accountAmount !== undefined ? Number(accountAmount) : undefined,
+    });
     return ok(res, sales);
   } catch (e: any) {
     return fail(res, e.message);

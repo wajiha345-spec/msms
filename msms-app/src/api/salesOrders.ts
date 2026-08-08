@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import { PaymentFields } from './payment';
 
 export type SalesOrderStatus = 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
 
@@ -56,6 +57,6 @@ export const salesOrdersApi = {
   cancel: (id: string) =>
     apiClient.post<{ success: boolean; data: SalesOrder }>(`/sales-orders/${id}/cancel`),
 
-  deliver: (id: string) =>
-    apiClient.post<{ success: boolean; data: any[] }>(`/sales-orders/${id}/deliver`),
+  deliver: (id: string, payment: PaymentFields) =>
+    apiClient.post<{ success: boolean; data: any[] }>(`/sales-orders/${id}/deliver`, payment),
 };

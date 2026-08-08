@@ -11,9 +11,11 @@ import { ProductPicker } from '../../components/ProductPicker';
 import VariantPicker     from '../../components/VariantPicker';
 import { BranchPicker }  from '../../components/BranchPicker';
 import { SupplierPicker } from '../../components/SupplierPicker';
+import { PaymentMethodPicker } from '../../components/PaymentMethodPicker';
 import { Product, productsApi } from '../../api/products';
 import { purchasesApi, SupplierContact }  from '../../api/purchases';
 import { Branch }        from '../../api/branches';
+import { PaymentFields } from '../../api/payment';
 import { formatPhone, formatDateInput, parseDDMMYYYY } from '../../utils/format';
 import { colors }        from '../../theme/colors';
 
@@ -39,6 +41,7 @@ export default function NewPurchaseScreen() {
   const [branch,        setBranch]        = useState<Branch | null>(null);
   const [loading,       setLoading]       = useState(false);
   const [errors,        setErrors]        = useState<Record<string, string>>({});
+  const [payment,       setPayment]       = useState<PaymentFields>({});
 
   // Auto-fill purchase price when picking existing product
   function handleProductChange(p: Product) {
@@ -92,6 +95,13 @@ export default function NewPurchaseScreen() {
     if (paymentType === 'Credit') {
       if (!paymentDueDate.trim())            e.paymentDueDate = 'Due date is required';
       else if (!parseDDMMYYYY(paymentDueDate)) e.paymentDueDate = 'Enter a valid date (DD/MM/YYYY)';
+    } else {
+      if (!payment.paymentMethod) e.paymentMethod = 'Select how the payment was made';
+      else if (payment.paymentMethod !== 'CASH' && !payment.accountId) e.paymentMethod = 'Select an account';
+      else if (payment.paymentMethod === 'SPLIT') {
+        const sum = (payment.cashAmount ?? 0) + (payment.accountAmount ?? 0);
+        if (Math.abs(sum - total) > 0.01) e.paymentMethod = 'Split amounts must add up to the total';
+      }
     }
 
     setErrors(e);
@@ -135,6 +145,7 @@ export default function NewPurchaseScreen() {
         paymentType:    isCredit ? 'CREDIT' : 'CASH',
         paymentDueDate: dueDate ? dueDate.toISOString() : undefined,
         branchId:       branch?.id || undefined,
+        ...(isCredit ? {} : payment),
       });
 
       Alert.alert(
@@ -253,6 +264,12 @@ export default function NewPurchaseScreen() {
             maxLength={10}
             error={errors.paymentDueDate}
           />
+        )}
+        {paymentType === 'Cash' && (
+          <>
+            <PaymentMethodPicker total={total} value={payment} onChange={setPayment} />
+            {errors.paymentMethod && <Text style={styles.errorText}>{errors.paymentMethod}</Text>}
+          </>
         )}
 
         <BranchPicker value={branch} onChange={setBranch} />

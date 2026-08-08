@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import { PaymentFields } from './payment';
 
 export type QuotationStatus = 'DRAFT' | 'CONVERTED' | 'CANCELLED';
 
@@ -54,8 +55,8 @@ export const quotationsApi = {
   cancel: (id: string) =>
     apiClient.post<{ success: boolean; data: Quotation }>(`/quotations/${id}/cancel`),
 
-  convert: (id: string) =>
-    apiClient.post<{ success: boolean; data: any[] }>(`/quotations/${id}/convert`),
+  convert: (id: string, payment: PaymentFields) =>
+    apiClient.post<{ success: boolean; data: any[] }>(`/quotations/${id}/convert`, payment),
 
   // Returns the URL to open — same "open in browser" pattern as invoicesApi.getUrl
   getViewUrl: (id: string) =>

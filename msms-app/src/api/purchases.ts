@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import { PaymentFields } from './payment';
 
 export interface Purchase {
   id:            string;
@@ -12,7 +13,7 @@ export interface Purchase {
   recordedBy:    { username: string };
 }
 
-export interface CreatePurchasePayload {
+export interface CreatePurchasePayload extends PaymentFields {
   productId:     string;
   quantity:      number;
   purchasePrice: number;

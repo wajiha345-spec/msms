@@ -69,7 +69,7 @@ export default function ImportProductsScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => navigation.navigate('MoreTab', { screen: 'MoreMenu' })}>
           <Text style={styles.backBtn}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Import Products</Text>

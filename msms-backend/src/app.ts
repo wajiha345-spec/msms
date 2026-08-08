@@ -20,6 +20,7 @@ import accountingRoutes from './modules/accounting/accounting.routes';
 import expensesRoutes   from './modules/expenses/expenses.routes';
 import incomeRoutes     from './modules/income/income.routes';
 import customerLedgerRoutes from './modules/customerLedger/customerLedger.routes';
+import saleInstallmentRoutes from './modules/sales/saleInstallments.routes';
 import supplierLedgerRoutes from './modules/supplierLedger/supplierLedger.routes';
 import cashBankRoutes       from './modules/cashBank/cashBank.routes';
 import quotationRoutes      from './modules/quotations/quotations.routes';
@@ -61,6 +62,10 @@ app.use('/api/license-installments', authenticate, licenseInstallmentRoutes);
 
 // ── SIMPLE + PRO: both plans can access these ────────────────────────────────
 app.use('/api/products', authenticate, checkTrialExpiry, productRoutes);  // import route gated inside
+// Must be registered before /api/sales below — Express matches prefixes in
+// registration order, and /api/sales would otherwise swallow every request
+// under /api/sales/installments/* before this router ever sees them.
+app.use('/api/sales/installments', authenticate, checkTrialExpiry, requirePlan('PRO'), requirePermission('manage_customer_ledger'), saleInstallmentRoutes);
 app.use('/api/sales',    authenticate, checkTrialExpiry, saleRoutes);
 
 // ── PRO only (an active trial counts as PRO) ────────────────────────────────

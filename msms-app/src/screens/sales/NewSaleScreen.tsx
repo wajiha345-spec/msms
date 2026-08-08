@@ -13,12 +13,14 @@ import VariantPicker       from '../../components/VariantPicker';
 import ScannerOverlay      from '../../components/ScannerOverlay';
 import { BranchPicker }    from '../../components/BranchPicker';
 import { CustomerPicker }  from '../../components/CustomerPicker';
+import { PaymentMethodPicker } from '../../components/PaymentMethodPicker';
 import { Product, productsApi } from '../../api/products';
 import { salesApi, Guarantor }  from '../../api/sales';
 import { Branch }          from '../../api/branches';
 import { Customer }        from '../../api/crm';
 import { invoicesApi }     from '../../api/invoices';
-import { formatCnic, formatPhone, formatDateInput, parseDDMMYYYY } from '../../utils/format';
+import { PaymentFields }   from '../../api/payment';
+import { formatCnic, formatPhone, parseDDMMYYYY, formatDDMMYYYY } from '../../utils/format';
 import { colors }          from '../../theme/colors';
 
 const EMPTY_GUARANTOR: Guarantor = { name: '', cnic: '', phone: '' };
@@ -41,6 +43,7 @@ export default function NewSaleScreen() {
   const [branch,        setBranch]        = useState<Branch | null>(null);
   const [loading,       setLoading]       = useState(false);
   const [errors,        setErrors]        = useState<Record<string, string>>({});
+  const [payment,       setPayment]       = useState<PaymentFields>({});
 
   // Installment sale fields
   const [paymentType,        setPaymentType]        = useState<'Cash' | 'Installment'>('Cash');
@@ -49,6 +52,17 @@ export default function NewSaleScreen() {
   const [guarantors,         setGuarantors]         = useState<Guarantor[]>([
     { ...EMPTY_GUARANTOR }, { ...EMPTY_GUARANTOR }, { ...EMPTY_GUARANTOR },
   ]);
+
+  // Installment due date is always exactly one month from today — not
+  // something the shop owner picks. Recomputed every time Installment is
+  // (re)selected so it's never stale from an earlier visit to this screen.
+  useEffect(() => {
+    if (paymentType === 'Installment') {
+      const due = new Date();
+      due.setMonth(due.getMonth() + 1);
+      setInstallmentDueDate(formatDDMMYYYY(due));
+    }
+  }, [paymentType]);
 
   function updateGuarantor(index: number, field: keyof Guarantor, value: string) {
     setGuarantors((prev) => prev.map((g, i) => (i === index ? { ...g, [field]: value } : g)));
@@ -161,6 +175,15 @@ export default function NewSaleScreen() {
     if (!customerPhone.trim()) e.customerPhone = 'Customer phone is required';
     else if (customerPhone.length !== 11) e.customerPhone = 'Phone must be 11 digits';
 
+    if (paymentType === 'Cash') {
+      if (!payment.paymentMethod) e.paymentMethod = 'Select how the payment was received';
+      else if (payment.paymentMethod !== 'CASH' && !payment.accountId) e.paymentMethod = 'Select an account';
+      else if (payment.paymentMethod === 'SPLIT') {
+        const sum = (payment.cashAmount ?? 0) + (payment.accountAmount ?? 0);
+        if (Math.abs(sum - revenue) > 0.01) e.paymentMethod = 'Split amounts must add up to the total';
+      }
+    }
+
     if (paymentType === 'Installment') {
       if (!customerCnic.trim()) e.customerCnic = 'Customer CNIC is required';
       else if (customerCnic.replace(/\D/g, '').length !== 13)
@@ -170,6 +193,8 @@ export default function NewSaleScreen() {
       else if (!parseDDMMYYYY(installmentDueDate)) e.installmentDueDate = 'Enter a valid date (DD/MM/YYYY)';
 
       guarantors.forEach((g, i) => {
+        if (!g.name?.trim()) e[`guarantor${i}Name`] = 'Guarantor name is required';
+
         if (!g.cnic.trim()) e[`guarantor${i}Cnic`] = 'Guarantor CNIC is required';
         else if (g.cnic.replace(/\D/g, '').length !== 13) e[`guarantor${i}Cnic`] = 'CNIC must be 13 digits';
 
@@ -208,6 +233,7 @@ export default function NewSaleScreen() {
         installmentDueDate: dueDate ? dueDate.toISOString() : undefined,
         guarantors:    isInstallment ? guarantors : undefined,
         branchId:      branch?.id || undefined,
+        ...(isInstallment ? {} : payment),
       });
 
       const invoiceUrl = invoicesApi.getUrl(sale.data.data.id);
@@ -364,6 +390,12 @@ export default function NewSaleScreen() {
           placeholder="Select payment type"
           required
         />
+        {paymentType === 'Cash' && (
+          <>
+            <PaymentMethodPicker total={revenue} value={payment} onChange={setPayment} />
+            {errors.paymentMethod && <Text style={styles.errorText}>{errors.paymentMethod}</Text>}
+          </>
+        )}
 
         <Text style={styles.sectionLabel}>Customer Info</Text>
         <CustomerPicker
@@ -419,12 +451,10 @@ export default function NewSaleScreen() {
               textContentType="none"
             />
             <Input
-              label="Installment Due Date *"
-              placeholder="DD/MM/YYYY"
+              label="Installment Due Date (1 month from today)"
               value={installmentDueDate}
-              onChangeText={(v) => setInstallmentDueDate(formatDateInput(v))}
-              keyboardType="numeric"
-              maxLength={10}
+              editable={false}
+              style={styles.readOnlyInput}
               error={errors.installmentDueDate}
             />
 
@@ -433,10 +463,11 @@ export default function NewSaleScreen() {
               <View key={i} style={styles.guarantorBox}>
                 <Text style={styles.guarantorTitle}>Guarantor {i + 1}</Text>
                 <Input
-                  label="Name (optional)"
+                  label="Name *"
                   placeholder="e.g. Bilal Ahmed"
                   value={g.name}
                   onChangeText={(v) => updateGuarantor(i, 'name', v)}
+                  error={errors[`guarantor${i}Name`]}
                 />
                 <Input
                   label="CNIC *"
@@ -498,6 +529,7 @@ const sumStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  readOnlyInput: { backgroundColor: colors.background, color: colors.textMuted },
   header: {
     flexDirection:     'row',
     alignItems:        'center',

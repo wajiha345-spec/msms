@@ -235,6 +235,121 @@ export async function postJournalEntry(
   );
 }
 
+// ── Cash/Account ledger wiring (Business Management) ──────────────────────────
+// Shared by every module that wires a real money-in/money-out action (Sale,
+// Purchase, SecondhandRecord, and settling an installment/credit balance)
+// into the GL — see notes on SalePayment/SupplierPayment above for why this
+// was previously deliberately deferred.
+export const SYSTEM_ACCOUNT_CODES = {
+  CASH:                 '1000',
+  BANK:                 '1010',
+  ACCOUNTS_RECEIVABLE:  '1100',
+  ACCOUNTS_PAYABLE:     '2000',
+  SALES_INCOME:         '4000',
+  COGS:                 '5000',
+};
+
+export async function getSystemAccountId(shopId: string, code: string): Promise<string> {
+  await ensureDefaultAccounts(shopId);
+  const account = await prisma.account.findFirst({ where: { shopId, code } });
+  if (!account) throw new Error(`System account ${code} not found for this shop`);
+  return account.id;
+}
+
+// Validates a Cash/Account/Split payment breakdown against the total it must
+// cover. Deliberately does NOT check that accountId belongs to the shop or is
+// an ASSET account — the frontend picker only ever offers valid choices, and
+// buildCashAccountLines()/postJournalEntry() below will reject an invalid one
+// when it actually tries to post.
+export function validatePaymentSplit(
+  method: string | undefined,
+  total: number,
+  cashAmount?: number,
+  accountId?: string,
+  accountAmount?: number
+) {
+  if (!method) throw new Error('Payment method (Cash/Account/Split) is required');
+  if (method === 'CASH') return;
+  if (method === 'ACCOUNT') {
+    if (!accountId) throw new Error('An account must be selected');
+    return;
+  }
+  if (method === 'SPLIT') {
+    if (!accountId) throw new Error('An account must be selected for a split payment');
+    const cash = cashAmount ?? 0;
+    const acct = accountAmount ?? 0;
+    if (cash <= 0 || acct <= 0) throw new Error('A split payment needs a positive amount on both sides');
+    if (Math.abs(cash + acct - total) > 0.01) {
+      throw new Error(`Split amounts (${cash.toFixed(2)} + ${acct.toFixed(2)}) must add up to the total (${total.toFixed(2)})`);
+    }
+    return;
+  }
+  throw new Error('Invalid payment method');
+}
+
+function paymentLine(accountId: string, amount: number, side: 'debit' | 'credit', description?: string): JournalLineInput {
+  return side === 'debit' ? { accountId, debit: amount, description } : { accountId, credit: amount, description };
+}
+
+interface CashAccountLinesInput {
+  paymentMethod: string;        // "CASH" | "ACCOUNT" | "SPLIT"
+  cashAmount?:   number;
+  accountId?:    string;
+  accountAmount?: number;
+  amount:        number;        // total this side must cover (ignored for SPLIT, which uses cashAmount+accountAmount)
+  description?:  string;
+  side:          'debit' | 'credit';
+}
+
+// Builds the Cash/Bank/chosen-Account side of a journal entry — the other
+// side (Sales Income, COGS, Accounts Receivable/Payable) is supplied by the
+// caller via postJournalEntry's `lines`.
+export async function buildCashAccountLines(shopId: string, input: CashAccountLinesInput): Promise<JournalLineInput[]> {
+  if (input.paymentMethod === 'ACCOUNT') {
+    return [paymentLine(input.accountId!, input.amount, input.side, input.description)];
+  }
+  const cashAccountId = await getSystemAccountId(shopId, SYSTEM_ACCOUNT_CODES.CASH);
+  if (input.paymentMethod === 'CASH') {
+    return [paymentLine(cashAccountId, input.amount, input.side, input.description)];
+  }
+  // SPLIT
+  return [
+    paymentLine(cashAccountId,    input.cashAmount!,    input.side, input.description),
+    paymentLine(input.accountId!, input.accountAmount!, input.side, input.description),
+  ];
+}
+
+// Distributes an overall Cash/Account split across multiple line-item
+// amounts, proportional to each item's share of the total — used when one
+// payment choice (converting a multi-item Quotation/SalesOrder) funds
+// several separately-created Sales. The last item absorbs any rounding
+// remainder so the parts always sum back to the original totals exactly.
+export function apportionSplit(
+  itemAmounts: number[],
+  cashTotal: number,
+  accountTotal: number
+): { cashAmount: number; accountAmount: number }[] {
+  const grandTotal = itemAmounts.reduce((s, a) => s + a, 0);
+  const result: { cashAmount: number; accountAmount: number }[] = [];
+  let cashUsed = 0, accountUsed = 0;
+  itemAmounts.forEach((amount, i) => {
+    if (i === itemAmounts.length - 1) {
+      result.push({
+        cashAmount:    Math.round((cashTotal - cashUsed) * 100) / 100,
+        accountAmount: Math.round((accountTotal - accountUsed) * 100) / 100,
+      });
+      return;
+    }
+    const ratio = grandTotal > 0 ? amount / grandTotal : 0;
+    const cash = Math.round(cashTotal * ratio * 100) / 100;
+    const acct = Math.round(accountTotal * ratio * 100) / 100;
+    cashUsed += cash;
+    accountUsed += acct;
+    result.push({ cashAmount: cash, accountAmount: acct });
+  });
+  return result;
+}
+
 export async function getJournalEntries(
   shopId: string,
   filters: { dateFrom?: string; dateTo?: string } = {}

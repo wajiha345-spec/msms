@@ -2,6 +2,7 @@ import { prisma } from '../../config/db';
 import { Server } from 'socket.io';
 import { createPurchase } from '../purchases/purchases.service';
 import { notifyPurchaseOrderReceived } from '../notifications/notifications.service';
+import { validatePaymentSplit, apportionSplit } from '../accounting/accounting.service';
 
 // Build PO number like PO-20260806-0001 — same per-shop-per-day counter
 // pattern as sales.service.ts:generateInvoiceNo.
@@ -112,6 +113,10 @@ interface ReceiveGoodsInput {
   receipts:     Receipt[];
   paymentType?: string;
   userId:       string;
+  paymentMethod?: string; // "CASH" | "ACCOUNT" | "SPLIT" — required unless paymentType is CREDIT
+  cashAmount?:    number;
+  accountId?:     string;
+  accountAmount?: number;
 }
 
 export async function receiveGoods(shopId: string, poId: string, data: ReceiveGoodsInput, io: Server) {
@@ -133,10 +138,22 @@ export async function receiveGoods(shopId: string, poId: string, data: ReceiveGo
     }
   }
 
+  const isCredit = data.paymentType === 'CREDIT';
+  const receiptTotals = data.receipts.map((r) => r.quantity * po.items.find((i) => i.id === r.itemId)!.unitPrice);
+  const grandTotal = receiptTotals.reduce((s, a) => s + a, 0);
+  if (!isCredit) {
+    validatePaymentSplit(data.paymentMethod, grandTotal, data.cashAmount, data.accountId, data.accountAmount);
+  }
+  const perLineSplit = !isCredit && data.paymentMethod === 'SPLIT'
+    ? apportionSplit(receiptTotals, data.cashAmount ?? 0, data.accountAmount ?? 0)
+    : null;
+
   // Reuses purchases.service.ts's createPurchase() unchanged — one call per
   // receipt line, so stock increments and the Purchase record are created
-  // exactly as they already are for a manually-recorded purchase.
-  for (const receipt of data.receipts) {
+  // exactly as they already are for a manually-recorded purchase. The one
+  // payment choice made for the whole receipt is proportionally apportioned
+  // across lines when Split.
+  for (const [i, receipt] of data.receipts.entries()) {
     const item = po.items.find((i) => i.id === receipt.itemId)!;
     await createPurchase(
       shopId,
@@ -148,6 +165,10 @@ export async function receiveGoods(shopId: string, poId: string, data: ReceiveGo
         supplierPhone:  po.supplierPhone ?? undefined,
         paymentType:    data.paymentType,
         userId:         data.userId,
+        paymentMethod:  data.paymentMethod,
+        accountId:      data.accountId,
+        cashAmount:     perLineSplit ? perLineSplit[i].cashAmount    : undefined,
+        accountAmount:  perLineSplit ? perLineSplit[i].accountAmount : undefined,
       },
       io
     );

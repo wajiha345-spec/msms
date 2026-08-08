@@ -7,7 +7,9 @@ import {
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { Input }  from '../../components/Inputs';
 import { Button } from '../../components/Buttons';
+import { PaymentMethodPicker } from '../../components/PaymentMethodPicker';
 import { customerLedgerApi, CustomerStatement } from '../../api/customerLedger';
+import { PaymentFields } from '../../api/payment';
 import { colors } from '../../theme/colors';
 
 type OutstandingSale = CustomerStatement['sales'][number] & { outstanding: number; paid: number };
@@ -21,6 +23,7 @@ export default function RecordCustomerPaymentScreen() {
   const [sales,    setSales]    = useState<OutstandingSale[]>([]);
   const [selected, setSelected] = useState<OutstandingSale | null>(null);
   const [amount,   setAmount]   = useState('');
+  const [payment,  setPayment]  = useState<PaymentFields>({});
   const [submitting, setSubmitting] = useState(false);
   const [error,    setError]    = useState('');
 
@@ -56,10 +59,19 @@ export default function RecordCustomerPaymentScreen() {
     const amt = Number(amount);
     if (!amt || amt <= 0) { setError('Enter a valid amount'); return; }
     if (amt > selected.outstanding + 0.01) { setError(`Amount exceeds outstanding balance of Rs ${selected.outstanding.toLocaleString()}`); return; }
+    if (!payment.paymentMethod) { setError('Select how the payment was received'); return; }
+    if (payment.paymentMethod !== 'CASH' && !payment.accountId) { setError('Select an account'); return; }
+    if (payment.paymentMethod === 'SPLIT') {
+      const sum = (payment.cashAmount ?? 0) + (payment.accountAmount ?? 0);
+      if (Math.abs(sum - amt) > 0.01) { setError('Split amounts must add up to the payment amount'); return; }
+    }
 
     setSubmitting(true);
     try {
-      await customerLedgerApi.recordPayment({ saleId: selected.id, amount: amt });
+      await customerLedgerApi.recordPayment({
+        saleId: selected.id, amount: amt, method: payment.paymentMethod,
+        cashAmount: payment.cashAmount, accountId: payment.accountId, accountAmount: payment.accountAmount,
+      });
       Alert.alert('Payment Recorded ✓', undefined, [{ text: 'OK', onPress: () => navigation.goBack() }]);
     } catch (e: any) {
       Alert.alert('Error', e?.response?.data?.error || 'Something went wrong');
@@ -114,6 +126,7 @@ export default function RecordCustomerPaymentScreen() {
                 onChangeText={setAmount}
                 keyboardType="numeric"
               />
+              <PaymentMethodPicker total={Number(amount) || 0} value={payment} onChange={setPayment} />
               {error ? <Text style={styles.errorText}>{error}</Text> : null}
               <Button label="Record Payment" onPress={handleSubmit} loading={submitting} style={{ marginTop: 8 }} />
             </>

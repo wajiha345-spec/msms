@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, FlatList, StyleSheet,
-  RefreshControl, ActivityIndicator, Alert,
+  RefreshControl, ActivityIndicator, Alert, TouchableOpacity,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { accountingApi, JournalEntry } from '../../api/accounting';
@@ -66,6 +66,9 @@ export default function JournalEntriesScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={styles.backBtn}>← Back</Text>
+        </TouchableOpacity>
         <Text style={styles.title}>Journal Entries</Text>
         <Button
           label="+ New Entry"
@@ -103,6 +106,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderBottomWidth: 1, borderBottomColor: colors.border,
   },
+  backBtn: { color: colors.primary, fontSize: 15, fontWeight: '500' },
   title: { fontSize: 20, fontWeight: '700', color: colors.text },
   list:  { padding: 12, gap: 10, paddingBottom: 40 },
   card: {

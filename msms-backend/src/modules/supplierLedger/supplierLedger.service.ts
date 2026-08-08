@@ -1,6 +1,10 @@
 import { prisma } from '../../config/db';
 import { Server } from 'socket.io';
 import { createPurchase } from '../purchases/purchases.service';
+import {
+  postJournalEntry, buildCashAccountLines, validatePaymentSplit,
+  getSystemAccountId, SYSTEM_ACCOUNT_CODES,
+} from '../accounting/accounting.service';
 
 const TOLERANCE = 0.01;
 
@@ -168,9 +172,12 @@ export async function getAgingReport(shopId: string) {
 interface RecordPaymentInput {
   purchaseId: string;
   amount:     number;
-  method?:    string;
+  method?:    string; // "CASH" | "ACCOUNT" | "SPLIT" — Cash/Account ledger wiring
   note?:      string;
   userId:     string;
+  cashAmount?:    number;
+  accountId?:     string;
+  accountAmount?: number;
 }
 
 export async function recordPayment(shopId: string, data: RecordPaymentInput) {
@@ -190,6 +197,13 @@ export async function recordPayment(shopId: string, data: RecordPaymentInput) {
     throw new Error(`Payment of ${data.amount.toFixed(2)} exceeds outstanding balance of ${outstanding.toFixed(2)}`);
   }
 
+  // method is optional here (unlike Sale/Purchase creation) — this endpoint
+  // predates the Cash/Account ledger wiring and is still reachable without
+  // it; only validate/post to the ledger when the caller opts in.
+  if (data.method) {
+    validatePaymentSplit(data.method, data.amount, data.cashAmount, data.accountId, data.accountAmount);
+  }
+
   const payment = await prisma.supplierPayment.create({
     data: {
       purchaseId: data.purchaseId,
@@ -198,8 +212,43 @@ export async function recordPayment(shopId: string, data: RecordPaymentInput) {
       method:     data.method ?? 'CASH',
       note:       data.note,
       userId:     data.userId,
+      cashAmount:    data.cashAmount    ?? null,
+      accountId:     data.accountId     ?? null,
+      accountAmount: data.accountAmount ?? null,
     },
   });
+
+  // Settling a credit purchase clears part of the Accounts Payable liability
+  // that was accrued when the purchase itself was recorded (see
+  // purchases.service.ts:createPurchase). Best-effort/logged; skipped
+  // entirely if no method was given.
+  if (data.method) {
+    try {
+      const apAccountId = await getSystemAccountId(shopId, SYSTEM_ACCOUNT_CODES.ACCOUNTS_PAYABLE);
+      const creditLines = await buildCashAccountLines(shopId, {
+        paymentMethod: data.method,
+        cashAmount: data.cashAmount,
+        accountId: data.accountId,
+        accountAmount: data.accountAmount,
+        amount: data.amount,
+        description: `Payment for purchase ${data.purchaseId}`,
+        side: 'credit',
+      });
+      const entry = await postJournalEntry(shopId, data.userId, {
+        memo: `Supplier payment (${purchase.supplierName ?? 'supplier'})`,
+        sourceModule: 'SUPPLIER_PAYMENT',
+        sourceId: payment.id,
+        lines: [
+          { accountId: apAccountId, debit: data.amount, description: `Payment for purchase ${data.purchaseId}` },
+          ...creditLines,
+        ],
+      });
+      await prisma.supplierPayment.update({ where: { id: payment.id }, data: { journalEntryId: entry.id } });
+      payment.journalEntryId = entry.id; // keep the returned object in sync
+    } catch (err: any) {
+      console.error('[SupplierPayment] ledger posting failed for', payment.id, err?.message);
+    }
+  }
 
   return { payment, outstanding: Math.max(outstanding - data.amount, 0) };
 }

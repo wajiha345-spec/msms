@@ -20,8 +20,10 @@ import ScannerOverlay from '../../components/ScannerOverlay';
 import ImeiVerifyPanel from '../../components/ImeiVerifyPanel';
 import VariantPicker from '../../components/VariantPicker';
 import CategoryPicker from '../../components/CategoryPicker';
+import { PaymentMethodPicker } from '../../components/PaymentMethodPicker';
 import { ImeiVerifyResult } from '../../api/imeiVerify';
 import { secondhandApi } from '../../api/secondhand';
+import { PaymentFields } from '../../api/payment';
 import { formatCnic, formatPhone } from '../../utils/format';
 import { colors } from '../../theme/colors';
 
@@ -48,6 +50,7 @@ export default function AddSecondhandScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [picking, setPicking] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [payment, setPayment] = useState<PaymentFields>({});
   // imeiBlocked = true when IMEI verify panel says reject AND user hasn't confirmed override
   const [imeiBlocked, setImeiBlocked] = useState(false);
 
@@ -71,6 +74,12 @@ export default function AddSecondhandScreen() {
     else if (sellerPhone.length !== 11) e.sellerPhone = 'Phone must be 11 digits';
     if (!purchasePrice) e.purchasePrice = 'Purchase price is required';
     if (isNaN(Number(purchasePrice))) e.purchasePrice = 'Must be a number';
+    if (!payment.paymentMethod) e.paymentMethod = 'Select how the seller was paid';
+    else if (payment.paymentMethod !== 'CASH' && !payment.accountId) e.paymentMethod = 'Select an account';
+    else if (payment.paymentMethod === 'SPLIT') {
+      const sum = (payment.cashAmount ?? 0) + (payment.accountAmount ?? 0);
+      if (Math.abs(sum - (Number(purchasePrice) || 0)) > 0.01) e.paymentMethod = 'Split amounts must add up to the total';
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -172,6 +181,11 @@ export default function AddSecondhandScreen() {
       if (storage.trim()) formData.append('storage', storage.trim());
       if (color.trim())   formData.append('color', color.trim());
       if (ram.trim())     formData.append('ram', ram.trim());
+
+      formData.append('paymentMethod', payment.paymentMethod!);
+      if (payment.cashAmount    !== undefined) formData.append('cashAmount',    String(payment.cashAmount));
+      if (payment.accountId)                    formData.append('accountId',     payment.accountId);
+      if (payment.accountAmount !== undefined) formData.append('accountAmount', String(payment.accountAmount));
 
       if (sellerPhotoUri) {
         const filename = sellerPhotoUri.split('/').pop() ?? 'seller.jpg';
@@ -328,6 +342,13 @@ export default function AddSecondhandScreen() {
           error={errors.purchasePrice}
           editable={!submitting && !picking}
         />
+        <PaymentMethodPicker
+          label="Paid to Seller Via *"
+          total={Number(purchasePrice) || 0}
+          value={payment}
+          onChange={setPayment}
+        />
+        {errors.paymentMethod && <Text style={styles.errorText}>{errors.paymentMethod}</Text>}
         <Input
           label="Notes"
           placeholder="Condition, accessories, faults..."
@@ -685,6 +706,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#fecaca',
   },
   blockedText: { fontSize: 13, color: '#991b1b', lineHeight: 20 },
+  errorText: { color: colors.danger, fontSize: 12, marginTop: -10, marginBottom: 10 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

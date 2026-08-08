@@ -18,6 +18,10 @@ function typeIcon(type: string) {
   return '🔔';
 }
 
+function ordinal(n: number) {
+  return n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`;
+}
+
 function fmtDate(d: string | null | undefined) {
   if (!d) return '—';
   return new Date(d).toLocaleDateString('en-GB');
@@ -82,10 +86,15 @@ export default function NotificationsScreen() {
   }
 
   const unreadCount = feed.filter((n) => !n.isRead).length;
-  const hasAttention = !!attention && (
-    attention.overdueInstallments.length > 0 ||
-    attention.overdueFollowUps.length > 0 ||
-    !!attention.upcomingLicenseInstallment
+  const overdueInstallments = attention?.overdueInstallments ?? [];
+  const dueSoonInstallments = attention?.dueSoonInstallments ?? [];
+  const overdueFollowUps    = attention?.overdueFollowUps ?? [];
+  const upcomingLicenseInstallment = attention?.upcomingLicenseInstallment ?? null;
+  const hasAttention = (
+    overdueInstallments.length > 0 ||
+    dueSoonInstallments.length > 0 ||
+    overdueFollowUps.length > 0 ||
+    !!upcomingLicenseInstallment
   );
 
   if (loading) {
@@ -132,13 +141,33 @@ export default function NotificationsScreen() {
                   <Text style={styles.attentionIcon}>⏰</Text>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.attentionTitle}>
-                      Installment overdue — {it.customerName || it.customerPhone}
+                      {ordinal(it.installmentNumber)} installment overdue — {it.customerName || it.customerPhone}
                     </Text>
                     <Text style={styles.attentionSub}>
                       {it.invoiceNo} · Rs {it.pendingAmount.toLocaleString()} · due {fmtDate(it.dueDate)}
                     </Text>
                   </View>
                   <Badge label="Overdue" type="danger" />
+                </TouchableOpacity>
+              ))}
+
+              {attention!.dueSoonInstallments.map((it) => (
+                <TouchableOpacity
+                  key={it.saleId}
+                  style={styles.attentionCard}
+                  onPress={() => navigation.navigate('CustomerStatement', { phone: it.customerPhone, name: it.customerName })}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.attentionIcon}>🔔</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.attentionTitle}>
+                      {ordinal(it.installmentNumber)} installment due soon — {it.customerName || it.customerPhone}
+                    </Text>
+                    <Text style={styles.attentionSub}>
+                      {it.invoiceNo} · Rs {it.pendingAmount.toLocaleString()} · due {fmtDate(it.dueDate)}
+                    </Text>
+                  </View>
+                  <Badge label="Due Soon" type="warning" />
                 </TouchableOpacity>
               ))}
 

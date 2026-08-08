@@ -8,7 +8,9 @@ import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/nativ
 import { Input }  from '../../components/Inputs';
 import { Button } from '../../components/Buttons';
 import VariantPicker from '../../components/VariantPicker';
+import { PaymentMethodPicker } from '../../components/PaymentMethodPicker';
 import { purchaseOrdersApi, PurchaseOrder } from '../../api/purchaseOrders';
+import { PaymentFields } from '../../api/payment';
 import { colors } from '../../theme/colors';
 
 export default function ReceiveGoodsScreen() {
@@ -20,6 +22,7 @@ export default function ReceiveGoodsScreen() {
   const [loading,    setLoading]    = useState(true);
   const [quantities, setQuantities] = useState<Record<string, string>>({});
   const [paymentType, setPaymentType] = useState<'Cash' | 'Credit'>('Cash');
+  const [payment,    setPayment]    = useState<PaymentFields>({});
   const [submitting, setSubmitting] = useState(false);
   const [error,      setError]      = useState('');
 
@@ -62,11 +65,21 @@ export default function ReceiveGoodsScreen() {
 
     if (receipts.length === 0) { setError('Enter a quantity to receive for at least one line'); return; }
 
+    if (paymentType === 'Cash') {
+      if (!payment.paymentMethod) { setError('Select how the goods were paid for'); return; }
+      if (payment.paymentMethod !== 'CASH' && !payment.accountId) { setError('Select an account'); return; }
+      if (payment.paymentMethod === 'SPLIT') {
+        const sum = (payment.cashAmount ?? 0) + (payment.accountAmount ?? 0);
+        if (Math.abs(sum - receiptTotal) > 0.01) { setError('Split amounts must add up to the total'); return; }
+      }
+    }
+
     setSubmitting(true);
     try {
       await purchaseOrdersApi.receive(id, {
         receipts,
         paymentType: paymentType === 'Credit' ? 'CREDIT' : 'CASH',
+        ...(paymentType === 'Credit' ? {} : payment),
       });
       Alert.alert('Goods Received ✓', 'Stock has been updated.', [{ text: 'OK', onPress: () => navigation.goBack() }]);
     } catch (e: any) {
@@ -85,6 +98,9 @@ export default function ReceiveGoodsScreen() {
   }
 
   const outstandingItems = order.items.filter((i) => i.quantityOrdered - i.quantityReceived > 0);
+  const receiptTotal = outstandingItems.reduce(
+    (sum, item) => sum + (Number(quantities[item.id]) || 0) * item.unitPrice, 0
+  );
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -123,6 +139,9 @@ export default function ReceiveGoodsScreen() {
           placeholder="Select payment type"
           required
         />
+        {paymentType === 'Cash' && (
+          <PaymentMethodPicker total={receiptTotal} value={payment} onChange={setPayment} />
+        )}
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 

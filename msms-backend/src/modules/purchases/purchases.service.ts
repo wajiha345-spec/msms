@@ -1,6 +1,10 @@
 import { prisma } from '../../config/db';
 import { Server } from 'socket.io';
 import { EVENTS } from '../../socket/events';
+import {
+  postJournalEntry, buildCashAccountLines, validatePaymentSplit,
+  getSystemAccountId, SYSTEM_ACCOUNT_CODES,
+} from '../accounting/accounting.service';
 
 interface CreatePurchaseInput {
   productId:     string;
@@ -12,6 +16,12 @@ interface CreatePurchaseInput {
   paymentDueDate?: string | Date;
   branchId?:     string; // optional — unset means "Main Branch" (see branches.service.ts)
   userId:        string;
+  // Cash/Account ledger wiring — only meaningful (and required) for CASH
+  // purchases; CREDIT purchases post an Accounts Payable accrual instead.
+  paymentMethod?: string; // "CASH" | "ACCOUNT" | "SPLIT"
+  cashAmount?:    number;
+  accountId?:     string;
+  accountAmount?: number;
 }
 
 export async function getPurchases(shopId: string, productId?: string) {
@@ -72,6 +82,15 @@ export async function createPurchase(shopId: string, data: CreatePurchaseInput, 
   if (!data.supplierName?.trim())  throw new Error('Supplier name is required');
   if (!data.supplierPhone?.trim()) throw new Error('Supplier phone is required');
 
+  const isCredit = data.paymentType === 'CREDIT';
+  const total = data.quantity * data.purchasePrice;
+  if (!isCredit) {
+    // CASH purchase — money actually leaves now, so Cash/Account/Split is
+    // required. CREDIT purchases post an Accounts Payable accrual instead;
+    // no cash moves until the balance is settled via supplierLedger.
+    validatePaymentSplit(data.paymentMethod, total, data.cashAmount, data.accountId, data.accountAmount);
+  }
+
   // --- ATOMIC TRANSACTION ---
   // Both the Purchase record AND the stock increment happen together.
   // If either fails, neither is saved.
@@ -85,11 +104,15 @@ export async function createPurchase(shopId: string, data: CreatePurchaseInput, 
         purchasePrice: data.purchasePrice,
         supplierName:  data.supplierName,
         supplierPhone: data.supplierPhone,
-        paymentType:    data.paymentType === 'CREDIT' ? 'CREDIT' : 'CASH',
-        paymentDueDate: data.paymentType === 'CREDIT' && data.paymentDueDate
+        paymentType:    isCredit ? 'CREDIT' : 'CASH',
+        paymentDueDate: isCredit && data.paymentDueDate
           ? new Date(data.paymentDueDate)
           : null,
         branchId: data.branchId ?? null,
+        paymentMethod: !isCredit ? data.paymentMethod : null,
+        cashAmount:    !isCredit ? data.cashAmount    ?? null : null,
+        accountId:     !isCredit ? data.accountId     ?? null : null,
+        accountAmount: !isCredit ? data.accountAmount ?? null : null,
       },
     });
 
@@ -100,6 +123,42 @@ export async function createPurchase(shopId: string, data: CreatePurchaseInput, 
 
     return { purchase, updatedStock: updated.stock };
   });
+
+  // Ledger posting after the stock-critical transaction commits — same
+  // reasoning as sales.service.ts:createSale (postJournalEntry can't
+  // participate in prisma.$transaction; a posting failure must never undo a
+  // purchase that already succeeded and already incremented stock).
+  try {
+    const cogsAccountId = await getSystemAccountId(shopId, SYSTEM_ACCOUNT_CODES.COGS);
+    let creditLines;
+    if (isCredit) {
+      const apAccountId = await getSystemAccountId(shopId, SYSTEM_ACCOUNT_CODES.ACCOUNTS_PAYABLE);
+      creditLines = [{ accountId: apAccountId, credit: total, description: `Purchase ${result.purchase.id}` }];
+    } else {
+      creditLines = await buildCashAccountLines(shopId, {
+        paymentMethod: data.paymentMethod!,
+        cashAmount: data.cashAmount,
+        accountId: data.accountId,
+        accountAmount: data.accountAmount,
+        amount: total,
+        description: `Purchase ${result.purchase.id}`,
+        side: 'credit',
+      });
+    }
+    const entry = await postJournalEntry(shopId, data.userId, {
+      memo: isCredit ? `Credit purchase (${product.name})` : `Purchase (${product.name})`,
+      sourceModule: 'PURCHASE',
+      sourceId: result.purchase.id,
+      lines: [
+        { accountId: cogsAccountId, debit: total, description: product.name },
+        ...creditLines,
+      ],
+    });
+    await prisma.purchase.update({ where: { id: result.purchase.id }, data: { journalEntryId: entry.id } });
+    result.purchase.journalEntryId = entry.id; // keep the returned/emitted object in sync
+  } catch (err: any) {
+    console.error('[Purchase] ledger posting failed for', result.purchase.id, err?.message);
+  }
 
   // Emit realtime events AFTER the transaction succeeds — scoped to this shop only
   const room = `shop:${shopId}`;

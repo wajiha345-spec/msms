@@ -2,9 +2,13 @@ import { prisma } from '../../config/db';
 import { Server } from 'socket.io';
 import { EVENTS } from '../../socket/events';
 import { notifyLowStock } from '../notifications/notifications.service';
+import {
+  postJournalEntry, buildCashAccountLines, validatePaymentSplit,
+  getSystemAccountId, SYSTEM_ACCOUNT_CODES,
+} from '../accounting/accounting.service';
 
 interface GuarantorInput {
-  name?: string;
+  name:  string;
   cnic:  string;
   phone: string;
 }
@@ -24,6 +28,43 @@ interface CreateSaleInput {
   installmentDueDate?: Date;
   guarantors?:   GuarantorInput[];
   branchId?:     string; // optional — unset means "Main Branch" (see branches.service.ts)
+  // Cash/Account ledger wiring — only meaningful (and required) for CASH
+  // sales; INSTALLMENT sales post an Accounts Receivable accrual instead,
+  // no payment picker at creation time.
+  paymentMethod?: string; // "CASH" | "ACCOUNT" | "SPLIT"
+  cashAmount?:    number;
+  accountId?:     string;
+  accountAmount?: number;
+}
+
+function addMonths(date: Date, months: number): Date {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
+// Splits totalAmount into 3 as-equal-as-possible parts that sum back exactly
+// (the last part absorbs any rounding remainder).
+function splitIntoThirds(total: number): [number, number, number] {
+  const part = Math.round((total / 3) * 100) / 100;
+  const last = Math.round((total - part * 2) * 100) / 100;
+  return [part, part, last];
+}
+
+// Fixed 3-equal-installments schedule, anchored on installment #1's due date
+// (already computed by the caller as sale date + 1 month, same value stored
+// on Sale.installmentDueDate — anchoring here too, rather than recomputing
+// "+1 month" independently, keeps the two in sync to the millisecond).
+// Shared by createSale() and createHistoricalSale() so every INSTALLMENT
+// sale (new or imported) is queryable the same way by notifications.service.ts
+// and DueInstallmentsScreen.
+function buildInstallmentSchedule(totalAmount: number, installment1DueDate: Date) {
+  const [a1, a2, a3] = splitIntoThirds(totalAmount);
+  return [
+    { installmentNumber: 1, amount: a1, dueDate: installment1DueDate },
+    { installmentNumber: 2, amount: a2, dueDate: addMonths(installment1DueDate, 1) },
+    { installmentNumber: 3, amount: a3, dueDate: addMonths(installment1DueDate, 2) },
+  ];
 }
 
 // Build invoice number: INV-20240118-0001 (unique per shop, not globally)
@@ -95,9 +136,19 @@ export async function createSale(shopId: string, data: CreateSaleInput, io: Serv
       throw new Error('Exactly 3 guarantors are required for installment sales');
     }
     for (const [i, g] of data.guarantors.entries()) {
+      if (!g.name?.trim()) throw new Error(`Guarantor ${i + 1} name is required`);
       if (!g.cnic)  throw new Error(`Guarantor ${i + 1} CNIC is required`);
       if (!g.phone) throw new Error(`Guarantor ${i + 1} phone is required`);
     }
+  } else {
+    // CASH sale — cash actually changes hands now, so Cash/Account/Split is
+    // required. (INSTALLMENT sales post an Accounts Receivable accrual
+    // instead; no cash moves until an installment is marked paid.)
+    validatePaymentSplit(
+      data.paymentMethod,
+      data.salePrice * data.quantity - discount,
+      data.cashAmount, data.accountId, data.accountAmount
+    );
   }
 
   // --- ATOMIC TRANSACTION ---
@@ -144,13 +195,27 @@ export async function createSale(shopId: string, data: CreateSaleInput, io: Serv
         installmentDueDate: data.paymentType === 'INSTALLMENT' ? data.installmentDueDate : null,
         guarantors: data.paymentType === 'INSTALLMENT' && data.guarantors
           ? { create: data.guarantors.map((g) => ({
-              name:  g.name || null,
+              name:  g.name,
               cnic:  g.cnic,
               phone: g.phone,
             })) }
           : undefined,
+        paymentMethod: data.paymentType !== 'INSTALLMENT' ? data.paymentMethod : null,
+        cashAmount:    data.paymentType !== 'INSTALLMENT' ? data.cashAmount    ?? null : null,
+        accountId:     data.paymentType !== 'INSTALLMENT' ? data.accountId     ?? null : null,
+        accountAmount: data.paymentType !== 'INSTALLMENT' ? data.accountAmount ?? null : null,
       },
     });
+
+    // 4b. INSTALLMENT sales get their 1st/2nd/3rd payment schedule right away
+    // — same transaction as the Sale/stock write so a schedule never exists
+    // without its parent sale (or vice versa).
+    if (data.paymentType === 'INSTALLMENT') {
+      const schedule = buildInstallmentSchedule(totalAmount, data.installmentDueDate!);
+      await tx.saleInstallment.createMany({
+        data: schedule.map((s) => ({ saleId: sale.id, ...s })),
+      });
+    }
 
     // 5. Deduct stock
     const updated = await tx.product.update({
@@ -173,6 +238,55 @@ export async function createSale(shopId: string, data: CreateSaleInput, io: Serv
       reorderPoint:  product.reorderPoint,
     };
   });
+
+  // Ledger posting happens after the stock-critical transaction commits —
+  // postJournalEntry() can't participate in prisma.$transaction (it uses the
+  // shared prisma client, same as expenses.service.ts/income.service.ts), and
+  // a ledger-posting failure must never undo a sale that already succeeded
+  // and already deducted stock. Best-effort, logged, never thrown.
+  try {
+    if (result.sale.paymentType === 'INSTALLMENT') {
+      const arAccountId = await getSystemAccountId(shopId, SYSTEM_ACCOUNT_CODES.ACCOUNTS_RECEIVABLE);
+      const salesIncomeAccountId = await getSystemAccountId(shopId, SYSTEM_ACCOUNT_CODES.SALES_INCOME);
+      const entry = await postJournalEntry(shopId, data.userId, {
+        date: result.sale.createdAt,
+        memo: `Installment sale ${result.sale.invoiceNo}`,
+        sourceModule: 'SALE',
+        sourceId: result.sale.id,
+        lines: [
+          { accountId: arAccountId, debit: result.sale.totalAmount, description: result.sale.invoiceNo },
+          { accountId: salesIncomeAccountId, credit: result.sale.totalAmount, description: result.sale.invoiceNo },
+        ],
+      });
+      await prisma.sale.update({ where: { id: result.sale.id }, data: { journalEntryId: entry.id } });
+      result.sale.journalEntryId = entry.id; // keep the returned/emitted object in sync
+    } else {
+      const debitLines = await buildCashAccountLines(shopId, {
+        paymentMethod: data.paymentMethod!,
+        cashAmount: data.cashAmount,
+        accountId: data.accountId,
+        accountAmount: data.accountAmount,
+        amount: result.sale.totalAmount,
+        description: result.sale.invoiceNo,
+        side: 'debit',
+      });
+      const salesIncomeAccountId = await getSystemAccountId(shopId, SYSTEM_ACCOUNT_CODES.SALES_INCOME);
+      const entry = await postJournalEntry(shopId, data.userId, {
+        date: result.sale.createdAt,
+        memo: `Sale ${result.sale.invoiceNo}`,
+        sourceModule: 'SALE',
+        sourceId: result.sale.id,
+        lines: [
+          ...debitLines,
+          { accountId: salesIncomeAccountId, credit: result.sale.totalAmount, description: result.sale.invoiceNo },
+        ],
+      });
+      await prisma.sale.update({ where: { id: result.sale.id }, data: { journalEntryId: entry.id } });
+      result.sale.journalEntryId = entry.id;
+    }
+  } catch (err: any) {
+    console.error('[Sale] ledger posting failed for', result.sale.id, err?.message);
+  }
 
   // Emit realtime events after commit — scoped to this shop only
   const room = `shop:${shopId}`;
@@ -257,7 +371,7 @@ export async function createHistoricalSale(shopId: string, data: HistoricalSaleI
   const profit      = (data.salePrice - purchasePrice) * data.quantity;
   const invoiceNo   = `HIST-${Date.now()}-${historySeq++}`;
 
-  return prisma.sale.create({
+  const sale = await prisma.sale.create({
     data: {
       invoiceNo,
       productId:     product.id,
@@ -276,6 +390,20 @@ export async function createHistoricalSale(shopId: string, data: HistoricalSaleI
       createdAt:     data.date ? new Date(data.date) : undefined,
     },
   });
+
+  // Still-unpaid imported installment sales get the same 1st/2nd/3rd
+  // schedule as any other installment sale, anchored so installment #1's due
+  // date matches exactly what the CSV said — otherwise this sale would be
+  // invisible to notifications.service.ts/DueInstallmentsScreen (both now
+  // read SaleInstallment, not Sale directly).
+  if (data.paymentType === 'INSTALLMENT' && !data.installmentPaid) {
+    const schedule = buildInstallmentSchedule(totalAmount, new Date(data.installmentDueDate!));
+    await prisma.saleInstallment.createMany({
+      data: schedule.map((s) => ({ saleId: sale.id, ...s })),
+    });
+  }
+
+  return sale;
 }
 
 export async function markInstallmentPaid(shopId: string, id: string, io: Server) {

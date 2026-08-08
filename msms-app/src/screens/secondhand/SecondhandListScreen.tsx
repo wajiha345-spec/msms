@@ -85,6 +85,9 @@ export default function SecondhandListScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={styles.backBtn}>← Back</Text>
+        </TouchableOpacity>
         <Text style={styles.title}>Secondhand</Text>
         <TouchableOpacity
           style={styles.addBtn}
@@ -167,6 +170,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  backBtn: { color: colors.primary, fontSize: 15, fontWeight: "500" },
   title: { fontSize: 20, fontWeight: "700", color: colors.text },
   addBtn: {
     backgroundColor: colors.primary,

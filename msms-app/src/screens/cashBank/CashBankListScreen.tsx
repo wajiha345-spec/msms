@@ -56,7 +56,11 @@ export default function CashBankListScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={styles.backBtn}>← Back</Text>
+        </TouchableOpacity>
         <Text style={styles.title}>Cash & Bank</Text>
+        <View style={{ width: 60 }} />
       </View>
 
       <View style={styles.summaryStrip}>
@@ -104,10 +108,12 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center:    { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingTop: 54, paddingBottom: 12,
     backgroundColor: colors.card,
     borderBottomWidth: 1, borderBottomColor: colors.border,
   },
+  backBtn: { color: colors.primary, fontSize: 15, fontWeight: '500', width: 60 },
   title: { fontSize: 20, fontWeight: '700', color: colors.text },
   summaryStrip: {
     flexDirection: 'row', backgroundColor: colors.card,

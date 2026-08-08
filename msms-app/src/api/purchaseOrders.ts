@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import { PaymentFields } from './payment';
 
 export type PurchaseOrderStatus = 'DRAFT' | 'PARTIALLY_RECEIVED' | 'RECEIVED' | 'CANCELLED';
 
@@ -40,7 +41,7 @@ export interface CreatePurchaseOrderPayload {
   items:         PoItemPayload[];
 }
 
-export interface ReceiveGoodsPayload {
+export interface ReceiveGoodsPayload extends PaymentFields {
   receipts:     { itemId: string; quantity: number }[];
   paymentType?: 'CASH' | 'CREDIT';
 }

@@ -49,8 +49,11 @@ export interface AgingReport {
 export interface RecordCustomerPaymentPayload {
   saleId:  string;
   amount:  number;
-  method?: string;
+  method?: string; // "CASH" | "ACCOUNT" | "SPLIT" — set to also post to the Cash/Bank ledger
   note?:   string;
+  cashAmount?:    number;
+  accountId?:     string;
+  accountAmount?: number;
 }
 
 export const customerLedgerApi = {
