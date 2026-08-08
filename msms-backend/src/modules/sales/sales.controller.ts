@@ -54,6 +54,10 @@ export async function create(req: AuthRequest, res: Response) {
       installmentDueDate,
       guarantors,
       branchId,
+      paymentMethod,
+      cashAmount,
+      accountId,
+      accountAmount,
     } = req.body;
 
     if (!productId) return fail(res, 'productId is required');
@@ -85,6 +89,10 @@ export async function create(req: AuthRequest, res: Response) {
         installmentDueDate: installmentDueDate ? new Date(installmentDueDate) : undefined,
         guarantors: Array.isArray(guarantors) ? guarantors : undefined,
         branchId: branchId ?? undefined,
+        paymentMethod,
+        cashAmount: cashAmount !== undefined ? Number(cashAmount) : undefined,
+        accountId,
+        accountAmount: accountAmount !== undefined ? Number(accountAmount) : undefined,
       },
       io
     );

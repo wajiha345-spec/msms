@@ -65,7 +65,7 @@ export default function ReceiveGoodsScreen() {
 
     if (receipts.length === 0) { setError('Enter a quantity to receive for at least one line'); return; }
 
-    if (paymentType === 'Cash') {
+    if (isLegacyOrder && paymentType === 'Cash') {
       if (!payment.paymentMethod) { setError('Select how the goods were paid for'); return; }
       if (payment.paymentMethod !== 'CASH' && !payment.accountId) { setError('Select an account'); return; }
       if (payment.paymentMethod === 'SPLIT') {
@@ -78,8 +78,10 @@ export default function ReceiveGoodsScreen() {
     try {
       await purchaseOrdersApi.receive(id, {
         receipts,
-        paymentType: paymentType === 'Credit' ? 'CREDIT' : 'CASH',
-        ...(paymentType === 'Credit' ? {} : payment),
+        ...(isLegacyOrder ? {
+          paymentType: paymentType === 'Credit' ? 'CREDIT' : 'CASH',
+          ...(paymentType === 'Credit' ? {} : payment),
+        } : {}),
       });
       Alert.alert('Goods Received ✓', 'Stock has been updated.', [{ text: 'OK', onPress: () => navigation.goBack() }]);
     } catch (e: any) {
@@ -101,6 +103,18 @@ export default function ReceiveGoodsScreen() {
   const receiptTotal = outstandingItems.reduce(
     (sum, item) => sum + (Number(quantities[item.id]) || 0) * item.unitPrice, 0
   );
+
+  // Orders created before payment moved to PO creation time have no stored
+  // paymentType — fall back to asking here, exactly how this screen used to
+  // work. New orders already have their payment choice locked in.
+  const isLegacyOrder = order.paymentType == null;
+  const paymentSummary = order.paymentType === 'CREDIT'
+    ? 'Credit'
+    : order.paymentMethod === 'SPLIT'
+      ? 'Split (Cash + Account)'
+      : order.paymentMethod === 'ACCOUNT'
+        ? 'Account'
+        : 'Cash';
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -131,16 +145,25 @@ export default function ReceiveGoodsScreen() {
           );
         })}
 
-        <VariantPicker
-          label="Payment Type"
-          value={paymentType}
-          onChange={(v) => setPaymentType(v === 'Credit' ? 'Credit' : 'Cash')}
-          options={['Cash', 'Credit']}
-          placeholder="Select payment type"
-          required
-        />
-        {paymentType === 'Cash' && (
-          <PaymentMethodPicker total={receiptTotal} value={payment} onChange={setPayment} />
+        {isLegacyOrder ? (
+          <>
+            <VariantPicker
+              label="Payment Type"
+              value={paymentType}
+              onChange={(v) => setPaymentType(v === 'Credit' ? 'Credit' : 'Cash')}
+              options={['Cash', 'Credit']}
+              placeholder="Select payment type"
+              required
+            />
+            {paymentType === 'Cash' && (
+              <PaymentMethodPicker total={receiptTotal} value={payment} onChange={setPayment} />
+            )}
+          </>
+        ) : (
+          <View style={styles.paymentSummary}>
+            <Text style={styles.paymentSummaryLabel}>Payment (set when this order was created)</Text>
+            <Text style={styles.paymentSummaryValue}>{paymentSummary}</Text>
+          </View>
         )}
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -165,6 +188,16 @@ const styles = StyleSheet.create({
   title:   { fontSize: 17, fontWeight: '700', color: colors.text },
   form:    { padding: 16 },
   poLabel: { fontSize: 15, fontWeight: '600', color: colors.text, marginBottom: 16 },
+
+  paymentSummary: {
+    backgroundColor: colors.card, borderRadius: 12, padding: 14,
+    marginBottom: 14, borderWidth: 1, borderColor: colors.border,
+  },
+  paymentSummaryLabel: {
+    fontSize: 12, fontWeight: '600', color: colors.textMuted,
+    textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4,
+  },
+  paymentSummaryValue: { fontSize: 15, fontWeight: '700', color: colors.text },
 
   lineCard: {
     backgroundColor: colors.card, borderRadius: 12, padding: 14,

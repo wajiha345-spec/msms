@@ -34,6 +34,13 @@ interface CreatePoInput {
   notes?:        string;
   items:         PoItemInput[];
   userId:        string;
+  // Payment choice, decided once at creation — receiveGoods() reuses these
+  // for every receipt against this order instead of asking again.
+  paymentType?:   string; // "CASH" | "CREDIT" — defaults to CASH
+  paymentMethod?: string; // "CASH" | "ACCOUNT" | "SPLIT" — required unless CREDIT
+  cashAmount?:    number;
+  accountId?:     string;
+  accountAmount?: number;
 }
 
 const PO_INCLUDE = {
@@ -70,6 +77,16 @@ export async function createPurchaseOrder(shopId: string, data: CreatePoInput) {
     if (!product) throw new Error(`Line ${i + 1}: product not found`);
   }
 
+  // Payment is decided once, here, for the whole order — CREDIT orders skip
+  // this (no cash moves until settled via supplierLedger, same as a credit
+  // Purchase); CASH orders require Cash/Account/Split now so receiveGoods()
+  // never has to ask again.
+  const isCredit = data.paymentType === 'CREDIT';
+  if (!isCredit) {
+    const orderedTotal = data.items.reduce((s, i) => s + i.quantityOrdered * i.unitPrice, 0);
+    validatePaymentSplit(data.paymentMethod, orderedTotal, data.cashAmount, data.accountId, data.accountAmount);
+  }
+
   const poNo = await generatePoNo(shopId);
 
   return prisma.purchaseOrder.create({
@@ -81,6 +98,11 @@ export async function createPurchaseOrder(shopId: string, data: CreatePoInput) {
       expectedDate:  data.expectedDate ? new Date(data.expectedDate) : null,
       notes:         data.notes,
       userId:        data.userId,
+      paymentType:    isCredit ? 'CREDIT' : 'CASH',
+      paymentMethod:  isCredit ? null : data.paymentMethod,
+      cashAmount:     isCredit ? null : data.cashAmount    ?? null,
+      accountId:      isCredit ? null : data.accountId     ?? null,
+      accountAmount:  isCredit ? null : data.accountAmount ?? null,
       items: {
         create: data.items.map((item) => ({
           productId:       item.productId,
@@ -138,20 +160,50 @@ export async function receiveGoods(shopId: string, poId: string, data: ReceiveGo
     }
   }
 
-  const isCredit = data.paymentType === 'CREDIT';
+  // Payment was decided once at PO creation time (createPurchaseOrder).
+  // Orders created before that field existed (paymentType is null) fall
+  // back to accepting payment fields on this request instead, exactly how
+  // this endpoint used to work.
+  const isLegacyOrder      = po.paymentType == null;
+  const paymentType        = isLegacyOrder ? data.paymentType    : po.paymentType ?? undefined;
+  const paymentMethod      = isLegacyOrder ? data.paymentMethod  : po.paymentMethod ?? undefined;
+  const cashAmountTotal    = isLegacyOrder ? data.cashAmount     : po.cashAmount ?? undefined;
+  const accountId          = isLegacyOrder ? data.accountId      : po.accountId ?? undefined;
+  const accountAmountTotal = isLegacyOrder ? data.accountAmount  : po.accountAmount ?? undefined;
+
+  const isCredit = paymentType === 'CREDIT';
   const receiptTotals = data.receipts.map((r) => r.quantity * po.items.find((i) => i.id === r.itemId)!.unitPrice);
   const grandTotal = receiptTotals.reduce((s, a) => s + a, 0);
+
+  let perLineSplit: { cashAmount: number; accountAmount: number }[] | null = null;
   if (!isCredit) {
-    validatePaymentSplit(data.paymentMethod, grandTotal, data.cashAmount, data.accountId, data.accountAmount);
+    if (isLegacyOrder) {
+      // Old behavior — validate against this receipt batch's own total.
+      validatePaymentSplit(paymentMethod, grandTotal, cashAmountTotal, accountId, accountAmountTotal);
+      perLineSplit = paymentMethod === 'SPLIT'
+        ? apportionSplit(receiptTotals, cashAmountTotal ?? 0, accountAmountTotal ?? 0)
+        : null;
+    } else {
+      // New behavior — cashAmount/accountAmount were already validated
+      // against the PO's full ordered total at creation. A single PO can be
+      // received across several partial batches over time, so apportion
+      // this batch's share of that stored split, proportional to how much
+      // of the order it covers, so repeated partial receipts still sum to
+      // the original split once the order is fully received.
+      const orderedTotal  = po.items.reduce((s, i) => s + i.quantityOrdered * i.unitPrice, 0);
+      const batchFraction = orderedTotal > 0 ? grandTotal / orderedTotal : 0;
+      const batchCash      = (cashAmountTotal ?? 0) * batchFraction;
+      const batchAccount   = (accountAmountTotal ?? 0) * batchFraction;
+      perLineSplit = paymentMethod === 'SPLIT'
+        ? apportionSplit(receiptTotals, batchCash, batchAccount)
+        : null;
+    }
   }
-  const perLineSplit = !isCredit && data.paymentMethod === 'SPLIT'
-    ? apportionSplit(receiptTotals, data.cashAmount ?? 0, data.accountAmount ?? 0)
-    : null;
 
   // Reuses purchases.service.ts's createPurchase() unchanged — one call per
   // receipt line, so stock increments and the Purchase record are created
   // exactly as they already are for a manually-recorded purchase. The one
-  // payment choice made for the whole receipt is proportionally apportioned
+  // payment choice made for the whole order is proportionally apportioned
   // across lines when Split.
   for (const [i, receipt] of data.receipts.entries()) {
     const item = po.items.find((i) => i.id === receipt.itemId)!;
@@ -163,10 +215,10 @@ export async function receiveGoods(shopId: string, poId: string, data: ReceiveGo
         purchasePrice:  item.unitPrice,
         supplierName:   po.supplierName  ?? undefined,
         supplierPhone:  po.supplierPhone ?? undefined,
-        paymentType:    data.paymentType,
+        paymentType,
         userId:         data.userId,
-        paymentMethod:  data.paymentMethod,
-        accountId:      data.accountId,
+        paymentMethod,
+        accountId,
         cashAmount:     perLineSplit ? perLineSplit[i].cashAmount    : undefined,
         accountAmount:  perLineSplit ? perLineSplit[i].accountAmount : undefined,
       },

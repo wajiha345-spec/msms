@@ -24,6 +24,13 @@ export interface PurchaseOrder {
   createdAt:      string;
   items:          PurchaseOrderItem[];
   createdBy:      { username: string };
+  // Payment choice made at creation — null on orders created before this
+  // field existed (legacy orders still ask for payment when received).
+  paymentType?:    'CASH' | 'CREDIT' | null;
+  paymentMethod?:  'CASH' | 'ACCOUNT' | 'SPLIT' | null;
+  cashAmount?:     number | null;
+  accountId?:      string | null;
+  accountAmount?:  number | null;
 }
 
 export interface PoItemPayload {
@@ -33,12 +40,13 @@ export interface PoItemPayload {
   unitPrice:       number;
 }
 
-export interface CreatePurchaseOrderPayload {
+export interface CreatePurchaseOrderPayload extends PaymentFields {
   supplierName:  string;
   supplierPhone: string;
   expectedDate?: string;
   notes?:        string;
   items:         PoItemPayload[];
+  paymentType?:  'CASH' | 'CREDIT';
 }
 
 export interface ReceiveGoodsPayload extends PaymentFields {

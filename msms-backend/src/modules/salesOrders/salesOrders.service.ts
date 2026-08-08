@@ -42,6 +42,12 @@ interface CreateSoInput {
   notes?:        string;
   items:         SoItemInput[];
   userId:        string;
+  // Payment choice, decided once at creation — markDelivered() reuses these
+  // instead of asking again.
+  paymentMethod?: string; // "CASH" | "ACCOUNT" | "SPLIT"
+  cashAmount?:    number;
+  accountId?:     string;
+  accountAmount?: number;
 }
 
 const SO_INCLUDE = {
@@ -78,6 +84,12 @@ export async function createSalesOrder(shopId: string, data: CreateSoInput) {
     if (!product) throw new Error(`Line ${i + 1}: product not found`);
   }
 
+  // Payment is decided once, here, for the whole order — a sales order
+  // always converts to a cash sale on delivery, so this is required now
+  // instead of being asked again in markDelivered().
+  const orderedTotal = data.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+  validatePaymentSplit(data.paymentMethod, orderedTotal, data.cashAmount, data.accountId, data.accountAmount);
+
   const soNo = await generateSoNo(shopId);
 
   return prisma.salesOrder.create({
@@ -89,6 +101,10 @@ export async function createSalesOrder(shopId: string, data: CreateSoInput) {
       deliveryDate:  data.deliveryDate ? new Date(data.deliveryDate) : null,
       notes:         data.notes,
       userId:        data.userId,
+      paymentMethod: data.paymentMethod,
+      cashAmount:    data.cashAmount    ?? null,
+      accountId:     data.accountId     ?? null,
+      accountAmount: data.accountAmount ?? null,
       items: {
         create: data.items.map((item) => ({
           productId:   item.productId,
@@ -122,15 +138,31 @@ export async function cancelSalesOrder(shopId: string, id: string) {
   return prisma.salesOrder.update({ where: { id }, data: { status: 'CANCELLED' } });
 }
 
-export async function markDelivered(shopId: string, userId: string, id: string, io: Server, payment: PaymentInput) {
+export async function markDelivered(shopId: string, userId: string, id: string, io: Server, requestPayment: PaymentInput) {
   const so = await prisma.salesOrder.findFirst({ where: { id, shopId }, include: { items: true } });
   if (!so) throw new Error('Sales order not found');
   if (so.status === 'DELIVERED') throw new Error('Order has already been delivered');
   if (so.status === 'CANCELLED') throw new Error('Cannot deliver a cancelled order');
 
+  // Payment was decided once at SO creation time (createSalesOrder). Orders
+  // created before that field existed (paymentMethod is null) fall back to
+  // accepting payment fields on this request instead, exactly how this
+  // endpoint used to work.
+  const isLegacyOrder = so.paymentMethod == null;
+  const payment: PaymentInput = isLegacyOrder
+    ? requestPayment
+    : {
+        paymentMethod: so.paymentMethod ?? undefined,
+        cashAmount:    so.cashAmount    ?? undefined,
+        accountId:     so.accountId     ?? undefined,
+        accountAmount: so.accountAmount ?? undefined,
+      };
+
   const itemTotals = so.items.map((item) => item.quantity * item.unitPrice);
   const grandTotal  = itemTotals.reduce((s, a) => s + a, 0);
-  validatePaymentSplit(payment.paymentMethod, grandTotal, payment.cashAmount, payment.accountId, payment.accountAmount);
+  if (isLegacyOrder) {
+    validatePaymentSplit(payment.paymentMethod, grandTotal, payment.cashAmount, payment.accountId, payment.accountAmount);
+  }
   const perItemSplit = payment.paymentMethod === 'SPLIT'
     ? apportionSplit(itemTotals, payment.cashAmount ?? 0, payment.accountAmount ?? 0)
     : null;

@@ -367,6 +367,8 @@ model Account {
   secondhandAsAccount      SecondhandRecord[] @relation("SecondhandAccount")
   supplierPaymentsAsAccount SupplierPayment[] @relation("SupplierPaymentAccount")
   saleInstallmentsAsAccount SaleInstallment[] @relation("SaleInstallmentAccount")
+  purchaseOrdersAsAccount  PurchaseOrder[]   @relation("PurchaseOrderAccount")
+  salesOrdersAsAccount     SalesOrder[]      @relation("SalesOrderAccount")
 
   @@unique([shopId, code])
   @@index([shopId])
@@ -649,6 +651,17 @@ model PurchaseOrder {
   items         PurchaseOrderItem[]
   createdAt     DateTime            @default(now())
 
+  // Payment choice made at creation time (Cash/Account/Split, or Credit —
+  // no cash moves until goods are received). Null on orders created before
+  // this field existed; receiveGoods() falls back to request-body payment
+  // fields for those legacy rows.
+  paymentType    String?
+  paymentMethod  String?
+  cashAmount     Float?
+  account        Account?            @relation("PurchaseOrderAccount", fields: [accountId], references: [id])
+  accountId      String?
+  accountAmount  Float?
+
   @@unique([shopId, poNo])
   @@index([shopId])
 }
@@ -681,6 +694,16 @@ model SalesOrder {
   userId        String
   items         SalesOrderItem[]
   createdAt     DateTime         @default(now())
+
+  // Payment choice made at creation time (Cash/Account/Split — always cash
+  // sale on delivery, no credit concept for sales orders). Null on orders
+  // created before this field existed; markDelivered() falls back to
+  // request-body payment fields for those legacy rows.
+  paymentMethod String?
+  cashAmount    Float?
+  account       Account?         @relation("SalesOrderAccount", fields: [accountId], references: [id])
+  accountId     String?
+  accountAmount Float?
 
   @@unique([shopId, soNo])
   @@index([shopId])

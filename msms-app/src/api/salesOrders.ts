@@ -24,6 +24,12 @@ export interface SalesOrder {
   createdAt:      string;
   items:          SalesOrderItem[];
   createdBy:      { username: string };
+  // Payment choice made at creation — null on orders created before this
+  // field existed (legacy orders still ask for payment when delivered).
+  paymentMethod?: 'CASH' | 'ACCOUNT' | 'SPLIT' | null;
+  cashAmount?:    number | null;
+  accountId?:     string | null;
+  accountAmount?: number | null;
 }
 
 export interface SoItemPayload {
@@ -33,7 +39,7 @@ export interface SoItemPayload {
   unitPrice:   number;
 }
 
-export interface CreateSalesOrderPayload {
+export interface CreateSalesOrderPayload extends PaymentFields {
   customerName:  string;
   customerPhone: string;
   deliveryDate?: string;

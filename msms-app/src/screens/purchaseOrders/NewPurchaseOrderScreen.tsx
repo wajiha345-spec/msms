@@ -9,9 +9,12 @@ import { Input }  from '../../components/Inputs';
 import { Button } from '../../components/Buttons';
 import { ProductPicker } from '../../components/ProductPicker';
 import { SupplierPicker } from '../../components/SupplierPicker';
+import VariantPicker from '../../components/VariantPicker';
+import { PaymentMethodPicker } from '../../components/PaymentMethodPicker';
 import { Product } from '../../api/products';
 import { purchaseOrdersApi } from '../../api/purchaseOrders';
 import { SupplierContact } from '../../api/purchases';
+import { PaymentFields } from '../../api/payment';
 import { formatPhone, formatDateInput, parseDDMMYYYY } from '../../utils/format';
 import { colors } from '../../theme/colors';
 
@@ -33,6 +36,8 @@ export default function NewPurchaseOrderScreen() {
   const [expectedDate,  setExpectedDate]  = useState('');
   const [notes,         setNotes]         = useState('');
   const [lines,         setLines]         = useState<DraftLine[]>([newLine()]);
+  const [paymentType,   setPaymentType]   = useState<'Cash' | 'Credit'>('Cash');
+  const [payment,       setPayment]       = useState<PaymentFields>({});
   const [loading,       setLoading]       = useState(false);
   const [error,         setError]         = useState('');
   const [errors,        setErrors]        = useState<Record<string, string>>({});
@@ -70,6 +75,16 @@ export default function NewPurchaseOrderScreen() {
     const expDate = expectedDate.trim() ? parseDDMMYYYY(expectedDate) : null;
     if (expectedDate.trim() && !expDate) { setError('Enter a valid expected date (DD/MM/YYYY)'); return; }
 
+    if (paymentType === 'Cash') {
+      if (!payment.paymentMethod) { setError('Select how the goods will be paid for'); return; }
+      if (payment.paymentMethod !== 'CASH' && !payment.accountId) { setError('Select an account'); return; }
+      if (payment.paymentMethod === 'SPLIT') {
+        const sum = (payment.cashAmount ?? 0) + (payment.accountAmount ?? 0);
+        if (Math.abs(sum - total) > 0.01) { setError('Split amounts must add up to the total'); return; }
+      }
+    }
+
+    const isCredit = paymentType === 'Credit';
     setLoading(true);
     try {
       await purchaseOrdersApi.create({
@@ -83,6 +98,8 @@ export default function NewPurchaseOrderScreen() {
           quantityOrdered: Number(l.quantity),
           unitPrice:       Number(l.unitPrice),
         })),
+        paymentType: isCredit ? 'CREDIT' : 'CASH',
+        ...(isCredit ? {} : payment),
       });
       Alert.alert('Purchase Order Created ✓', undefined, [{ text: 'OK', onPress: () => navigation.goBack() }]);
     } catch (e: any) {
@@ -186,6 +203,19 @@ export default function NewPurchaseOrderScreen() {
           <Text style={styles.summaryLabel}>Total</Text>
           <Text style={styles.summaryValue}>Rs {total.toLocaleString()}</Text>
         </View>
+
+        <Text style={styles.sectionLabel}>Payment</Text>
+        <VariantPicker
+          label="Payment Type *"
+          value={paymentType}
+          onChange={(v) => setPaymentType(v === 'Credit' ? 'Credit' : 'Cash')}
+          options={['Cash', 'Credit']}
+          placeholder="Select payment type"
+          required
+        />
+        {paymentType === 'Cash' && (
+          <PaymentMethodPicker total={total} value={payment} onChange={setPayment} />
+        )}
 
         <Input
           label="Notes (optional)"

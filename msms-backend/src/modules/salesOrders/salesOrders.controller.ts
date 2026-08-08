@@ -36,11 +36,18 @@ export async function getSalesOrderHandler(req: AuthRequest, res: Response) {
 
 export async function createSalesOrderHandler(req: AuthRequest, res: Response) {
   try {
-    const { customerName, customerPhone, deliveryDate, notes, items } = req.body;
+    const {
+      customerName, customerPhone, deliveryDate, notes, items,
+      paymentMethod, cashAmount, accountId, accountAmount,
+    } = req.body;
     if (!items) return fail(res, 'items is required');
 
     const order = await createSalesOrder(req.user!.shopId, {
       customerName, customerPhone, deliveryDate, notes, items, userId: req.user!.userId,
+      paymentMethod,
+      cashAmount:    cashAmount    !== undefined ? Number(cashAmount)    : undefined,
+      accountId,
+      accountAmount: accountAmount !== undefined ? Number(accountAmount) : undefined,
     });
     return ok(res, order);
   } catch (e: any) {

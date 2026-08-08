@@ -35,11 +35,19 @@ export async function getPurchaseOrderHandler(req: AuthRequest, res: Response) {
 
 export async function createPurchaseOrderHandler(req: AuthRequest, res: Response) {
   try {
-    const { supplierName, supplierPhone, expectedDate, notes, items } = req.body;
+    const {
+      supplierName, supplierPhone, expectedDate, notes, items,
+      paymentType, paymentMethod, cashAmount, accountId, accountAmount,
+    } = req.body;
     if (!items) return fail(res, 'items is required');
 
     const order = await createPurchaseOrder(req.user!.shopId, {
       supplierName, supplierPhone, expectedDate, notes, items, userId: req.user!.userId,
+      paymentType,
+      paymentMethod,
+      cashAmount:    cashAmount    !== undefined ? Number(cashAmount)    : undefined,
+      accountId,
+      accountAmount: accountAmount !== undefined ? Number(accountAmount) : undefined,
     });
     return ok(res, order);
   } catch (e: any) {

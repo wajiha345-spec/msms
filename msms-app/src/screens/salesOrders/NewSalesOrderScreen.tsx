@@ -9,9 +9,11 @@ import { Input }  from '../../components/Inputs';
 import { Button } from '../../components/Buttons';
 import { ProductPicker } from '../../components/ProductPicker';
 import { CustomerPicker } from '../../components/CustomerPicker';
+import { PaymentMethodPicker } from '../../components/PaymentMethodPicker';
 import { Product } from '../../api/products';
 import { salesOrdersApi } from '../../api/salesOrders';
 import { Customer } from '../../api/crm';
+import { PaymentFields } from '../../api/payment';
 import { formatPhone, formatDateInput, parseDDMMYYYY } from '../../utils/format';
 import { colors } from '../../theme/colors';
 
@@ -33,6 +35,7 @@ export default function NewSalesOrderScreen() {
   const [deliveryDate,  setDeliveryDate]  = useState('');
   const [notes,         setNotes]         = useState('');
   const [lines,         setLines]         = useState<DraftLine[]>([newLine()]);
+  const [payment,       setPayment]       = useState<PaymentFields>({});
   const [loading,       setLoading]       = useState(false);
   const [error,         setError]         = useState('');
   const [errors,        setErrors]        = useState<Record<string, string>>({});
@@ -70,6 +73,13 @@ export default function NewSalesOrderScreen() {
     const delDate = deliveryDate.trim() ? parseDDMMYYYY(deliveryDate) : null;
     if (deliveryDate.trim() && !delDate) { setError('Enter a valid delivery date (DD/MM/YYYY)'); return; }
 
+    if (!payment.paymentMethod) { setError('Select how the payment will be received on delivery'); return; }
+    if (payment.paymentMethod !== 'CASH' && !payment.accountId) { setError('Select an account'); return; }
+    if (payment.paymentMethod === 'SPLIT') {
+      const sum = (payment.cashAmount ?? 0) + (payment.accountAmount ?? 0);
+      if (Math.abs(sum - total) > 0.01) { setError('Split amounts must add up to the total'); return; }
+    }
+
     setLoading(true);
     try {
       await salesOrdersApi.create({
@@ -83,6 +93,7 @@ export default function NewSalesOrderScreen() {
           quantity:    Number(l.quantity),
           unitPrice:   Number(l.unitPrice),
         })),
+        ...payment,
       });
       Alert.alert('Sales Order Created ✓', undefined, [{ text: 'OK', onPress: () => navigation.goBack() }]);
     } catch (e: any) {
@@ -186,6 +197,9 @@ export default function NewSalesOrderScreen() {
           <Text style={styles.summaryLabel}>Total</Text>
           <Text style={styles.summaryValue}>Rs {total.toLocaleString()}</Text>
         </View>
+
+        <Text style={styles.sectionLabel}>Payment (on delivery)</Text>
+        <PaymentMethodPicker total={total} value={payment} onChange={setPayment} />
 
         <Input
           label="Notes (optional)"

@@ -57,12 +57,18 @@ export default function SalesOrderDetailScreen() {
 
   async function handleDeliver() {
     setPaymentError('');
-    if (!payment.paymentMethod) { setPaymentError('Select how the payment was received'); return; }
-    if (payment.paymentMethod !== 'CASH' && !payment.accountId) { setPaymentError('Select an account'); return; }
-    if (payment.paymentMethod === 'SPLIT' && order) {
-      const orderTotal = order.items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
-      const sum = (payment.cashAmount ?? 0) + (payment.accountAmount ?? 0);
-      if (Math.abs(sum - orderTotal) > 0.01) { setPaymentError('Split amounts must add up to the total'); return; }
+    // Orders created before payment moved to SO creation time have no
+    // stored paymentMethod — fall back to asking here, exactly how this
+    // screen used to work. New orders already have their payment locked in.
+    const isLegacyOrder = !order?.paymentMethod;
+    if (isLegacyOrder) {
+      if (!payment.paymentMethod) { setPaymentError('Select how the payment was received'); return; }
+      if (payment.paymentMethod !== 'CASH' && !payment.accountId) { setPaymentError('Select an account'); return; }
+      if (payment.paymentMethod === 'SPLIT' && order) {
+        const orderTotal = order.items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
+        const sum = (payment.cashAmount ?? 0) + (payment.accountAmount ?? 0);
+        if (Math.abs(sum - orderTotal) > 0.01) { setPaymentError('Split amounts must add up to the total'); return; }
+      }
     }
 
     Alert.alert(
@@ -74,7 +80,7 @@ export default function SalesOrderDetailScreen() {
           text: 'Confirm', onPress: async () => {
             setBusy(true);
             try {
-              await salesOrdersApi.deliver(id, payment);
+              await salesOrdersApi.deliver(id, isLegacyOrder ? payment : {});
               Alert.alert('Delivered ✓', 'Sales have been created.', [{ text: 'OK', onPress: fetchOrder }]);
             } catch (e: any) {
               Alert.alert('Error', e?.response?.data?.error || 'Could not mark as delivered');
@@ -117,6 +123,12 @@ export default function SalesOrderDetailScreen() {
   const total = order.items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
   const canCancel = order.status !== 'DELIVERED' && order.status !== 'CANCELLED';
   const isActive  = order.status === 'PENDING' || order.status === 'PROCESSING' || order.status === 'SHIPPED';
+  const isLegacyOrder = !order.paymentMethod;
+  const paymentSummary = order.paymentMethod === 'SPLIT'
+    ? 'Split (Cash + Account)'
+    : order.paymentMethod === 'ACCOUNT'
+      ? 'Account'
+      : 'Cash';
 
   return (
     <View style={styles.container}>
@@ -176,8 +188,14 @@ export default function SalesOrderDetailScreen() {
             )}
             <View style={styles.card}>
               <Text style={styles.cardLabel}>Payment (on delivery)</Text>
-              <PaymentMethodPicker total={total} value={payment} onChange={setPayment} />
-              {paymentError ? <Text style={styles.paymentError}>{paymentError}</Text> : null}
+              {isLegacyOrder ? (
+                <>
+                  <PaymentMethodPicker total={total} value={payment} onChange={setPayment} />
+                  {paymentError ? <Text style={styles.paymentError}>{paymentError}</Text> : null}
+                </>
+              ) : (
+                <Text style={styles.customerName}>{paymentSummary}</Text>
+              )}
             </View>
             <Button label="Mark Delivered" onPress={handleDeliver} loading={busy} style={{ marginBottom: 10 }} />
           </>
