@@ -8,8 +8,10 @@ import { useNavigation } from '@react-navigation/native';
 import { Input }  from '../../components/Inputs';
 import { Button } from '../../components/Buttons';
 import { ProductPicker } from '../../components/ProductPicker';
+import { SupplierPicker } from '../../components/SupplierPicker';
 import { Product } from '../../api/products';
 import { purchaseOrdersApi } from '../../api/purchaseOrders';
+import { SupplierContact } from '../../api/purchases';
 import { formatPhone, formatDateInput, parseDDMMYYYY } from '../../utils/format';
 import { colors } from '../../theme/colors';
 
@@ -102,6 +104,13 @@ export default function NewPurchaseOrderScreen() {
 
       <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
         <Text style={styles.sectionLabel}>Supplier Info</Text>
+        <SupplierPicker
+          onChange={(s: SupplierContact) => {
+            setSupplierName(s.supplierName || '');
+            setSupplierPhone(s.supplierPhone);
+            setErrors((prev) => ({ ...prev, supplierName: '', supplierPhone: '' }));
+          }}
+        />
         <Input
           label="Supplier Name *"
           placeholder="e.g. Malik Traders"

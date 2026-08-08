@@ -8,8 +8,10 @@ import { useNavigation } from '@react-navigation/native';
 import { Input }  from '../../components/Inputs';
 import { Button } from '../../components/Buttons';
 import { ProductPicker } from '../../components/ProductPicker';
+import { CustomerPicker } from '../../components/CustomerPicker';
 import { Product } from '../../api/products';
 import { salesOrdersApi } from '../../api/salesOrders';
+import { Customer } from '../../api/crm';
 import { formatPhone, formatDateInput, parseDDMMYYYY } from '../../utils/format';
 import { colors } from '../../theme/colors';
 
@@ -102,6 +104,13 @@ export default function NewSalesOrderScreen() {
 
       <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
         <Text style={styles.sectionLabel}>Customer Info</Text>
+        <CustomerPicker
+          onChange={(c: Customer) => {
+            setCustomerName(c.name);
+            setCustomerPhone(c.phone);
+            setErrors((prev) => ({ ...prev, customerName: '', customerPhone: '' }));
+          }}
+        />
         <Input
           label="Customer Name *"
           placeholder="e.g. Bilal Ahmed"
