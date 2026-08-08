@@ -23,3 +23,6 @@ Thumbs.db
 !.dev.vars.example
 .env*
 !.env.example
+
+# Claude Code local settings (can contain locally-approved commands/secrets)
+.claude/settings.local.json
