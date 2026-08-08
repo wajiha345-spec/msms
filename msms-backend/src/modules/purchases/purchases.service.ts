@@ -25,6 +25,30 @@ export async function getPurchases(shopId: string, productId?: string) {
   });
 }
 
+// Convenience lookup for New Purchase's supplier picker — no dedicated
+// Supplier master table exists (same reasoning as supplierLedger.service.ts:
+// suppliers are grouped by the supplierPhone Purchase already carries).
+// Unlike supplierLedger's listSuppliers (CREDIT-only, for ledger balances),
+// this includes every past supplier regardless of payment type, since it's
+// just "who have I bought from before" for autofill purposes.
+export async function listDistinctSuppliers(shopId: string, search?: string) {
+  const where: any = { shopId, supplierPhone: { not: null } };
+  if (search) {
+    const q = search.trim();
+    where.OR = [
+      { supplierName:  { contains: q, mode: 'insensitive' } },
+      { supplierPhone: { contains: q } },
+    ];
+  }
+  const purchases = await prisma.purchase.findMany({
+    where,
+    select: { supplierName: true, supplierPhone: true },
+    orderBy: { createdAt: 'desc' },
+    distinct: ['supplierPhone'],
+  });
+  return purchases.map((p) => ({ supplierName: p.supplierName, supplierPhone: p.supplierPhone as string }));
+}
+
 export async function getPurchaseById(shopId: string, id: string) {
   const p = await prisma.purchase.findFirst({
     where: { id, shopId },

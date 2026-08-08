@@ -5,6 +5,7 @@ import {
   getPurchases,
   getPurchaseById,
   createPurchase,
+  listDistinctSuppliers,
 } from './purchases.service';
 import { notifyPurchaseRecorded } from '../notifications/notifications.service';
 
@@ -24,6 +25,16 @@ export async function list(req: AuthRequest, res: Response) {
     const productId = getQueryValue(req.query.productId);
     const purchases = await getPurchases(req.user!.shopId, productId);
     return ok(res, purchases);
+  } catch (e: any) {
+    return fail(res, e.message);
+  }
+}
+
+export async function listSuppliersHandler(req: AuthRequest, res: Response) {
+  try {
+    const search = getQueryValue(req.query.search);
+    const suppliers = await listDistinctSuppliers(req.user!.shopId, search);
+    return ok(res, suppliers);
   } catch (e: any) {
     return fail(res, e.message);
   }

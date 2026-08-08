@@ -10,8 +10,9 @@ import { Button }        from '../../components/Buttons';
 import { ProductPicker } from '../../components/ProductPicker';
 import VariantPicker     from '../../components/VariantPicker';
 import { BranchPicker }  from '../../components/BranchPicker';
+import { SupplierPicker } from '../../components/SupplierPicker';
 import { Product, productsApi } from '../../api/products';
-import { purchasesApi }  from '../../api/purchases';
+import { purchasesApi, SupplierContact }  from '../../api/purchases';
 import { Branch }        from '../../api/branches';
 import { formatPhone, formatDateInput, parseDDMMYYYY } from '../../utils/format';
 import { colors }        from '../../theme/colors';
@@ -282,6 +283,13 @@ export default function NewPurchaseScreen() {
 
         {/* ── Supplier info ── */}
         <Text style={styles.sectionLabel}>Supplier Info</Text>
+        <SupplierPicker
+          onChange={(s: SupplierContact) => {
+            setSupplierName(s.supplierName || '');
+            setSupplierPhone(s.supplierPhone);
+            setErrors((prev) => ({ ...prev, supplierName: '', supplierPhone: '' }));
+          }}
+        />
         <Input
           label="Supplier Name *"
           placeholder="e.g. Malik Traders"

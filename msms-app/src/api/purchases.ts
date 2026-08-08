@@ -23,6 +23,11 @@ export interface CreatePurchasePayload {
   branchId?:       string;
 }
 
+export interface SupplierContact {
+  supplierName?:  string | null;
+  supplierPhone:  string;
+}
+
 export const purchasesApi = {
   list: (productId?: string) =>
     apiClient.get<{ success: boolean; data: Purchase[] }>('/purchases', {
@@ -34,4 +39,9 @@ export const purchasesApi = {
 
   create: (payload: CreatePurchasePayload) =>
     apiClient.post<{ success: boolean; data: Purchase }>('/purchases', payload),
+
+  listSuppliers: (search?: string) =>
+    apiClient.get<{ success: boolean; data: SupplierContact[] }>('/purchases/suppliers', {
+      params: search ? { search } : undefined,
+    }),
 };
