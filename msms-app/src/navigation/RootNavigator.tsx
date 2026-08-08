@@ -27,7 +27,7 @@ export default function RootNavigator() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer documentTitle={{ formatter: () => 'SmartShop' }}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {token ? (
           isTrialExpired || isInstallmentOverdue ? (
