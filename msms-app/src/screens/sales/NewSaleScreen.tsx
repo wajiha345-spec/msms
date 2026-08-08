@@ -12,9 +12,11 @@ import { ProductPicker }   from '../../components/ProductPicker';
 import VariantPicker       from '../../components/VariantPicker';
 import ScannerOverlay      from '../../components/ScannerOverlay';
 import { BranchPicker }    from '../../components/BranchPicker';
+import { CustomerPicker }  from '../../components/CustomerPicker';
 import { Product, productsApi } from '../../api/products';
 import { salesApi, Guarantor }  from '../../api/sales';
 import { Branch }          from '../../api/branches';
+import { Customer }        from '../../api/crm';
 import { invoicesApi }     from '../../api/invoices';
 import { formatCnic, formatPhone, formatDateInput, parseDDMMYYYY } from '../../utils/format';
 import { colors }          from '../../theme/colors';
@@ -364,6 +366,13 @@ export default function NewSaleScreen() {
         />
 
         <Text style={styles.sectionLabel}>Customer Info</Text>
+        <CustomerPicker
+          onChange={(c: Customer) => {
+            setCustomerName(c.name);
+            setCustomerPhone(c.phone);
+            setErrors((prev) => ({ ...prev, customerName: '', customerPhone: '' }));
+          }}
+        />
         <Input
           label="Customer Name *"
           placeholder="e.g. Ahmed Khan"

@@ -97,7 +97,9 @@ app.use('/api/users',       authenticate, checkTrialExpiry, requirePlan('PRO'), 
 app.use('/api/branches',    authenticate, checkTrialExpiry, requirePlan('PRO'), branchRoutes);
 
 // ── Business Management: CRM (PRO + owner or granted permission) ───────────
-app.use('/api/crm',         authenticate, checkTrialExpiry, requirePlan('PRO'), requirePermission('manage_crm'), crmRoutes);
+// manage_crm is enforced selectively inside crm.routes.ts — GET /customers
+// stays open to any PRO user (New Sale's customer picker needs it).
+app.use('/api/crm',         authenticate, checkTrialExpiry, requirePlan('PRO'), crmRoutes);
 
 // ── Business Management: Notifications (PRO; every user sees only their own
 // userId-scoped inbox, so no permission grant is needed on top of PRO) ─────
