@@ -148,6 +148,17 @@ export async function sendLicenseEmail(customer: {
         </a>
 
         <p style="color:#64748b;font-size:13px">The download link is tied to your license key. Keep it safe — you'll need it to set up the app.</p>
+
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:16px 18px;margin:20px 0">
+          <p style="margin:0;color:#92400e;font-size:13px;line-height:1.6">
+            📌 <strong>Don't delete this email.</strong> If your phone is ever lost, broken, or
+            replaced, come back to this email and tap the download button again to reinstall
+            the app — then just <strong>log in</strong> with your existing username and
+            password. Your shop and all its data are safe on our servers, so you won't need
+            to re-enter the license key.
+          </p>
+        </div>
+
         <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0"/>
         <p style="color:#94a3b8;font-size:12px">If you have any issues, reply to this email for support.</p>
       </div>
@@ -311,7 +322,7 @@ export async function sendAdminNewLicenseInstallmentEmail(installment: {
           Verify the payment below and click Approve.
           ${installment.installmentNumber === 1
             ? 'This will unlock the shop\'s full PRO access immediately.'
-            : 'This will keep the shop unlocked and schedule the next installment.'}
+            : 'If the shop is currently locked for this installment, approving unlocks it right away and schedules the next one.'}
         </p>
 
         <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:24px">
@@ -375,8 +386,10 @@ export async function sendInstallmentDueReminderEmail(customer: {
           Rs ${customer.amount.toLocaleString()}) is due on
           <strong>${customer.dueDate.toDateString()}</strong>.
         </p>
-        <p>You can submit your payment proof any time from the Billing section inside the MSMS app.
-           If it isn't paid by the due date, the app will lock again until this installment is settled.</p>
+        <p>You can submit your payment proof any time at
+           <a href="https://msms-app.site">msms-app.site</a> — look for "Pay your next installment"
+           at the bottom of the page. If it isn't paid by the due date, the app will lock again
+           until this installment is settled.</p>
         <p style="color:#64748b;font-size:13px">If you've already paid, you can ignore this email once it's approved.</p>
       </div>
     `,

@@ -23,44 +23,13 @@ export interface LicenseInstallmentPlan {
   upcomingInstallment: LicenseInstallment | null;
 }
 
-async function uploadProof(url: string, transactionId: string, photoUri: string) {
-  const formData = new FormData();
-  formData.append('transactionId', transactionId);
-  const filename = photoUri.split('/').pop() ?? 'proof.jpg';
-  const ext = filename.split('.').pop()?.toLowerCase() ?? 'jpg';
-  formData.append('screenshot', {
-    uri:  photoUri,
-    name: filename,
-    type: ext === 'png' ? 'image/png' : 'image/jpeg',
-  } as any);
-
-  // Mirrors expensesApi.create: use fetch directly for multipart uploads.
-  const baseURL = apiClient.defaults.baseURL;
-  const token   = (apiClient.defaults.headers.common as any)['Authorization'];
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 45000);
-  try {
-    const res = await fetch(`${baseURL}${url}`, {
-      method:  'POST',
-      headers: token ? { Authorization: token } : {},
-      body:    formData,
-      signal:  controller.signal,
-    });
-    const json = await res.json();
-    if (!res.ok) throw { response: { data: json } };
-    return { data: json };
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
+// Payment submission (start/submit an installment) now happens entirely on
+// the website (msms-app.site), not in the app — see msms-website/index.html
+// and the public /api/license-installments/public/submit endpoint. This
+// client only reads status, which AuthContext polls in the background to
+// detect an overdue installment (lock the app) or an out-of-band admin
+// approval (unlock it) — see AuthContext.refreshInstallmentStatus.
 export const licenseInstallmentsApi = {
   getStatus: () =>
     apiClient.get<{ success: boolean; data: LicenseInstallmentPlan | null }>('/license-installments/status'),
-
-  start: (transactionId: string, photoUri: string) =>
-    uploadProof('/license-installments/start', transactionId, photoUri),
-
-  submitInstallment: (installmentNumber: number, transactionId: string, photoUri: string) =>
-    uploadProof(`/license-installments/${installmentNumber}/submit`, transactionId, photoUri),
 };

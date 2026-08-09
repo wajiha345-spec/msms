@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, FlatList, StyleSheet,
-  RefreshControl, ActivityIndicator, TouchableOpacity, Alert,
+  RefreshControl, ActivityIndicator, TouchableOpacity, Alert, Linking,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import {
@@ -174,7 +174,7 @@ export default function NotificationsScreen() {
               {attention!.upcomingLicenseInstallment && (
                 <TouchableOpacity
                   style={styles.attentionCard}
-                  onPress={() => navigation.navigate('BillingStatus')}
+                  onPress={() => Linking.openURL('https://msms-app.site').catch(() => {})}
                   activeOpacity={0.7}
                 >
                   <Text style={styles.attentionIcon}>💳</Text>
@@ -183,7 +183,7 @@ export default function NotificationsScreen() {
                       License installment #{attention!.upcomingLicenseInstallment.installmentNumber} due soon
                     </Text>
                     <Text style={styles.attentionSub}>
-                      Rs {attention!.upcomingLicenseInstallment.amount.toLocaleString()} · due {fmtDate(attention!.upcomingLicenseInstallment.dueDate)}
+                      Rs {attention!.upcomingLicenseInstallment.amount.toLocaleString()} · due {fmtDate(attention!.upcomingLicenseInstallment.dueDate)} · pay at msms-app.site
                     </Text>
                   </View>
                   <Badge label="Due Soon" type="warning" />

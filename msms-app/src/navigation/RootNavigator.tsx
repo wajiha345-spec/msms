@@ -9,7 +9,6 @@ import WelcomeScreen from '../screens/onboarding/WelcomeScreen';
 import SetupScreen  from '../screens/onboarding/SetupScreen';
 import TrialSignupScreen  from '../screens/onboarding/TrialSignupScreen';
 import TrialExpiredScreen from '../screens/onboarding/TrialExpiredScreen';
-import InstallmentPaymentScreen from '../screens/billing/InstallmentPaymentScreen';
 import BottomTabs   from './BottomTabs';
 import { colors }   from '../theme/colors';
 
@@ -32,11 +31,11 @@ export default function RootNavigator() {
         {token ? (
           isTrialExpired || isInstallmentOverdue ? (
             // Trial ran out, or a license installment is overdue — lock the
-            // app until a license key is entered or a payment is submitted
-            <>
-              <Stack.Screen name="TrialExpired" component={TrialExpiredScreen} />
-              <Stack.Screen name="InstallmentPayment" component={InstallmentPaymentScreen} />
-            </>
+            // app until a license key is entered (full payment) or the
+            // overdue installment is paid on the website (installment
+            // payments are handled entirely outside the app — see
+            // TrialExpiredScreen).
+            <Stack.Screen name="TrialExpired" component={TrialExpiredScreen} />
           ) : (
             // Authenticated — show main app
             <Stack.Screen name="Main" component={BottomTabs} />

@@ -82,7 +82,7 @@ export async function submitInstallment(
 ) {
   const plan = await prisma.licenseInstallmentPlan.findUnique({
     where: { shopId },
-    include: { installments: true },
+    include: { installments: true, shop: { select: { name: true } } },
   });
   if (!plan) throw new Error('No installment plan found for this shop');
   if (plan.status !== 'ACTIVE') throw new Error('This installment plan has already been completed');
@@ -91,7 +91,7 @@ export async function submitInstallment(
   if (!installment) throw new Error('Installment not found. It may not be due yet.');
   if (installment.status !== 'PENDING') throw new Error('This installment has already been submitted or paid');
 
-  return prisma.licenseInstallment.update({
+  const updated = await prisma.licenseInstallment.update({
     where: { id: installment.id },
     data: {
       status: 'SUBMITTED',
@@ -99,6 +99,79 @@ export async function submitInstallment(
       screenshotUrl: data.screenshotUrl,
       submittedAt: new Date(),
     },
+  });
+
+  // Previously only startPlan (installment #1) notified the admin — #2/#3
+  // submissions went silent and relied on the admin polling the admin
+  // dashboard. Every submission now emails the same way.
+  sendAdminNewLicenseInstallmentEmail({
+    installmentId: updated.id,
+    shopName: plan.shop.name,
+    installmentNumber: updated.installmentNumber,
+    amount: updated.amount,
+    transactionId: updated.transactionId!,
+    screenshotUrl: updated.screenshotUrl!,
+  }).catch(() => {});
+
+  return updated;
+}
+
+interface PublicSubmitInput {
+  username:      string;
+  contact:       string; // email or phone — loosely cross-checked against what's on file
+  transactionId: string;
+  screenshotUrl: string;
+}
+
+// The website has no login — a shop identifies itself by the same username
+// its owner already uses to log into the app, plus its email/phone as a
+// speed-bump cross-check (same trust model the existing full-payment order
+// form already uses: nobody is strongly authenticated, the admin verifies
+// the actual transaction manually before ever clicking Approve). Reuses
+// startPlan/submitInstallment unchanged — no separate state machine.
+export async function submitPublicInstallment(data: PublicSubmitInput) {
+  const NOT_FOUND = "We couldn't verify that account. Please double-check your username and the email or phone on file, then try again — or contact support.";
+
+  const foundUser = await prisma.user.findFirst({ where: { username: data.username.trim() } });
+  if (!foundUser) throw new Error(NOT_FOUND);
+
+  const shopId = foundUser.shopId;
+  const [adminUser, settings] = await Promise.all([
+    prisma.user.findFirst({ where: { shopId, role: 'admin' }, select: { email: true } }),
+    prisma.shopSettings.findUnique({ where: { shopId }, select: { shopPhone: true } }),
+  ]);
+
+  const digitsOnly = (s: string) => s.replace(/\D/g, '');
+  const contact = data.contact.trim().toLowerCase();
+  const contactDigits = digitsOnly(contact);
+  const onFile = [adminUser?.email, foundUser.email, settings?.shopPhone]
+    .filter((v): v is string => !!v)
+    .map((v) => v.trim().toLowerCase());
+  const isMatch = onFile.some((v) => v === contact || (contactDigits.length >= 7 && digitsOnly(v) === contactDigits));
+  if (!isMatch) throw new Error(NOT_FOUND);
+
+  const plan = await prisma.licenseInstallmentPlan.findUnique({
+    where: { shopId },
+    include: { installments: true },
+  });
+
+  if (!plan) {
+    return startPlan(shopId, { transactionId: data.transactionId, screenshotUrl: data.screenshotUrl });
+  }
+  if (plan.status !== 'ACTIVE') {
+    throw new Error("This shop's license is already fully paid off — nothing left to submit.");
+  }
+
+  const nextPending = plan.installments
+    .filter((i) => i.status === 'PENDING')
+    .sort((a, b) => a.installmentNumber - b.installmentNumber)[0];
+  if (!nextPending) {
+    throw new Error('Your latest payment has already been submitted and is awaiting approval.');
+  }
+
+  return submitInstallment(shopId, nextPending.installmentNumber, {
+    transactionId: data.transactionId,
+    screenshotUrl: data.screenshotUrl,
   });
 }
 

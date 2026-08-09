@@ -1,26 +1,35 @@
 import React, { useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, Alert,
+  TouchableOpacity, Alert, Linking,
   KeyboardAvoidingView, Platform,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { Input } from '../../components/Inputs';
 import { Button } from '../../components/Buttons';
 import { useAuth } from '../../context/AuthContext';
 import { colors } from '../../theme/colors';
+
+const WEBSITE_URL = 'https://msms-app.site';
 
 function fmtDate(d: string | null | undefined) {
   if (!d) return '—';
   return new Date(d).toLocaleDateString('en-GB');
 }
 
+function openWebsite() {
+  Linking.openURL(WEBSITE_URL).catch(() => {});
+}
+
 // Doubles as the "trial expired" lock screen and the "installment payment
-// overdue" lock screen — RootNavigator routes here for either state. Also
-// offers a "Pay in Installments" path alongside the original license-key
-// entry, for shops that can't pay the full amount at once.
+// overdue" lock screen — RootNavigator routes here for either state.
+// Installment payments (both starting a new plan and paying installment
+// #2/#3) are handled entirely on the website now, not in the app — this
+// screen only ever points the user there, it never collects payment proof
+// itself. Unlock happens the same way either state resolves: an admin
+// approves the payment from an emailed link, and AuthContext's background
+// poll (refreshInstallmentStatus / re-checking the JWT) picks it up within
+// about a minute, no re-login required.
 export default function TrialExpiredScreen() {
-  const navigation = useNavigation<any>();
   const { upgradeAccount, logout, isInstallmentOverdue, installmentPlan } = useAuth();
 
   const [licenseKey, setLicenseKey] = useState('');
@@ -66,16 +75,12 @@ export default function TrialExpiredScreen() {
               Installment #{installmentPlan.overdueInstallment.installmentNumber} Is Overdue
             </Text>
             <Text style={styles.cardSub}>
-              Rs {installmentPlan.overdueInstallment.amount.toLocaleString()} was due on{' '}
-              {fmtDate(installmentPlan.overdueInstallment.dueDate)}. Submit your payment proof to unlock
-              your account again — all your data is safe and untouched.
+              Your installment is due on {fmtDate(installmentPlan.overdueInstallment.dueDate)}.
+              Please visit {WEBSITE_URL} and pay the next installment to reactivate the app
+              now. All your data is safe and untouched — as soon as we approve your payment,
+              the app unlocks automatically.
             </Text>
-            <Button
-              label="Submit Payment →"
-              onPress={() => navigation.navigate('InstallmentPayment', {
-                installmentNumber: installmentPlan.overdueInstallment!.installmentNumber,
-              })}
-            />
+            <Button label="Visit msms-app.site →" onPress={openWebsite} />
           </View>
         ) : (
           <>
@@ -122,13 +127,11 @@ export default function TrialExpiredScreen() {
               <View style={styles.installmentCard}>
                 <Text style={styles.installmentTitle}>Can't pay in full right now?</Text>
                 <Text style={styles.installmentSub}>
-                  Pay in 3 installments of Rs 45,000. Your first payment unlocks full access immediately.
+                  Pay in 3 installments of Rs 45,000 instead — visit {WEBSITE_URL} to set one
+                  up. Your first payment unlocks full access as soon as it's approved.
                 </Text>
-                <TouchableOpacity
-                  style={styles.installmentBtn}
-                  onPress={() => navigation.navigate('InstallmentPayment', { installmentNumber: 1 })}
-                >
-                  <Text style={styles.installmentBtnText}>Pay in Installments →</Text>
+                <TouchableOpacity style={styles.installmentBtn} onPress={openWebsite}>
+                  <Text style={styles.installmentBtnText}>Visit msms-app.site →</Text>
                 </TouchableOpacity>
               </View>
             )}

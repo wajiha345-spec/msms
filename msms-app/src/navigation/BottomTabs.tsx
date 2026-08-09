@@ -74,8 +74,6 @@ import FollowUpsScreen        from '../screens/crm/FollowUpsScreen';
 import NotificationsScreen    from '../screens/notifications/NotificationsScreen';
 import BackupScreen           from '../screens/backup/BackupScreen';
 import SettingsScreen         from '../screens/settings/SettingsScreen';
-import BillingStatusScreen    from '../screens/billing/BillingStatusScreen';
-import InstallmentPaymentScreen from '../screens/billing/InstallmentPaymentScreen';
 import LowStockScreen         from '../screens/inventory/LowStockScreen';
 import TransferStockScreen    from '../screens/inventory/TransferStockScreen';
 import ReportsHubScreen       from '../screens/reports/ReportsHubScreen';
@@ -209,9 +207,6 @@ function MoreStack() {
       {/* Business Management — Settings */}
       <MStack.Screen name="Settings"        component={SettingsScreen} />
 
-      {/* License Installment Payments */}
-      <MStack.Screen name="BillingStatus"      component={BillingStatusScreen} />
-      <MStack.Screen name="InstallmentPayment" component={InstallmentPaymentScreen} />
 
       {/* Business Management — Inventory Enhancements */}
       <MStack.Screen name="LowStock"        component={LowStockScreen} />
