@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SmartShop Admin — Dashboard</title>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #f8fafc; color: #1e293b; margin: 0;
+  }
+  header {
+    background: #0f172a; color: #fff; padding: 16px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  header h1 { font-size: 17px; margin: 0; font-weight: 700; }
+  header .who { font-size: 13px; color: #94a3b8; }
+  header button {
+    background: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 7px;
+    padding: 7px 14px; font-size: 13px; cursor: pointer; margin-left: 12px;
+  }
+  main { max-width: 1180px; margin: 0 auto; padding: 24px 20px 60px; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 28px; }
+  .stat { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 18px; }
+  .stat .n { font-size: 22px; font-weight: 800; }
+  .stat .l { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+  .tabs { display: flex; gap: 6px; margin-bottom: 16px; border-bottom: 1px solid #e2e8f0; }
+  .tabs button {
+    background: none; border: none; padding: 10px 16px; font-size: 14px; font-weight: 600;
+    color: #64748b; cursor: pointer; border-bottom: 2px solid transparent;
+  }
+  .tabs button.active { color: #2563eb; border-bottom-color: #2563eb; }
+
+  table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; font-size: 13px; }
+  th { background: #f1f5f9; text-align: left; padding: 10px 12px; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: .03em; }
+  td { padding: 10px 12px; border-top: 1px solid #f1f5f9; vertical-align: top; }
+  .badge { display: inline-block; padding: 3px 9px; border-radius: 99px; font-size: 11px; font-weight: 700; }
+  .badge.PENDING, .badge.SUBMITTED { background: #fffbeb; color: #92400e; }
+  .badge.PAID { background: #f0fdf4; color: #166534; }
+  .badge.REJECTED, .badge.CANCELLED { background: #fef2f2; color: #991b1b; }
+  .badge.ACTIVE { background: #eff6ff; color: #1d4ed8; }
+  .badge.COMPLETED { background: #f0fdf4; color: #166534; }
+
+  .actions button {
+    border: none; border-radius: 6px; padding: 6px 11px; font-size: 12px; font-weight: 600;
+    cursor: pointer; margin-right: 6px; margin-bottom: 4px;
+  }
+  .btn-approve { background: #16a34a; color: #fff; }
+  .btn-reject { background: #dc2626; color: #fff; }
+  .btn-neutral { background: #e2e8f0; color: #1e293b; }
+  .btn-resend { background: #2563eb; color: #fff; }
+
+  .empty { padding: 40px; text-align: center; color: #94a3b8; font-size: 14px; }
+  .toast {
+    position: fixed; bottom: 20px; right: 20px; background: #0f172a; color: #fff;
+    padding: 12px 18px; border-radius: 8px; font-size: 13px; max-width: 360px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.3);
+  }
+  .toast.error { background: #991b1b; }
+  a.screenshot-link { color: #2563eb; font-size: 12px; }
+</style>
+</head>
+<body x-data="adminDashboard()" x-init="init()">
+
+<header>
+  <h1>SmartShop Admin</h1>
+  <div>
+    <span class="who" x-text="'Signed in as ' + username"></span>
+    <button @click="logout()">Log Out</button>
+  </div>
+</header>
+
+<main>
+  <div class="stats" x-show="stats">
+    <div class="stat"><div class="n" x-text="stats.totalCustomers ?? '—'"></div><div class="l">Total Customers</div></div>
+    <div class="stat"><div class="n" x-text="stats.lifetimeLicenses ?? '—'"></div><div class="l">Lifetime Licenses</div></div>
+    <div class="stat"><div class="n" x-text="stats.trialCustomers ?? '—'"></div><div class="l">Trial Customers</div></div>
+    <div class="stat"><div class="n" x-text="stats.pendingPayments ?? '—'"></div><div class="l">Pending Payments</div></div>
+    <div class="stat"><div class="n" x-text="stats.approvedPayments ?? '—'"></div><div class="l">Approved Payments</div></div>
+    <div class="stat"><div class="n" x-text="stats.rejectedPayments ?? '—'"></div><div class="l">Rejected Payments</div></div>
+    <div class="stat"><div class="n" x-text="stats.lockedAccounts ?? '—'"></div><div class="l">Locked Accounts</div></div>
+    <div class="stat"><div class="n" x-text="stats.suspendedAccounts ?? '—'"></div><div class="l">Suspended</div></div>
+    <div class="stat"><div class="n" x-text="'Rs ' + (stats.totalRevenue ?? 0).toLocaleString()"></div><div class="l">Total Revenue</div></div>
+    <div class="stat"><div class="n" x-text="'Rs ' + (stats.outstandingAmount ?? 0).toLocaleString()"></div><div class="l">Outstanding</div></div>
+  </div>
+
+  <div class="tabs">
+    <button :class="{active: tab === 'orders'}" @click="tab = 'orders'">Orders (Full Payment)</button>
+    <button :class="{active: tab === 'installments'}" @click="tab = 'installments'">Installments</button>
+    <button :class="{active: tab === 'shops'}" @click="tab = 'shops'">Shops</button>
+  </div>
+
+  <!-- Orders -->
+  <template x-if="tab === 'orders'">
+    <table>
+      <thead><tr><th>Customer</th><th>Plan</th><th>Amount</th><th>Status</th><th>Transaction</th><th>Receipt</th><th>Action</th></tr></thead>
+      <tbody>
+        <template x-for="o in orders" :key="o.id">
+          <tr>
+            <td><strong x-text="o.customerName"></strong><br/><span x-text="o.customerEmail"></span></td>
+            <td x-text="o.plan"></td>
+            <td x-text="'Rs ' + o.amount.toLocaleString()"></td>
+            <td><span class="badge" :class="o.status" x-text="o.status"></span>
+              <div x-show="o.status === 'REJECTED' && o.rejectionReason" style="font-size:11px;color:#991b1b;margin-top:4px" x-text="o.rejectionReason"></div>
+            </td>
+            <td x-text="o.transactionId || '—'"></td>
+            <td><a class="screenshot-link" :href="o.screenshotUrl" target="_blank" x-show="o.screenshotUrl">View</a></td>
+            <td class="actions">
+              <template x-if="o.status === 'PENDING'">
+                <span>
+                  <button class="btn-approve" @click="approveOrder(o.id)">Approve</button>
+                  <button class="btn-reject" @click="rejectOrder(o.id)">Reject</button>
+                  <button class="btn-neutral" @click="cancelOrder(o.id)">Cancel</button>
+                </span>
+              </template>
+              <template x-if="o.status === 'PAID'">
+                <button class="btn-resend" @click="resendLicense(o.id)">Resend License</button>
+              </template>
+            </td>
+          </tr>
+        </template>
+        <tr x-show="!orders.length"><td colspan="7" class="empty">No orders yet.</td></tr>
+      </tbody>
+    </table>
+  </template>
+
+  <!-- Installments -->
+  <template x-if="tab === 'installments'">
+    <table>
+      <thead><tr><th>Shop</th><th>Installment</th><th>Amount</th><th>Status</th><th>Due</th><th>Receipt</th><th>Action</th></tr></thead>
+      <tbody>
+        <template x-for="i in installments" :key="i.id">
+          <tr>
+            <td x-text="i.plan.shop.name"></td>
+            <td x-text="'#' + i.installmentNumber + ' of ' + i.plan.totalInstallments"></td>
+            <td x-text="'Rs ' + i.amount.toLocaleString()"></td>
+            <td><span class="badge" :class="i.status" x-text="i.status"></span>
+              <div x-show="i.status === 'REJECTED' && i.rejectionReason" style="font-size:11px;color:#991b1b;margin-top:4px" x-text="i.rejectionReason"></div>
+            </td>
+            <td x-text="i.dueDate ? new Date(i.dueDate).toDateString() : '—'"></td>
+            <td><a class="screenshot-link" :href="i.screenshotUrl" target="_blank" x-show="i.screenshotUrl">View</a></td>
+            <td class="actions">
+              <template x-if="i.status === 'SUBMITTED'">
+                <span>
+                  <button class="btn-approve" @click="approveInstallment(i.id)">Approve</button>
+                  <button class="btn-reject" @click="rejectInstallment(i.id)">Reject</button>
+                </span>
+              </template>
+            </td>
+          </tr>
+        </template>
+        <tr x-show="!installments.length"><td colspan="7" class="empty">No submitted installments.</td></tr>
+      </tbody>
+    </table>
+  </template>
+
+  <!-- Shops -->
+  <template x-if="tab === 'shops'">
+    <table>
+      <thead><tr><th>Shop</th><th>Plan</th><th>Installment Plan</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody>
+        <template x-for="s in shops" :key="s.id">
+          <tr>
+            <td x-text="s.name"></td>
+            <td x-text="s.plan"></td>
+            <td x-text="s.licenseInstallmentPlan ? (s.licenseInstallmentPlan.status + ' (' + s.licenseInstallmentPlan.installments.filter(x => x.status === 'PAID').length + '/' + s.licenseInstallmentPlan.installments.length + ' paid)') : '—'"></td>
+            <td><span class="badge" :class="s.suspended ? 'REJECTED' : 'PAID'" x-text="s.suspended ? 'SUSPENDED' : 'ACTIVE'"></span></td>
+            <td class="actions">
+              <button x-show="!s.suspended" class="btn-reject" @click="suspendShop(s.id)">Suspend</button>
+              <button x-show="s.suspended" class="btn-approve" @click="reactivateShop(s.id)">Reactivate</button>
+            </td>
+          </tr>
+        </template>
+        <tr x-show="!shops.length"><td colspan="5" class="empty">No shops yet.</td></tr>
+      </tbody>
+    </table>
+  </template>
+
+  <div class="toast" :class="{error: toastIsError}" x-show="toast" x-text="toast" x-transition style="display:none"></div>
+</main>
+
+<script>
+function adminDashboard() {
+  return {
+    token: null,
+    username: '',
+    stats: {},
+    orders: [],
+    installments: [],
+    shops: [],
+    tab: 'orders',
+    toast: '',
+    toastIsError: false,
+
+    init() {
+      this.token = localStorage.getItem('smartshop_admin_token');
+      if (!this.token) { window.location.href = 'login.html'; return; }
+      try {
+        const payload = JSON.parse(atob(this.token.split('.')[1]));
+        this.username = payload.username || '';
+      } catch (e) {}
+      this.loadAll();
+    },
+
+    logout() {
+      localStorage.removeItem('smartshop_admin_token');
+      window.location.href = 'login.html';
+    },
+
+    showToast(message, isError) {
+      this.toast = message;
+      this.toastIsError = !!isError;
+      setTimeout(() => { this.toast = ''; }, 4000);
+    },
+
+    async api(path, method, body) {
+      const res = await fetch('/api/admin' + path, {
+        method: method || 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + this.token,
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      if (res.status === 401) { this.logout(); throw new Error('Session expired'); }
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Request failed');
+      return data.data;
+    },
+
+    async loadAll() {
+      try {
+        const [stats, orders, installments, shops] = await Promise.all([
+          this.api('/dashboard'),
+          this.api('/orders'),
+          this.api('/license-installments'),
+          this.api('/shops'),
+        ]);
+        this.stats = stats;
+        this.orders = orders;
+        this.installments = installments;
+        this.shops = shops;
+      } catch (e) {
+        this.showToast(e.message, true);
+      }
+    },
+
+    async approveOrder(id) {
+      try { const r = await this.api('/orders/' + id + '/approve', 'POST'); this.showToast(r.message); await this.loadAll(); }
+      catch (e) { this.showToast(e.message, true); }
+    },
+    async rejectOrder(id) {
+      const reason = prompt('Reason for rejecting this order:');
+      if (!reason) return;
+      try { const r = await this.api('/orders/' + id + '/reject', 'POST', { reason }); this.showToast(r.message); await this.loadAll(); }
+      catch (e) { this.showToast(e.message, true); }
+    },
+    async cancelOrder(id) {
+      if (!confirm('Cancel this order?')) return;
+      try { const r = await this.api('/orders/' + id + '/cancel', 'POST'); this.showToast(r.message); await this.loadAll(); }
+      catch (e) { this.showToast(e.message, true); }
+    },
+    async resendLicense(id) {
+      try { const r = await this.api('/orders/' + id + '/resend-license', 'POST'); this.showToast(r.message); }
+      catch (e) { this.showToast(e.message, true); }
+    },
+    async approveInstallment(id) {
+      try { const r = await this.api('/license-installments/' + id + '/approve', 'POST'); this.showToast(r.message); await this.loadAll(); }
+      catch (e) { this.showToast(e.message, true); }
+    },
+    async rejectInstallment(id) {
+      const reason = prompt('Reason for rejecting this installment:');
+      if (!reason) return;
+      try { const r = await this.api('/license-installments/' + id + '/reject', 'POST', { reason }); this.showToast(r.message); await this.loadAll(); }
+      catch (e) { this.showToast(e.message, true); }
+    },
+    async suspendShop(id) {
+      if (!confirm('Suspend this shop? It will be locked out immediately.')) return;
+      try { const r = await this.api('/shops/' + id + '/suspend', 'POST'); this.showToast(r.message); await this.loadAll(); }
+      catch (e) { this.showToast(e.message, true); }
+    },
+    async reactivateShop(id) {
+      try { const r = await this.api('/shops/' + id + '/reactivate', 'POST'); this.showToast(r.message); await this.loadAll(); }
+      catch (e) { this.showToast(e.message, true); }
+    },
+  };
+}
+</script>
+</body>
+</html>

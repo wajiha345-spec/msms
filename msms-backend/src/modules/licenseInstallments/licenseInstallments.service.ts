@@ -1,5 +1,6 @@
 import { prisma } from '../../config/db';
 import { sendAdminNewLicenseInstallmentEmail, sendInstallmentDueReminderEmail } from '../../utils/email';
+import { activateLicense } from '../licenseStatus/licenseStatus.service';
 
 // ── License installment payments ────────────────────────────────────────────
 // A shop paying for its own PRO license in installments — unrelated to the
@@ -12,7 +13,10 @@ import { sendAdminNewLicenseInstallmentEmail, sendInstallmentDueReminderEmail } 
 // orders.service.ts / admin.controller.ts.
 
 const PLAN = 'PRO';
-const INSTALLMENT_AMOUNT = 45000;
+// 3 × 15,000 = Rs 45,000, matching orders.service.ts's SMARTSHOP_PRICE flat
+// price exactly (previously 45,000 per installment — 135,000 total — a real
+// pricing bug, not an intentional 3x markup over the one-time price).
+const INSTALLMENT_AMOUNT = 15000;
 const TOTAL_INSTALLMENTS = 3;
 const INSTALLMENT_INTERVAL_MS = 30 * 24 * 60 * 60 * 1000;
 const REMINDER_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
@@ -177,13 +181,16 @@ export async function submitPublicInstallment(data: PublicSubmitInput) {
 
 interface InstallmentGate {
   installment1Paid: boolean;
+  planStatus: 'ACTIVE' | 'COMPLETED' | null;
   overdue: { installmentNumber: number; amount: number; dueDate: Date | null } | null;
 }
 
-// Used by middleware/auth.ts:checkTrialExpiry on every authenticated request.
-// Returns null immediately (one indexed lookup on the unique shopId, zero
-// rows matched) for the vast majority of shops that never started a license
-// installment plan.
+// Used by middleware/auth.ts:checkTrialExpiry on every authenticated request,
+// and by licenseStatus.service.ts:computeLicenseStatus (via that same call)
+// to distinguish LIFETIME_ACTIVE (plan COMPLETED) from ACTIVE_INSTALLMENT
+// (plan still ACTIVE). Returns null immediately (one indexed lookup on the
+// unique shopId, zero rows matched) for the vast majority of shops that
+// never started a license installment plan.
 export async function getInstallmentGate(shopId: string): Promise<InstallmentGate | null> {
   const plan = await prisma.licenseInstallmentPlan.findUnique({
     where: { shopId },
@@ -216,6 +223,7 @@ export async function getInstallmentGate(shopId: string): Promise<InstallmentGat
 
   return {
     installment1Paid,
+    planStatus: plan.status as 'ACTIVE' | 'COMPLETED',
     overdue: overdue
       ? { installmentNumber: overdue.installmentNumber, amount: overdue.amount, dueDate: overdue.dueDate }
       : null,
@@ -255,19 +263,29 @@ export async function getInstallmentById(id: string) {
   return installment;
 }
 
+// Compare-and-swap: only transitions an installment that is still SUBMITTED,
+// closing the race window where two simultaneous admin approve-clicks could
+// otherwise both "succeed" against a stale in-memory read. Returns null if
+// the installment wasn't in a SUBMITTED state (already approved/rejected by
+// someone else, or never submitted) — caller distinguishes that from success.
 export async function approveInstallment(id: string) {
   const installment = await getInstallmentById(id);
-  if (installment.status === 'PAID') return installment; // already approved — caller handles messaging
+  if (installment.status === 'PAID') return { installment, alreadyApproved: true };
+  if (installment.status !== 'SUBMITTED') return null;
 
   const { plan } = installment;
   const now = new Date();
 
-  await prisma.$transaction(async (tx) => {
-    await tx.licenseInstallment.update({ where: { id: installment.id }, data: { status: 'PAID', paidAt: now } });
+  const claimed = await prisma.licenseInstallment.updateMany({
+    where: { id: installment.id, status: 'SUBMITTED' },
+    data: { status: 'PAID', paidAt: now },
+  });
+  if (claimed.count === 0) return null; // lost the race to a concurrent approval
 
+  await prisma.$transaction(async (tx) => {
     if (installment.installmentNumber === 1) {
       // The unlock — matches setup.controller.ts:upgradeShop's own upgrade write.
-      await tx.shop.update({ where: { id: plan.shopId }, data: { plan: plan.plan, trialEndsAt: null } });
+      await activateLicense(tx, plan.shopId, plan.plan);
     }
 
     if (installment.installmentNumber < plan.totalInstallments) {
@@ -284,6 +302,22 @@ export async function approveInstallment(id: string) {
       await tx.licenseInstallmentPlan.update({ where: { id: plan.id }, data: { status: 'COMPLETED' } });
     }
   });
+
+  return { installment: await getInstallmentById(id), alreadyApproved: false };
+}
+
+// Same compare-and-swap shape as approveInstallment. A rejection never
+// touches Shop.plan — the shop stays exactly as locked/unlocked as it
+// already was; the customer resubmits or contacts support.
+export async function rejectInstallment(id: string, reason: string) {
+  const installment = await getInstallmentById(id);
+  if (installment.status !== 'SUBMITTED') return null;
+
+  const claimed = await prisma.licenseInstallment.updateMany({
+    where: { id, status: 'SUBMITTED' },
+    data: { status: 'REJECTED', rejectionReason: reason },
+  });
+  if (claimed.count === 0) return null;
 
   return getInstallmentById(id);
 }

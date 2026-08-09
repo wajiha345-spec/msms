@@ -1,4 +1,5 @@
 import express from 'express';
+import path from 'path';
 import cors from 'cors';
 import 'dotenv/config';
 import authRoutes       from './modules/auth/auth.routes';
@@ -11,6 +12,7 @@ import dashboardRoutes  from './modules/dashboard/dashboard.routes';
 import invoiceRoutes    from './modules/invoices/invoices.routes';
 import orderRoutes      from './modules/orders/orders.routes';
 import adminRoutes      from './modules/admin/admin.routes';
+import adminAuthRoutes  from './modules/adminAuth/adminAuth.routes';
 import licenseRoutes    from './modules/licenses/licenses.routes';
 import setupRoutes      from './modules/setup/setup.routes';
 import catalogRoutes    from './modules/catalog/catalog.routes';
@@ -40,13 +42,19 @@ import { authenticate, requirePlan, checkTrialExpiry, requireRole, requirePermis
 
 const app = express();
 
+// Railway terminates TLS at a proxy in front of this service — without this,
+// req.ip / express-rate-limit's IP keying would see the proxy's address for
+// every request instead of the real client IP.
+app.set('trust proxy', 1);
+
 app.use(cors());
 app.use(express.json());
 
 // ── Public routes (no auth required) ────────────────────────────────────────
 app.use('/api/auth',          authRoutes);       // login only (register removed)
 app.use('/api/orders',        orderRoutes);      // website order form
-app.use('/api/admin',         adminRoutes);      // protected by ADMIN_SECRET query param
+app.use('/api/admin-auth',    adminAuthRoutes);  // SmartShop operator login (separate identity from shop users)
+app.use('/api/admin',         adminRoutes);      // protected by authenticateAdmin (real login, not a shared secret)
 app.use('/api/licenses',      licenseRoutes);    // key validation for app setup
 app.use('/api/setup',         setupRoutes);      // first-time app registration + authenticated upgrade
 app.use('/api/trial',         trialRoutes);      // 5-day free trial signup, no license key needed
@@ -54,6 +62,10 @@ app.get('/api/download/:key', downloadApp);      // APK download (license key = 
 app.get('/api/download-trial', downloadTrialApk); // APK download for trial signups (no key needed)
 app.use('/api/invoices',      invoiceRoutes);    // PDF invoices (invoice UUID = access token)
 app.use('/api/quotations',    quotationRoutes);  // :id/view is public (quote UUID = access token); CRUD gated inside the router
+
+// Admin panel static UI (login + dashboard) — the pages themselves are public
+// static files; every API call they make is gated by authenticateAdmin.
+app.use('/admin', express.static(path.join(__dirname, 'modules/adminPanel/public'), { index: 'login.html' }));
 
 // Website installment-payment form (no login on the website — identifies the
 // shop by username + email/phone cross-check, see licenseInstallments.service.ts).
@@ -148,8 +160,8 @@ app.get('/api/health/email', async (_req, res) => {
     const result = await resend.emails.send({
       from:    'noreply@msms-app.site',
       to:      process.env.ADMIN_EMAIL!,
-      subject: 'MSMS Email Test',
-      html:    '<p>Test email from MSMS backend. If you see this, Resend is working!</p>',
+      subject: 'SmartShop Email Test',
+      html:    '<p>Test email from SmartShop backend. If you see this, Resend is working!</p>',
     });
     return res.json({ ok: true, result });
   } catch (err: any) {

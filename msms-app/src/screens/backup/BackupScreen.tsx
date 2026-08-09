@@ -34,7 +34,7 @@ export default function BackupScreen() {
       if (canShare) {
         await Sharing.shareAsync(file.uri, {
           mimeType: 'application/json',
-          dialogTitle: 'Save or send your MSMS backup',
+          dialogTitle: 'Save or send your SmartShop backup',
         });
       } else {
         Alert.alert(

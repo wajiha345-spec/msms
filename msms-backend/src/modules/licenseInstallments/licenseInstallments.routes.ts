@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { upload } from '../../middleware/upload';
+import { publicSubmitLimiter } from '../../middleware/rateLimit';
 import { start, status, submit, publicSubmit } from './licenseInstallments.controller';
 
 const router = Router();
@@ -24,4 +25,4 @@ export default router;
 // `/api/license-installments/public` so it's reachable without `authenticate`
 // (same pattern as /api/orders — the website's existing full-payment form).
 export const publicRouter = Router();
-publicRouter.post('/submit', upload.single('screenshot'), publicSubmit);
+publicRouter.post('/submit', publicSubmitLimiter, upload.single('screenshot'), publicSubmit);

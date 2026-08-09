@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { checkPermission } from '../modules/users/users.service';
 import { getInstallmentGate } from '../modules/licenseInstallments/licenseInstallments.service';
+import { computeLicenseStatus } from '../modules/licenseStatus/licenseStatus.service';
+import { prisma } from '../config/db';
 
 export interface AuthRequest extends Request {
   user?: { userId: string; role: string; plan: string; shopId: string; trialEndsAt: string | null };
@@ -47,15 +49,34 @@ export async function checkTrialExpiry(req: AuthRequest, res: Response, next: Ne
   }
 
   let gate: Awaited<ReturnType<typeof getInstallmentGate>> = null;
+  let suspended = false;
   try {
-    gate = await getInstallmentGate(req.user.shopId);
+    const [gateResult, shop] = await Promise.all([
+      getInstallmentGate(req.user.shopId),
+      prisma.shop.findUnique({ where: { id: req.user.shopId }, select: { suspended: true } }),
+    ]);
+    gate = gateResult;
+    suspended = shop?.suspended ?? false;
   } catch {
     gate = null; // fail open — a transient DB hiccup must never lock out every user
+    suspended = false;
   }
   req.installmentGate = gate; // let requirePlan reuse this instead of querying again
 
-  const trialLooksExpired = req.user.plan === 'TRIAL' && !isActiveTrial(req.user);
-  if (trialLooksExpired && !gate?.installment1Paid) {
+  const status = computeLicenseStatus(
+    { plan: req.user.plan, trialEndsAt: req.user.trialEndsAt, suspended },
+    gate
+  );
+
+  if (status === 'SUSPENDED') {
+    return res.status(403).json({
+      success: false,
+      error: 'This account has been suspended. Please contact support.',
+      suspended: true,
+    });
+  }
+
+  if (status === 'PENDING_FIRST_PAYMENT') {
     return res.status(402).json({
       success: false,
       error: 'Your free trial has ended. Please purchase a license to continue.',
@@ -63,12 +84,13 @@ export async function checkTrialExpiry(req: AuthRequest, res: Response, next: Ne
     });
   }
 
-  if (gate?.overdue) {
+  if (status === 'LOCKED') {
+    const overdue = gate!.overdue!;
     return res.status(402).json({
       success: false,
-      error: `Your installment payment of Rs ${gate.overdue.amount.toLocaleString()} was due on ${gate.overdue.dueDate?.toDateString()}. Please pay to continue using the app.`,
+      error: `Your installment payment of Rs ${overdue.amount.toLocaleString()} was due on ${overdue.dueDate?.toDateString()}. Please pay to continue using the app.`,
       installmentOverdue: true,
-      installment: gate.overdue,
+      installment: overdue,
     });
   }
 

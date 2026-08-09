@@ -1,7 +1,22 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Application from 'expo-application';
 import { apiClient, setUnauthorizedHandler } from '../api/client';
 import { licenseInstallmentsApi, LicenseInstallmentPlan } from '../api/licenseInstallments';
+
+// Recorded on activation for admin visibility (see admin panel's reset-device
+// action) — never hard-enforced, so a null/unavailable id here just means no
+// binding info is captured, not a blocked setup. Android-only build; other
+// platforms (e.g. the web preview used for testing) simply send nothing.
+function getDeviceId(): string | undefined {
+  if (Platform.OS !== 'android') return undefined;
+  try {
+    return Application.getAndroidId();
+  } catch {
+    return undefined;
+  }
+}
 
 interface AuthUser {
   id:       string;
@@ -138,7 +153,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     username:   string;
     password:   string;
   }) {
-    const res = await apiClient.post('/setup', data);
+    const res = await apiClient.post('/setup', { ...data, deviceId: getDeviceId() });
     const { token: t, user: u } = res.data.data;
     await AsyncStorage.setItem('account_registered', '1');
     setIsNewInstall(false);

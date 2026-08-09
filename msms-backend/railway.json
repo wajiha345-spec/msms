@@ -5,7 +5,7 @@
     "buildCommand": "npm ci --include=dev && npm run prisma:generate && npm run build"
   },
   "deploy": {
-    "preDeployCommand": "npx prisma migrate deploy",
+    "preDeployCommand": "npx prisma migrate deploy && node dist/scripts/seedAdmin.js",
     "startCommand": "npm start",
     "healthcheckPath": "/api/health",
     "restartPolicyType": "ON_FAILURE"

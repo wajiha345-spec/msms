@@ -5,6 +5,6 @@
     "build": "npm --prefix msms-backend run build",
     "start": "npm --prefix msms-backend start",
     "railway:build": "npm --prefix msms-backend ci --include=dev && npm --prefix msms-backend run prisma:generate && npm --prefix msms-backend run build",
-    "railway:predeploy": "npm --prefix msms-backend run prisma:migrate"
+    "railway:predeploy": "npm --prefix msms-backend run prisma:migrate && node msms-backend/dist/scripts/seedAdmin.js"
   }
 }

@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon",
-    "build": "tsc",
+    "build": "tsc && npm run copy:static",
+    "copy:static": "node -e \"require('fs').cpSync('src/modules/adminPanel/public','dist/modules/adminPanel/public',{recursive:true})\"",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
     "start": "node dist/server.js"
@@ -23,6 +24,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.6.2",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.1.1",
     "multer-storage-cloudinary": "^4.0.0",

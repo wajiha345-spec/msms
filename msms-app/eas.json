@@ -9,7 +9,8 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.msms-app.site/api",
-        "EXPO_PUBLIC_SOCKET_URL": "https://api.msms-app.site"
+        "EXPO_PUBLIC_SOCKET_URL": "https://api.msms-app.site",
+        "EXPO_PUBLIC_PAYMENT_URL": "https://msms-app.site"
       }
     }
   }

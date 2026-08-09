@@ -10,6 +10,10 @@ import {
 import { Badge } from '../../components/Badge';
 import { colors } from '../../theme/colors';
 
+// Configurable rather than hardcoded — mirrors the existing EXPO_PUBLIC_API_URL pattern.
+const WEBSITE_URL = process.env.EXPO_PUBLIC_PAYMENT_URL || 'https://msms-app.site';
+const WEBSITE_LABEL = WEBSITE_URL.replace(/^https?:\/\//, '');
+
 function typeIcon(type: string) {
   if (type === 'LOW_STOCK')              return '📉';
   if (type === 'SALE_RECORDED')          return '🧾';
@@ -174,7 +178,7 @@ export default function NotificationsScreen() {
               {attention!.upcomingLicenseInstallment && (
                 <TouchableOpacity
                   style={styles.attentionCard}
-                  onPress={() => Linking.openURL('https://msms-app.site').catch(() => {})}
+                  onPress={() => Linking.openURL(WEBSITE_URL).catch(() => {})}
                   activeOpacity={0.7}
                 >
                   <Text style={styles.attentionIcon}>💳</Text>
@@ -183,7 +187,7 @@ export default function NotificationsScreen() {
                       License installment #{attention!.upcomingLicenseInstallment.installmentNumber} due soon
                     </Text>
                     <Text style={styles.attentionSub}>
-                      Rs {attention!.upcomingLicenseInstallment.amount.toLocaleString()} · due {fmtDate(attention!.upcomingLicenseInstallment.dueDate)} · pay at msms-app.site
+                      Rs {attention!.upcomingLicenseInstallment.amount.toLocaleString()} · due {fmtDate(attention!.upcomingLicenseInstallment.dueDate)} · pay at {WEBSITE_LABEL}
                     </Text>
                   </View>
                   <Badge label="Due Soon" type="warning" />

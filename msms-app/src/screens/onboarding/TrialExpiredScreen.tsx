@@ -9,7 +9,10 @@ import { Button } from '../../components/Buttons';
 import { useAuth } from '../../context/AuthContext';
 import { colors } from '../../theme/colors';
 
-const WEBSITE_URL = 'https://msms-app.site';
+// Configurable rather than hardcoded so the payment URL can change without
+// editing every screen — mirrors the existing EXPO_PUBLIC_API_URL pattern.
+const WEBSITE_URL = process.env.EXPO_PUBLIC_PAYMENT_URL || 'https://msms-app.site';
+const WEBSITE_LABEL = WEBSITE_URL.replace(/^https?:\/\//, '');
 
 function fmtDate(d: string | null | undefined) {
   if (!d) return '—';
@@ -63,7 +66,7 @@ export default function TrialExpiredScreen() {
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
 
         <View style={styles.logoBox}>
-          <Text style={styles.logoText}>MSMS</Text>
+          <Text style={styles.logoText}>SmartShop</Text>
         </View>
 
         {isInstallmentOverdue && installmentPlan?.overdueInstallment ? (
@@ -76,11 +79,11 @@ export default function TrialExpiredScreen() {
             </Text>
             <Text style={styles.cardSub}>
               Your installment is due on {fmtDate(installmentPlan.overdueInstallment.dueDate)}.
-              Please visit {WEBSITE_URL} and pay the next installment to reactivate the app
+              Please visit {WEBSITE_URL} and pay the next installment to reactivate SmartShop
               now. All your data is safe and untouched — as soon as we approve your payment,
               the app unlocks automatically.
             </Text>
-            <Button label="Visit msms-app.site →" onPress={openWebsite} />
+            <Button label={`Visit ${WEBSITE_LABEL} →`} onPress={openWebsite} />
           </View>
         ) : (
           <>
@@ -127,11 +130,11 @@ export default function TrialExpiredScreen() {
               <View style={styles.installmentCard}>
                 <Text style={styles.installmentTitle}>Can't pay in full right now?</Text>
                 <Text style={styles.installmentSub}>
-                  Pay in 3 installments of Rs 45,000 instead — visit {WEBSITE_URL} to set one
+                  Pay in 3 installments of Rs 15,000 instead — visit {WEBSITE_URL} to set one
                   up. Your first payment unlocks full access as soon as it's approved.
                 </Text>
                 <TouchableOpacity style={styles.installmentBtn} onPress={openWebsite}>
-                  <Text style={styles.installmentBtnText}>Visit msms-app.site →</Text>
+                  <Text style={styles.installmentBtnText}>Visit {WEBSITE_LABEL} →</Text>
                 </TouchableOpacity>
               </View>
             )}

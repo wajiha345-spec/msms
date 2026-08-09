@@ -82,7 +82,7 @@ export default function SetupScreen() {
 
         {/* Logo / header */}
         <View style={styles.logoBox}>
-          <Text style={styles.logoText}>MSMS</Text>
+          <Text style={styles.logoText}>SmartShop</Text>
           <Text style={styles.logoSub}>Mobile Shop Management System</Text>
         </View>
 

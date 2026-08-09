@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MSMS - Mobile Shop Management System</title>
+  <title>SmartShop - Mobile Shop Management System</title>
   <link rel="icon" type="image/png" href="assets/favicon.png" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1211,12 +1211,12 @@
   </div>
   <div class="nav-ticker">
     <div class="ticker-track">
-      <span class="ticker-item"><strong>MSMS</strong> one-time payment</span>
+      <span class="ticker-item"><strong>SmartShop</strong> one-time payment</span>
       <span class="ticker-item">built for Pakistan mobile shops</span>
       <span class="ticker-item">simple invoices to full inventory</span>
       <span class="ticker-item">🚫 <strong>keep track of stolen or blocked mobiles</strong></span>
       <span class="ticker-item">license key sent after verification</span>
-      <span class="ticker-item"><strong>MSMS</strong> one-time payment</span>
+      <span class="ticker-item"><strong>SmartShop</strong> one-time payment</span>
       <span class="ticker-item">built for Pakistan mobile shops</span>
       <span class="ticker-item">simple invoices to full inventory</span>
       <span class="ticker-item">🚫 <strong>keep track of stolen or blocked mobiles</strong></span>
@@ -1231,10 +1231,10 @@
   <div class="hero-copy">
     <div class="hero-badge">Mobile Shop Management System</div>
     <h1>Run your shop with <span>clarity</span>.</h1>
-    <p>From lightning-fast invoicing to full inventory control, MSMS gives mobile phone shops in Pakistan a cleaner and more professional way to sell, track, and grow with a one-time payment.</p>
+    <p>From lightning-fast invoicing to full inventory control, SmartShop gives mobile phone shops in Pakistan a cleaner and more professional way to sell, track, and grow with a one-time payment.</p>
     <div class="hero-btns">
-      <button class="btn-primary" onclick="openModal('PRO')">Get Pro - Rs 25,000</button>
-      <button class="btn-secondary" onclick="document.getElementById('plans').scrollIntoView({behavior:'smooth'})">Compare Plans</button>
+      <button class="btn-primary" onclick="openModal()">Get SmartShop - Rs 45,000</button>
+      <button class="btn-secondary" onclick="document.getElementById('plans').scrollIntoView({behavior:'smooth'})">See Full Details</button>
     </div>
     <a class="trial-link" href="https://api.msms-app.site/api/download-trial">Or try free for 5 days, no card needed →</a>
     <div class="hero-meta">
@@ -1246,12 +1246,12 @@
 
   <div class="hero-panel">
     <div class="panel-card primary">
-      <div class="panel-label">MSMS Pro</div>
+      <div class="panel-label">SmartShop</div>
       <h3>Everything your counter needs in one place.</h3>
       <p>Sales, stock movement, secondhand phone records, and profit reporting all live in a layout designed to feel fast and dependable.</p>
       <div class="panel-figure">
         <div class="mini-stat">
-          <strong>Rs 25,000</strong>
+          <strong>Rs 45,000</strong>
           <span>One-time</span>
         </div>
         <div class="mini-stat">
@@ -1283,7 +1283,7 @@
     <h2>Never get stuck with a<br/><span>stolen or blocked mobile.</span></h2>
     <p>
       Every day shopkeepers in Pakistan unknowingly buy stolen phones — only to find out
-      later when the customer is long gone. MSMS lets you scan any IMEI instantly and check
+      later when the customer is long gone. SmartShop lets you scan any IMEI instantly and check
       its PTA status before handing over a single rupee.
     </p>
     <div class="stolen-pills">
@@ -1335,41 +1335,20 @@
   <div class="section-shell">
     <div class="section-label">Pricing</div>
     <div class="section-title">One-time payment. No renewals.</div>
-    <div class="section-sub">Choose the version that matches your shop today. The pricing stays simple while the presentation feels much more premium.</div>
+    <div class="section-sub">One product, everything included. Pay once — in full or in 3 installments — and it's yours forever.</div>
     <div class="plans">
 
-      <!-- Simple -->
-      <div class="plan-card">
-        <div class="plan-name">Simple</div>
-        <div class="plan-save-badge">Save Rs 5,000</div>
-        <div class="plan-price-was">Rs 20,000</div>
-        <div class="plan-price">Rs 15,000 <span></span></div>
-        <div class="plan-once">One-time payment - no subscription</div>
-        <div class="plan-desc">Best for smaller counters that want clean invoices, customer records, and a faster sales flow without the full inventory layer.</div>
+      <!-- SmartShop -->
+      <div class="plan-card popular">
+        <div class="popular-badge">One Plan, Everything Included</div>
+        <div class="plan-name">SmartShop</div>
+        <div class="plan-price-was">Rs 65,000</div>
+        <div class="plan-price">Rs 45,000 <span></span></div>
+        <div class="plan-once">One-time payment — or 3 installments of Rs 15,000</div>
+        <div class="plan-desc">The full operating system for serious shop owners: inventory control, purchase tracking, secondhand phone records, invoicing, and profit visibility.</div>
         <ul class="plan-features">
           <li><span class="icon">✓</span> Professional invoice generation</li>
           <li><span class="icon">✓</span> Customer records</li>
-          <li><span class="icon">✓</span> PDF invoices</li>
-          <li><span class="icon">✓</span> Custom shop name &amp; branding</li>
-          <li><span class="icon icon-no">✕</span> <span style="color:var(--muted-soft)">Inventory management</span></li>
-          <li><span class="icon icon-no">✕</span> <span style="color:var(--muted-soft)">Secondhand phone tracking</span></li>
-          <li><span class="icon icon-no">✕</span> <span style="color:var(--muted-soft)">Purchase recording</span></li>
-          <li><span class="icon icon-no">✕</span> <span style="color:var(--muted-soft)">Sales dashboard &amp; reports</span></li>
-        </ul>
-        <button class="plan-btn plan-btn-secondary" onclick="openModal('SIMPLE')">Buy Simple</button>
-      </div>
-
-      <!-- Pro -->
-      <div class="plan-card popular">
-        <div class="popular-badge">Most Popular</div>
-        <div class="plan-name">Pro</div>
-        <div class="plan-save-badge">Save Rs 15,000</div>
-        <div class="plan-price-was">Rs 40,000</div>
-        <div class="plan-price">Rs 25,000 <span></span></div>
-        <div class="plan-once">One-time payment - no subscription</div>
-        <div class="plan-desc">The full operating system for serious shop owners who need inventory control, purchase tracking, secondhand phone records, and profit visibility.</div>
-        <ul class="plan-features">
-          <li><span class="icon">✓</span> Everything in Simple</li>
           <li><span class="icon">✓</span> Full inventory management</li>
           <li><span class="icon">✓</span> Secondhand phone intake &amp; tracking</li>
           <li><span class="icon">✓</span> CNIC &amp; seller photo recording</li>
@@ -1377,8 +1356,10 @@
           <li><span class="icon">✓</span> Sales dashboard with profit reports</li>
           <li><span class="icon">✓</span> Keep track of stolen or blocked mobiles</li>
           <li><span class="icon">✓</span> Real-time stock updates</li>
+          <li><span class="icon">✓</span> Custom shop name &amp; branding</li>
         </ul>
-        <button class="plan-btn plan-btn-primary" onclick="openModal('PRO')">Buy Pro</button>
+        <button class="plan-btn plan-btn-primary" onclick="openModal()">Buy SmartShop — Rs 45,000</button>
+        <div style="margin-top:10px;font-size:12px;color:var(--muted-soft)">Prefer to spread the cost? Start with the free trial, then pay in 3 installments of Rs 15,000 — see the link at the bottom of this page once you're set up.</div>
       </div>
     </div>
   </div>
@@ -1436,7 +1417,7 @@
   <p><strong>SmartShop</strong> - Run your Shop Smartly</p>
   <p style="margin-top:8px">Questions? Contact us at <strong id="footer-email">support@msms.pk</strong></p>
   <p style="margin-top:12px;font-size:13px">Already a customer paying in installments? <a href="#" onclick="openInstallmentModal();return false;" style="color:var(--text);font-weight:700">Pay your next installment →</a></p>
-  <p style="margin-top:12px;font-size:12px">© 2025 MSMS. All rights reserved.</p>
+  <p style="margin-top:12px;font-size:12px">© 2025 SmartShop. All rights reserved.</p>
 </footer>
 
 <!-- ORDER MODAL -->
@@ -1456,18 +1437,8 @@
 
     <div id="error-banner" class="error-banner"></div>
 
-    <!-- Step 1: Customer details + plan -->
+    <!-- Step 1: Customer details -->
     <div id="step-1">
-      <div class="plan-select-row">
-        <div class="plan-select-btn" id="ps-SIMPLE" onclick="selectPlan('SIMPLE')">
-          <div class="ps-name">Simple</div>
-          <div class="ps-price">Rs 25,000</div>
-        </div>
-        <div class="plan-select-btn selected" id="ps-PRO" onclick="selectPlan('PRO')">
-          <div class="ps-name">Pro</div>
-          <div class="ps-price">Rs 95,000</div>
-        </div>
-      </div>
       <div class="form-group">
         <label class="form-label">Full Name *</label>
         <input class="form-input" id="f-name" type="text" placeholder="e.g. Ahmed Khan" />
@@ -1489,21 +1460,21 @@
     <!-- Step 2: Payment -->
     <div id="step-2" style="display:none">
       <div class="payment-box">
-        <div class="pm-amount" id="pay-amount">Rs 95,000</div>
-        <div class="pm-amount-label">One-time payment for <span id="pay-plan">Pro</span> Plan</div>
+        <div class="pm-amount" id="pay-amount">Rs 45,000</div>
+        <div class="pm-amount-label">One-time payment for SmartShop</div>
         <div class="payment-method-tabs" style="margin-top:16px">
           <div class="pm-tab active" onclick="setPayMethod('jazzcash',this)">JazzCash</div>
           <div class="pm-tab" onclick="setPayMethod('easypaisa',this)">Easypaisa</div>
           <div class="pm-tab" onclick="setPayMethod('bank',this)">Bank Transfer</div>
         </div>
         <div class="pm-detail" id="pm-detail-jazzcash">
-          Send <strong id="pmd-jc-amount">Rs 95,000</strong> to:<br/>
+          Send <strong id="pmd-jc-amount">Rs 45,000</strong> to:<br/>
           JazzCash: <strong>0301-1444150</strong><br/>
           Account Title: <strong>Mudassar Sardar</strong><br/><br/>
           <em>After sending, enter the JazzCash Transaction ID below.</em>
         </div>
         <div class="pm-detail" id="pm-detail-easypaisa" style="display:none">
-          Send <strong id="pmd-ep-amount">Rs 95,000</strong> to:<br/>
+          Send <strong id="pmd-ep-amount">Rs 45,000</strong> to:<br/>
           Easypaisa: <strong>0312-5938303</strong><br/>
           Account Title: <strong>Mudassar Sardar</strong><br/><br/>
           <em>After sending, enter the Easypaisa Transaction ID below.</em>
@@ -1512,7 +1483,7 @@
           Bank: <strong>UBL</strong><br/>
           Account Title: <strong>Mudassar Sardar</strong><br/>
           Account No: <strong>0435251151942</strong><br/><br/>
-          Transfer <strong id="pmd-bk-amount">Rs 95,000</strong> and enter the transaction reference below.
+          Transfer <strong id="pmd-bk-amount">Rs 45,000</strong> and enter the transaction reference below.
         </div>
       </div>
 
@@ -1577,13 +1548,13 @@
 
     <div id="installment-form">
       <p style="font-size:13px;color:var(--muted-soft);margin:0 0 16px;line-height:1.6">
-        For shops paying their license in 3 installments. Enter your MSMS account details
+        For shops paying their license in 3 installments. Enter your SmartShop account details
         below so we can match this payment to your shop — we'll email you once it's
         approved and your app unlocks automatically.
       </p>
 
       <div class="payment-box">
-        <div class="pm-amount">Rs 45,000</div>
+        <div class="pm-amount">Rs 15,000</div>
         <div class="pm-amount-label">Your next license installment</div>
         <div class="payment-method-tabs" style="margin-top:16px">
           <div class="pm-tab active" onclick="setInstallmentPayMethod('jazzcash',this)">JazzCash</div>
@@ -1591,13 +1562,13 @@
           <div class="pm-tab" onclick="setInstallmentPayMethod('bank',this)">Bank Transfer</div>
         </div>
         <div class="pm-detail" id="ipm-detail-jazzcash">
-          Send <strong>Rs 45,000</strong> to:<br/>
+          Send <strong>Rs 15,000</strong> to:<br/>
           JazzCash: <strong>0301-1444150</strong><br/>
           Account Title: <strong>Mudassar Sardar</strong><br/><br/>
           <em>After sending, enter the JazzCash Transaction ID below.</em>
         </div>
         <div class="pm-detail" id="ipm-detail-easypaisa" style="display:none">
-          Send <strong>Rs 45,000</strong> to:<br/>
+          Send <strong>Rs 15,000</strong> to:<br/>
           Easypaisa: <strong>0312-5938303</strong><br/>
           Account Title: <strong>Mudassar Sardar</strong><br/><br/>
           <em>After sending, enter the Easypaisa Transaction ID below.</em>
@@ -1606,12 +1577,12 @@
           Bank: <strong>UBL</strong><br/>
           Account Title: <strong>Mudassar Sardar</strong><br/>
           Account No: <strong>0435251151942</strong><br/><br/>
-          Transfer <strong>Rs 45,000</strong> and enter the transaction reference below.
+          Transfer <strong>Rs 15,000</strong> and enter the transaction reference below.
         </div>
       </div>
 
       <div class="form-group">
-        <label class="form-label">Your MSMS Username *</label>
+        <label class="form-label">Your SmartShop Username *</label>
         <input class="form-input" id="i-username" type="text" placeholder="The username you log into the app with" autocapitalize="none" />
         <div class="form-error" id="ie-username">Please enter your username</div>
       </div>
@@ -1664,20 +1635,13 @@
   document.getElementById('footer-email').textContent = SUPPORT_EMAIL;
 
   // --- State ---
-  let selectedPlan = 'PRO';
   let currentPayMethod = 'jazzcash';
 
-  const PRICES = { SIMPLE: 15000, PRO: 25000 };
+  // Single flat SmartShop price — server-computed and enforced independently
+  // in orders.service.ts; this is display-only, never trusted for the charge.
+  const PRICE = 45000;
 
-  // --- Plan selection ---
-  function selectPlan(plan) {
-    selectedPlan = plan;
-    document.querySelectorAll('.plan-select-btn').forEach(b => b.classList.remove('selected'));
-    document.getElementById('ps-' + plan).classList.add('selected');
-  }
-
-  function openModal(plan) {
-    if (plan) selectPlan(plan);
+  function openModal() {
     document.getElementById('f-name').value = '';
     document.getElementById('f-email').value = '';
     document.getElementById('f-phone').value = '';
@@ -1766,11 +1730,9 @@
     if (phone.replace(/\D/g, '').length < 10)       { showError('phone', 'Please enter a valid 10-digit phone number'); valid = false; }
     if (!valid) return;
 
-    const price = PRICES[selectedPlan];
-    document.getElementById('pay-amount').textContent = 'Rs ' + price.toLocaleString();
-    document.getElementById('pay-plan').textContent   = selectedPlan === 'PRO' ? 'Pro' : 'Simple';
+    document.getElementById('pay-amount').textContent = 'Rs ' + PRICE.toLocaleString();
     ['pmd-jc-amount', 'pmd-ep-amount', 'pmd-bk-amount'].forEach(id =>
-      document.getElementById(id).textContent = 'Rs ' + price.toLocaleString()
+      document.getElementById(id).textContent = 'Rs ' + PRICE.toLocaleString()
     );
     document.getElementById('f-txn').value   = '';
     document.getElementById('f-notes').value = '';
@@ -1815,7 +1777,6 @@
       fd.append('customerName',  document.getElementById('f-name').value.trim());
       fd.append('customerEmail', document.getElementById('f-email').value.trim());
       fd.append('customerPhone', document.getElementById('f-phone').value.trim());
-      fd.append('plan',          selectedPlan);
       fd.append('transactionId', txn);
       fd.append('screenshot',    screenshot);
       const notes = document.getElementById('f-notes').value.trim();

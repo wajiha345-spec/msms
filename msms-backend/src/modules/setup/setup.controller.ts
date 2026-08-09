@@ -4,13 +4,14 @@ import jwt from 'jsonwebtoken';
 import { ok, fail } from '../../utils/response';
 import { prisma } from '../../config/db';
 import { AuthRequest } from '../../middleware/auth';
+import { activateLicense } from '../licenseStatus/licenseStatus.service';
 
 // POST /api/setup
 // Called once from the app when a new customer sets up their account.
 // Validates the license key, creates the User, marks the key as activated.
 export async function setupShop(req: Request, res: Response) {
   try {
-    const { licenseKey, shopName, username, password } = req.body;
+    const { licenseKey, shopName, username, password, deviceId } = req.body;
 
     if (!licenseKey || !shopName || !username || !password) {
       return fail(res, 'licenseKey, shopName, username, and password are all required');
@@ -50,7 +51,11 @@ export async function setupShop(req: Request, res: Response) {
       });
       await tx.licenseKey.update({
         where: { key: licenseKey },
-        data:  { isActivated: true, activatedAt: new Date(), shopName: shopName.trim() },
+        // deviceId is recorded for admin visibility (see admin panel's
+        // reset-device action) but never hard-enforced on login — reinstalls
+        // and phone replacements are common and indistinguishable from
+        // license sharing without a manual admin check.
+        data:  { isActivated: true, activatedAt: new Date(), shopName: shopName.trim(), deviceId: deviceId?.trim() || null },
       });
       return [shop, user];
     });
@@ -97,10 +102,8 @@ export async function upgradeShop(req: AuthRequest, res: Response) {
     if (!user) return fail(res, 'Account not found', 404);
 
     const shop = await prisma.$transaction(async (tx) => {
-      const shop = await tx.shop.update({
-        where: { id: user.shopId },
-        data:  { plan: license.plan, trialEndsAt: null },
-      });
+      await activateLicense(tx, user.shopId, license.plan);
+      const shop = await tx.shop.findUniqueOrThrow({ where: { id: user.shopId } });
       await tx.licenseKey.update({
         where: { key: licenseKey },
         data:  { isActivated: true, activatedAt: new Date(), shopName: shop.name },

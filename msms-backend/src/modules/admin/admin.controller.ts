@@ -1,65 +1,37 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import crypto from 'crypto';
+import { AdminRequest } from '../../middleware/authenticateAdmin';
 import { ok, fail } from '../../utils/response';
 import { getOrders, getOrderById } from '../orders/orders.service';
-import { listSubmittedInstallments, getInstallmentById, approveInstallment } from '../licenseInstallments/licenseInstallments.service';
+import {
+  listSubmittedInstallments,
+  getInstallmentById,
+  approveInstallment,
+  rejectInstallment,
+} from '../licenseInstallments/licenseInstallments.service';
 import { prisma } from '../../config/db';
-import { sendLicenseEmail } from '../../utils/email';
-import crypto from 'crypto';
+import { sendLicenseEmail, sendPaymentRejectedEmail } from '../../utils/email';
+import { logAdminAction } from '../auditLog/auditLog.service';
 
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+// Human-readable license key for NEW keys — "SMARTSHOP-XXXX-XXXX-XXXX".
+// Existing UUID-format keys keep working unchanged (LicenseKey.key is just a
+// String @id, not a UUID-typed column).
+function generateLicenseKey(): string {
+  const group = () => crypto.randomBytes(2).toString('hex').toUpperCase();
+  return `SMARTSHOP-${group()}-${group()}-${group()}`;
 }
 
-function adminPageHtml(body: string): string {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>MSMS Admin</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-           background:#f8fafc; color:#1e293b; margin:0; padding:40px 16px; }
-    .card { background:#fff; border-radius:14px; border:1px solid #e2e8f0;
-            box-shadow:0 4px 12px rgba(0,0,0,.06); max-width:520px;
-            margin:0 auto; padding:36px 32px; }
-    h2 { font-size:22px; margin:0 0 6px; }
-    p  { color:#64748b; font-size:14px; line-height:1.6; margin:4px 0; }
-    table { width:100%; border-collapse:collapse; margin:20px 0; font-size:14px; }
-    td { padding:9px 6px; border-bottom:1px solid #f1f5f9; }
-    td:first-child { color:#94a3b8; width:38%; }
-    td:last-child  { font-weight:600; font-family:monospace; }
-    .btn { display:inline-block; padding:11px 22px; border-radius:8px; font-weight:600;
-           font-size:14px; text-decoration:none; margin-top:6px; }
-    .btn-green  { background:#16a34a; color:#fff; }
-    .btn-blue   { background:#2563eb; color:#fff; }
-    .btn-yellow { background:#d97706; color:#fff; }
-    .warn { background:#fffbeb; border:1px solid #fde68a; border-radius:10px;
-            padding:14px 16px; margin:16px 0; font-size:13px; color:#92400e; }
-    .ok   { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px;
-            padding:14px 16px; margin:16px 0; font-size:13px; color:#166534; }
-    .icon { font-size:48px; margin-bottom:12px; display:block; }
-  </style>
-</head>
-<body><div class="card">${body}</div></body>
-</html>`;
+// req.params values are typed string | string[] by this Express version's
+// types (repeated route params); every route here uses a single simple
+// segment, so this just narrows to the expected case.
+function param(req: AdminRequest, name: string): string {
+  const value = req.params[name];
+  return Array.isArray(value) ? value[0] : value;
 }
 
-// Guard: all admin routes require ?secret=ADMIN_SECRET in the query string
-export function requireAdminSecret(req: Request, res: Response, next: Function) {
-  const secret = Array.isArray(req.query.secret) ? req.query.secret[0] : req.query.secret;
-  if (secret !== process.env.ADMIN_SECRET) {
-    return res.status(401).json({ success: false, error: 'Unauthorized' });
-  }
-  next();
-}
+// ── Orders (one-time full payment) ──────────────────────────────────────────
 
-// GET /api/admin/orders?secret=...&status=PENDING
-export async function listOrders(req: Request, res: Response) {
+export async function listOrders(req: AdminRequest, res: Response) {
   try {
     const status = typeof req.query.status === 'string' ? req.query.status : undefined;
     const orders = await getOrders(status);
@@ -69,178 +41,118 @@ export async function listOrders(req: Request, res: Response) {
   }
 }
 
-// GET|POST /api/admin/orders/:id/approve?secret=...
-// Works as GET so the admin can click the link directly from email.
-// The DB transaction is committed first. If the email send fails, the order
-// is still marked PAID and a resend link is shown — the customer is never stuck.
-export async function approveOrder(req: Request, res: Response) {
+// Compare-and-swap: only transitions an order that is still PENDING, closing
+// the race window where two admins clicking Approve at once could otherwise
+// both "succeed." The DB transaction commits before the email send, so the
+// license is never lost even if the email fails — resendLicense covers that.
+export async function approveOrder(req: AdminRequest, res: Response) {
   try {
-    const orderId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const secret  = String(req.query.secret ?? '');
-    const order   = await getOrderById(orderId);
-
-    const resendUrl = `${process.env.BACKEND_URL}/api/admin/orders/${orderId}/resend-license?secret=${encodeURIComponent(secret)}`;
+    const orderId = param(req, 'id');
+    const order = await getOrderById(orderId);
 
     if (order.status === 'PAID') {
-      const licKey = (order as any).licenseKey?.key ?? 'key not found';
-      return res.send(adminPageHtml(`
-        <span class="icon">ℹ️</span>
-        <h2>Already Approved</h2>
-        <p>This order is already marked <strong>PAID</strong> and a license key exists.</p>
-        <table>
-          <tr><td>Customer</td><td>${escapeHtml(order.customerName)}</td></tr>
-          <tr><td>Email</td><td>${escapeHtml(order.customerEmail)}</td></tr>
-          <tr><td>Plan</td><td>${escapeHtml(order.plan)}</td></tr>
-          <tr><td>License Key</td><td>${escapeHtml(licKey)}</td></tr>
-        </table>
-        <div class="warn">If the customer says they did not receive the email, use the resend button below.</div>
-        <a href="${resendUrl}" class="btn btn-blue">Resend License Email</a>
-      `));
+      return ok(res, { message: 'This order is already approved.', order, alreadyApproved: true });
+    }
+    if (order.status !== 'PENDING') {
+      return fail(res, `Only PENDING orders can be approved. Current status: ${order.status}`);
     }
 
-    if (order.status === 'CANCELLED') {
-      return res.status(400).send(adminPageHtml(`
-        <span class="icon">❌</span>
-        <h2>Order Cancelled</h2>
-        <p>This order has been cancelled and cannot be approved.</p>
-      `));
+    const key = generateLicenseKey();
+    const before = { status: order.status };
+
+    const claimed = await prisma.order.updateMany({
+      where: { id: order.id, status: 'PENDING' },
+      data: { status: 'PAID', updatedAt: new Date() },
+    });
+    if (claimed.count === 0) {
+      return fail(res, 'This order was just approved or rejected by someone else. Refresh and try again.', 409);
     }
+    await prisma.licenseKey.create({ data: { key, orderId: order.id, plan: order.plan } });
 
-    // Generate a unique license key (UUID)
-    const key = crypto.randomUUID();
+    await logAdminAction(req.admin!.adminId, 'ORDER_APPROVED', 'Order', order.id, before, { status: 'PAID', licenseKey: key }, req);
 
-    // Commit to DB first — so the license is never lost even if the email fails
-    await prisma.$transaction([
-      prisma.order.update({
-        where: { id: order.id },
-        data:  { status: 'PAID', updatedAt: new Date() },
-      }),
-      prisma.licenseKey.create({
-        data: { key, orderId: order.id, plan: order.plan },
-      }),
-    ]);
-
-    // Try to email — failure must NOT prevent the approval from being recorded
     let emailSent = false;
     try {
-      await sendLicenseEmail({
-        name:       order.customerName,
-        email:      order.customerEmail,
-        plan:       order.plan,
-        licenseKey: key,
-      });
+      await sendLicenseEmail({ name: order.customerName, email: order.customerEmail, plan: order.plan, licenseKey: key });
       emailSent = true;
     } catch (emailErr: any) {
       console.error('[Admin] License email failed for order', orderId, emailErr?.message);
     }
 
-    const emailNote = emailSent
-      ? `<div class="ok">License email sent to <strong>${escapeHtml(order.customerEmail)}</strong>.</div>`
-      : `<div class="warn">
-           <strong>Email delivery failed.</strong> The license key has been created and the order is marked as paid,
-           but the email was not sent. Use the button below to resend it now.
-           <br/><br/>
-           <a href="${resendUrl}" class="btn btn-yellow">Resend License Email</a>
-         </div>`;
-
-    return res.send(adminPageHtml(`
-      <span class="icon">✅</span>
-      <h2>Order Approved</h2>
-      ${emailNote}
-      <table>
-        <tr><td>Customer</td><td>${escapeHtml(order.customerName)}</td></tr>
-        <tr><td>Email</td><td>${escapeHtml(order.customerEmail)}</td></tr>
-        <tr><td>Plan</td><td>${escapeHtml(order.plan)}</td></tr>
-        <tr><td>License Key</td><td>${escapeHtml(key)}</td></tr>
-      </table>
-      <a href="${resendUrl}" class="btn btn-blue" style="margin-right:8px">Resend License Email</a>
-    `));
+    return ok(res, { message: emailSent ? 'Order approved and license emailed.' : 'Order approved, but the license email failed to send — use Resend.', licenseKey: key, emailSent });
   } catch (e: any) {
     return fail(res, e.message);
   }
 }
 
-// GET /api/admin/orders/:id/resend-license?secret=...
-// Safe to call multiple times — just resends the email to the customer.
-export async function resendLicense(req: Request, res: Response) {
+export async function rejectOrder(req: AdminRequest, res: Response) {
   try {
-    const orderId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const secret  = String(req.query.secret ?? '');
-    const order   = await getOrderById(orderId);
+    const orderId = param(req, 'id');
+    const reason = String(req.body?.reason ?? '').trim();
+    if (!reason) return fail(res, 'A rejection reason is required');
 
-    if (order.status !== 'PAID') {
-      return res.status(400).send(adminPageHtml(`
-        <span class="icon">❌</span>
-        <h2>Cannot Resend</h2>
-        <p>The order must be approved (PAID) before a license can be sent. Current status: <strong>${escapeHtml(order.status)}</strong>.</p>
-      `));
+    const order = await getOrderById(orderId);
+    if (order.status !== 'PENDING') {
+      return fail(res, `Only PENDING orders can be rejected. Current status: ${order.status}`);
     }
 
-    const licenseKey = (order as any).licenseKey;
-    if (!licenseKey) {
-      return res.status(400).send(adminPageHtml(`
-        <span class="icon">❌</span>
-        <h2>No License Key Found</h2>
-        <p>This order does not have a license key. This should not happen — please contact technical support.</p>
-      `));
-    }
-
-    await sendLicenseEmail({
-      name:       order.customerName,
-      email:      order.customerEmail,
-      plan:       order.plan,
-      licenseKey: licenseKey.key,
+    const claimed = await prisma.order.updateMany({
+      where: { id: order.id, status: 'PENDING' },
+      data: { status: 'REJECTED', rejectionReason: reason, updatedAt: new Date() },
     });
-
-    const resendUrl = `${process.env.BACKEND_URL}/api/admin/orders/${orderId}/resend-license?secret=${encodeURIComponent(secret)}`;
-
-    return res.send(adminPageHtml(`
-      <span class="icon">✅</span>
-      <h2>License Email Resent</h2>
-      <div class="ok">License email successfully resent to <strong>${escapeHtml(order.customerEmail)}</strong>.</div>
-      <table>
-        <tr><td>Customer</td><td>${escapeHtml(order.customerName)}</td></tr>
-        <tr><td>Plan</td><td>${escapeHtml(order.plan)}</td></tr>
-        <tr><td>License Key</td><td>${escapeHtml(licenseKey.key)}</td></tr>
-      </table>
-      <a href="${resendUrl}" class="btn btn-blue">Resend Again</a>
-    `));
-  } catch (e: any) {
-    if ((e as any)?.message?.includes('not found')) {
-      return res.status(404).send(adminPageHtml(`
-        <span class="icon">❌</span>
-        <h2>Order Not Found</h2>
-        <p>No order with this ID exists.</p>
-      `));
+    if (claimed.count === 0) {
+      return fail(res, 'This order was just approved or rejected by someone else. Refresh and try again.', 409);
     }
-    return res.status(500).send(adminPageHtml(`
-      <span class="icon">❌</span>
-      <h2>Email Failed</h2>
-      <p>The email could not be sent: <code>${escapeHtml(e?.message ?? 'unknown error')}</code></p>
-      <p>Check your email credentials in .env and try again.</p>
-    `));
+
+    await logAdminAction(req.admin!.adminId, 'ORDER_REJECTED', 'Order', order.id, { status: order.status }, { status: 'REJECTED', reason }, req);
+
+    sendPaymentRejectedEmail({
+      email: order.customerEmail,
+      name: order.customerName,
+      context: 'your order',
+      amount: order.amount,
+      reason,
+    }).catch(() => {});
+
+    return ok(res, { message: 'Order rejected and customer notified.' });
+  } catch (e: any) {
+    return fail(res, e.message);
   }
 }
 
-// POST /api/admin/orders/:id/cancel?secret=...
-export async function cancelOrder(req: Request, res: Response) {
+export async function resendLicense(req: AdminRequest, res: Response) {
   try {
-    const orderId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const orderId = param(req, 'id');
+    const order = await getOrderById(orderId);
+
+    if (order.status !== 'PAID') return fail(res, `The order must be approved (PAID) before a license can be sent. Current status: ${order.status}`);
+    const licenseKey = (order as any).licenseKey;
+    if (!licenseKey) return fail(res, 'This order does not have a license key. This should not happen — please contact technical support.');
+
+    await sendLicenseEmail({ name: order.customerName, email: order.customerEmail, plan: order.plan, licenseKey: licenseKey.key });
+    return ok(res, { message: `License email resent to ${order.customerEmail}.` });
+  } catch (e: any) {
+    return fail(res, e.message);
+  }
+}
+
+export async function cancelOrder(req: AdminRequest, res: Response) {
+  try {
+    const orderId = param(req, 'id');
     const order = await getOrderById(orderId);
     if (order.status !== 'PENDING') return fail(res, 'Only PENDING orders can be cancelled');
 
-    await prisma.order.update({
-      where: { id: order.id },
-      data:  { status: 'CANCELLED', updatedAt: new Date() },
-    });
+    await prisma.order.update({ where: { id: order.id }, data: { status: 'CANCELLED', updatedAt: new Date() } });
+    await logAdminAction(req.admin!.adminId, 'ORDER_CANCELLED', 'Order', order.id, { status: 'PENDING' }, { status: 'CANCELLED' }, req);
     return ok(res, { message: 'Order cancelled' });
   } catch (e: any) {
     return fail(res, e.message);
   }
 }
 
-// GET /api/admin/license-installments?secret=...&status=SUBMITTED
-export async function listLicenseInstallments(req: Request, res: Response) {
+// ── License installments ────────────────────────────────────────────────────
+
+export async function listLicenseInstallments(req: AdminRequest, res: Response) {
   try {
     const status = typeof req.query.status === 'string' ? req.query.status : undefined;
     const installments = await listSubmittedInstallments(status);
@@ -250,43 +162,175 @@ export async function listLicenseInstallments(req: Request, res: Response) {
   }
 }
 
-// GET|POST /api/admin/license-installments/:id/approve?secret=...
-// Works as GET so the admin can click the link directly from email. Reuses
-// the exact same manual-verification approve pattern as approveOrder above.
-export async function approveLicenseInstallment(req: Request, res: Response) {
+export async function approveLicenseInstallment(req: AdminRequest, res: Response) {
   try {
-    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const installment = await getInstallmentById(id);
+    const id = param(req, 'id');
+    const before = await getInstallmentById(id);
 
-    if (installment.status === 'PAID') {
-      return res.send(adminPageHtml(`
-        <span class="icon">ℹ️</span>
-        <h2>Already Approved</h2>
-        <p>Installment #${installment.installmentNumber} for <strong>${escapeHtml(installment.plan.shop.name)}</strong> is already marked paid.</p>
-      `));
+    const result = await approveInstallment(id);
+    if (result === null) {
+      return fail(res, 'This installment is not awaiting approval (already handled by someone else, or not yet submitted). Refresh and try again.', 409);
+    }
+    if (result.alreadyApproved) {
+      return ok(res, { message: 'This installment is already approved.', alreadyApproved: true });
     }
 
-    const updated = await approveInstallment(id);
+    await logAdminAction(
+      req.admin!.adminId,
+      'INSTALLMENT_APPROVED',
+      'LicenseInstallment',
+      id,
+      { status: before.status },
+      { status: 'PAID' },
+      req
+    );
 
-    const unlockNote = installment.installmentNumber === 1
-      ? `<div class="ok">This was installment #1 — <strong>${escapeHtml(installment.plan.shop.name)}</strong> now has full PRO access.</div>`
-      : `<div class="ok">Installment #${installment.installmentNumber} approved for <strong>${escapeHtml(installment.plan.shop.name)}</strong>.</div>`;
+    const unlockNote = before.installmentNumber === 1
+      ? `Installment #1 approved — ${before.plan.shop.name} now has full access.`
+      : `Installment #${before.installmentNumber} approved for ${before.plan.shop.name}.`;
 
-    const nextNote = updated.plan.status === 'COMPLETED'
-      ? `<p>All 3 installments are now paid — this plan is complete, no further payments are due.</p>`
-      : `<p>Next installment (#${installment.installmentNumber + 1}) is now due in 30 days.</p>`;
+    return ok(res, { message: unlockNote, installment: result.installment });
+  } catch (e: any) {
+    return fail(res, e.message);
+  }
+}
 
-    return res.send(adminPageHtml(`
-      <span class="icon">✅</span>
-      <h2>Installment Approved</h2>
-      ${unlockNote}
-      <table>
-        <tr><td>Shop</td><td>${escapeHtml(installment.plan.shop.name)}</td></tr>
-        <tr><td>Installment</td><td>#${installment.installmentNumber} of ${installment.plan.totalInstallments}</td></tr>
-        <tr><td>Amount</td><td>Rs ${installment.amount.toLocaleString()}</td></tr>
-      </table>
-      ${nextNote}
-    `));
+export async function rejectLicenseInstallment(req: AdminRequest, res: Response) {
+  try {
+    const id = param(req, 'id');
+    const reason = String(req.body?.reason ?? '').trim();
+    if (!reason) return fail(res, 'A rejection reason is required');
+
+    const before = await getInstallmentById(id);
+    const result = await rejectInstallment(id, reason);
+    if (result === null) {
+      return fail(res, 'This installment is not awaiting approval (already handled by someone else, or not yet submitted). Refresh and try again.', 409);
+    }
+
+    await logAdminAction(req.admin!.adminId, 'INSTALLMENT_REJECTED', 'LicenseInstallment', id, { status: before.status }, { status: 'REJECTED', reason }, req);
+
+    const admin = await prisma.user.findFirst({ where: { shopId: before.plan.shopId, role: 'admin' }, select: { email: true, username: true } });
+    if (admin?.email) {
+      sendPaymentRejectedEmail({
+        email: admin.email,
+        name: admin.username,
+        context: `installment #${before.installmentNumber}`,
+        amount: before.amount,
+        reason,
+      }).catch(() => {});
+    }
+
+    return ok(res, { message: 'Installment rejected and shop notified.' });
+  } catch (e: any) {
+    return fail(res, e.message);
+  }
+}
+
+// ── Shops (suspend / reactivate) ────────────────────────────────────────────
+
+export async function suspendShop(req: AdminRequest, res: Response) {
+  try {
+    const shopId = param(req, 'id');
+    const shop = await prisma.shop.update({ where: { id: shopId }, data: { suspended: true } });
+    await logAdminAction(req.admin!.adminId, 'SHOP_SUSPENDED', 'Shop', shopId, { suspended: false }, { suspended: true }, req);
+    return ok(res, { message: `${shop.name} suspended.` });
+  } catch (e: any) {
+    return fail(res, e.message);
+  }
+}
+
+export async function reactivateShop(req: AdminRequest, res: Response) {
+  try {
+    const shopId = param(req, 'id');
+    const shop = await prisma.shop.update({ where: { id: shopId }, data: { suspended: false } });
+    await logAdminAction(req.admin!.adminId, 'SHOP_REACTIVATED', 'Shop', shopId, { suspended: true }, { suspended: false }, req);
+    return ok(res, { message: `${shop.name} reactivated.` });
+  } catch (e: any) {
+    return fail(res, e.message);
+  }
+}
+
+export async function listShops(_req: AdminRequest, res: Response) {
+  try {
+    const shops = await prisma.shop.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true, name: true, plan: true, trialEndsAt: true, suspended: true, createdAt: true,
+        licenseInstallmentPlan: { select: { status: true, installments: { select: { installmentNumber: true, status: true, dueDate: true } } } },
+      },
+    });
+    return ok(res, shops);
+  } catch (e: any) {
+    return fail(res, e.message);
+  }
+}
+
+// ── License key device binding ──────────────────────────────────────────────
+// Recorded for visibility, never hard-enforced (see setup.controller.ts) —
+// this is the manual override when a legitimate reinstall/new-phone flags a
+// mismatch.
+
+export async function resetDevice(req: AdminRequest, res: Response) {
+  try {
+    const key = param(req, 'key');
+    const existing = await prisma.licenseKey.findUnique({ where: { key } });
+    if (!existing) return fail(res, 'License key not found', 404);
+
+    await prisma.licenseKey.update({ where: { key }, data: { deviceId: null } });
+    await logAdminAction(req.admin!.adminId, 'DEVICE_RESET', 'LicenseKey', key, { deviceId: existing.deviceId }, { deviceId: null }, req);
+    return ok(res, { message: 'Device binding cleared. The next login will bind a new device.' });
+  } catch (e: any) {
+    return fail(res, e.message);
+  }
+}
+
+// ── Dashboard summary ───────────────────────────────────────────────────────
+
+export async function getDashboardStats(_req: AdminRequest, res: Response) {
+  try {
+    const [
+      totalShops, trialShops, suspendedShops,
+      pendingOrders, paidOrders, rejectedOrders,
+      pendingInstallments, activePlans, completedPlans,
+      revenueOrders,
+    ] = await Promise.all([
+      prisma.shop.count(),
+      prisma.shop.count({ where: { plan: 'TRIAL' } }),
+      prisma.shop.count({ where: { suspended: true } }),
+      prisma.order.count({ where: { status: 'PENDING' } }),
+      prisma.order.count({ where: { status: 'PAID' } }),
+      prisma.order.count({ where: { status: 'REJECTED' } }),
+      prisma.licenseInstallment.count({ where: { status: 'SUBMITTED' } }),
+      prisma.licenseInstallmentPlan.count({ where: { status: 'ACTIVE' } }),
+      prisma.licenseInstallmentPlan.count({ where: { status: 'COMPLETED' } }),
+      prisma.order.findMany({ where: { status: 'PAID' }, select: { amount: true } }),
+    ]);
+
+    const paidInstallments = await prisma.licenseInstallment.findMany({ where: { status: 'PAID' }, select: { amount: true } });
+    const lockedShops = await prisma.licenseInstallment.count({
+      where: { status: { not: 'PAID' }, dueDate: { lt: new Date() }, plan: { status: 'ACTIVE' } },
+    });
+
+    const totalRevenue = revenueOrders.reduce((sum, o) => sum + o.amount, 0) + paidInstallments.reduce((sum, i) => sum + i.amount, 0);
+    const totalOutstanding = await prisma.licenseInstallment.findMany({
+      where: { status: { in: ['PENDING', 'SUBMITTED'] } },
+      select: { amount: true },
+    }).then((rows) => rows.reduce((sum, i) => sum + i.amount, 0));
+
+    return ok(res, {
+      totalCustomers: totalShops,
+      trialCustomers: trialShops,
+      suspendedAccounts: suspendedShops,
+      pendingPayments: pendingOrders + pendingInstallments,
+      approvedPayments: paidOrders,
+      rejectedPayments: rejectedOrders,
+      installmentsDue: lockedShops,
+      lockedAccounts: lockedShops,
+      lifetimeLicenses: paidOrders + completedPlans,
+      activeInstallmentPlans: activePlans,
+      totalRevenue,
+      outstandingAmount: totalOutstanding,
+    });
   } catch (e: any) {
     return fail(res, e.message);
   }

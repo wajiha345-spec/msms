@@ -11,6 +11,7 @@ model Shop {
   name         String
   plan         String     @default("PRO") // "TRIAL" | "SIMPLE" | "PRO"
   trialEndsAt  DateTime?  // set only when plan = "TRIAL"; cleared on upgrade
+  suspended    Boolean    @default(false) // admin-controlled lock, independent of plan/trial/installment state
   createdAt    DateTime   @default(now())
   users        User[]
   products     Product[]
@@ -226,29 +227,31 @@ model Purchase {
 }
 
 model Order {
-  id            String      @id @default(cuid())
-  customerName  String
-  customerEmail String
-  customerPhone String
-  plan          String      // "SIMPLE" | "PRO"
-  amount        Int
-  status        String      @default("PENDING") // "PENDING" | "PAID" | "CANCELLED"
-  transactionId String?
-  screenshotUrl String?     // Cloudinary URL of payment proof uploaded by customer
-  notes         String?
-  licenseKey    LicenseKey?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id              String      @id @default(cuid())
+  customerName    String
+  customerEmail   String
+  customerPhone   String
+  plan            String      // "SIMPLE" | "PRO"
+  amount          Int
+  status          String      @default("PENDING") // "PENDING" | "PAID" | "CANCELLED" | "REJECTED"
+  transactionId   String?
+  screenshotUrl   String?     // Cloudinary URL of payment proof uploaded by customer
+  notes           String?
+  rejectionReason String?     // set when status = "REJECTED"
+  licenseKey      LicenseKey?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 }
 
 model LicenseKey {
-  key           String    @id @default(uuid())
+  key           String    @id @default(uuid()) // new keys are formatted "SMARTSHOP-XXXX-XXXX-XXXX"; existing UUID keys keep working unchanged
   order         Order     @relation(fields: [orderId], references: [id])
   orderId       String    @unique
   plan          String
   isActivated   Boolean   @default(false)
   activatedAt   DateTime?
   shopName      String?
+  deviceId      String?   // captured on activation; admin-resettable, not hard-enforced (see setup.controller.ts)
   createdAt     DateTime  @default(now())
 }
 
@@ -275,15 +278,47 @@ model LicenseInstallment {
   installmentNumber Int
   amount            Int
   dueDate           DateTime?
-  status            String    @default("PENDING") // "PENDING" | "SUBMITTED" | "PAID"
+  status            String    @default("PENDING") // "PENDING" | "SUBMITTED" | "PAID" | "REJECTED"
   transactionId     String?
   screenshotUrl     String?
+  rejectionReason   String?   // set when status = "REJECTED"
   submittedAt       DateTime?
   paidAt            DateTime?
   reminderSentAt    DateTime?
   createdAt         DateTime  @default(now())
 
   @@index([planId])
+  @@index([status, dueDate])
+}
+
+// ── SmartShop company-operator identity (NOT a shop-scoped User) ─────────────
+// Distinct from User.role="admin" (a shop's own owner). Logs into the admin
+// panel to approve/reject payments and manage licenses across all shops.
+model AdminUser {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  lastLoginAt  DateTime?
+}
+
+// ── Immutable audit trail for admin actions ───────────────────────────────────
+// No update/delete route is ever exposed for this model. metadata stores a
+// small {before, after} diff of just the fields that changed.
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorType  String   // "ADMIN"
+  actorId    String
+  action     String   // e.g. "ORDER_APPROVED", "INSTALLMENT_REJECTED", "SHOP_SUSPENDED"
+  entityType String   // e.g. "Order", "LicenseInstallment", "Shop", "LicenseKey"
+  entityId   String
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
 }
 
 // ── Shared product catalog ────────────────────────────────────────────────────

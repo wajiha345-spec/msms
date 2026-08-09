@@ -59,7 +59,7 @@ export default function TrialSignupScreen() {
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
 
         <View style={styles.logoBox}>
-          <Text style={styles.logoText}>MSMS</Text>
+          <Text style={styles.logoText}>SmartShop</Text>
           <Text style={styles.logoSub}>Mobile Shop Management System</Text>
         </View>
 

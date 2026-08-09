@@ -5,9 +5,9 @@ function getResend() {
 }
 
 // From address — uses your verified domain once DNS records are added to Resend
-const FROM_ORDERS  = `"MSMS Orders" <noreply@msms-app.site>`;
-const FROM_SUPPORT = `"MSMS" <noreply@msms-app.site>`;
-const FROM_ALERTS  = `"MSMS Alert" <noreply@msms-app.site>`;
+const FROM_ORDERS  = `"SmartShop Orders" <noreply@msms-app.site>`;
+const FROM_SUPPORT = `"SmartShop" <noreply@msms-app.site>`;
+const FROM_ALERTS  = `"SmartShop Alert" <noreply@msms-app.site>`;
 
 // ── Notify admin of a new order ──────────────────────────────────────────────
 export async function sendAdminNewOrderEmail(order: {
@@ -20,9 +20,7 @@ export async function sendAdminNewOrderEmail(order: {
   transactionId?: string | null;
   screenshotUrl?: string | null;
 }) {
-  const secret     = encodeURIComponent(process.env.ADMIN_SECRET ?? '');
-  const approveUrl = `${process.env.BACKEND_URL}/api/admin/orders/${order.id}/approve?secret=${secret}`;
-  const listUrl    = `${process.env.BACKEND_URL}/api/admin/orders?secret=${secret}&status=PENDING`;
+  const adminPanelUrl = `${process.env.BACKEND_URL}/admin/login.html`;
 
   await getResend().emails.send({
     from:    FROM_ORDERS,
@@ -89,22 +87,17 @@ export async function sendAdminNewOrderEmail(order: {
         </div>
         `}
 
-        <a href="${approveUrl}"
+        <a href="${adminPanelUrl}"
            style="display:inline-block;background:#16a34a;color:#fff;
                   padding:13px 28px;border-radius:9px;text-decoration:none;
                   font-weight:700;font-size:15px;margin-right:10px">
-          Approve &amp; Send License
-        </a>
-        <a href="${listUrl}"
-           style="display:inline-block;background:#e2e8f0;color:#1e293b;
-                  padding:13px 20px;border-radius:9px;text-decoration:none;
-                  font-weight:600;font-size:14px">
-          View All Orders
+          Log In to Review &amp; Approve
         </a>
 
         <p style="color:#94a3b8;font-size:12px;margin-top:20px;line-height:1.6">
-          Clicking Approve will mark the order as paid, generate a license key,
-          and email it to the customer automatically.
+          Log in to the admin panel to verify the payment and approve it — this
+          marks the order as paid, generates a license key, and emails it to
+          the customer automatically.
         </p>
       </div>
     `,
@@ -123,7 +116,7 @@ export async function sendLicenseEmail(customer: {
   await getResend().emails.send({
     from: FROM_SUPPORT,
     to:   customer.email,
-    subject: '🎉 Your MSMS License Key & Download Link',
+    subject: '🎉 Your SmartShop License Key & Download Link',
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto">
         <h2 style="color:#1e293b">Thank you, ${customer.name}!</h2>
@@ -144,7 +137,7 @@ export async function sendLicenseEmail(customer: {
         </ol>
 
         <a href="${downloadUrl}" style="display:inline-block;background:#2563eb;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;margin:16px 0">
-          📲 Download MSMS App
+          📲 Download SmartShop
         </a>
 
         <p style="color:#64748b;font-size:13px">The download link is tied to your license key. Keep it safe — you'll need it to set up the app.</p>
@@ -175,7 +168,7 @@ export async function sendPasswordResetEmail(customer: {
   await getResend().emails.send({
     from: FROM_SUPPORT,
     to:   customer.email,
-    subject: 'Your MSMS Password Reset Code',
+    subject: 'Your SmartShop Password Reset Code',
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto">
         <h2 style="color:#1e293b">Reset your password</h2>
@@ -204,7 +197,7 @@ export async function sendOrderReceivedEmail(customer: {
   await getResend().emails.send({
     from: FROM_SUPPORT,
     to:   customer.email,
-    subject: 'Order Received — MSMS',
+    subject: 'Order Received — SmartShop',
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto">
         <h2 style="color:#1e293b">Hi ${customer.name},</h2>
@@ -307,8 +300,7 @@ export async function sendAdminNewLicenseInstallmentEmail(installment: {
   transactionId: string;
   screenshotUrl: string;
 }) {
-  const secret     = encodeURIComponent(process.env.ADMIN_SECRET ?? '');
-  const approveUrl = `${process.env.BACKEND_URL}/api/admin/license-installments/${installment.installmentId}/approve?secret=${secret}`;
+  const adminPanelUrl = `${process.env.BACKEND_URL}/admin/login.html`;
 
   await getResend().emails.send({
     from:    FROM_ORDERS,
@@ -355,12 +347,41 @@ export async function sendAdminNewLicenseInstallmentEmail(installment: {
           </a>
         </div>
 
-        <a href="${approveUrl}"
+        <a href="${adminPanelUrl}"
            style="display:inline-block;background:#16a34a;color:#fff;
                   padding:13px 28px;border-radius:9px;text-decoration:none;
                   font-weight:700;font-size:15px">
-          Approve Installment
+          Log In to Review &amp; Approve
         </a>
+      </div>
+    `,
+  });
+}
+
+// ── Notify customer a payment was rejected ────────────────────────────────────
+export async function sendPaymentRejectedEmail(customer: {
+  email: string;
+  name: string;
+  context: string; // e.g. "your order" or "installment #2"
+  amount: number;
+  reason: string;
+}) {
+  await getResend().emails.send({
+    from: FROM_SUPPORT,
+    to:   customer.email,
+    subject: `Payment Not Approved — ${customer.context}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto">
+        <h2 style="color:#1e293b">Hi ${customer.name},</h2>
+        <p>
+          We were unable to verify the payment you submitted for
+          <strong>${customer.context}</strong> (Rs ${customer.amount.toLocaleString()}).
+        </p>
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:16px 18px;margin:20px 0">
+          <p style="margin:0 0 4px;color:#64748b;font-size:13px">REASON</p>
+          <p style="margin:0;color:#991b1b;font-size:14px;font-weight:600">${customer.reason}</p>
+        </div>
+        <p>Please double-check the transaction details and submit the payment again. If you believe this is a mistake, reply to this email and we'll help sort it out.</p>
       </div>
     `,
   });
@@ -387,7 +408,7 @@ export async function sendInstallmentDueReminderEmail(customer: {
           <strong>${customer.dueDate.toDateString()}</strong>.
         </p>
         <p>You can submit your payment proof any time at
-           <a href="https://msms-app.site">msms-app.site</a> — look for "Pay your next installment"
+           <a href="${process.env.PAYMENT_URL}">${process.env.PAYMENT_URL?.replace(/^https?:\/\//, '')}</a> — look for "Pay your next installment"
            at the bottom of the page. If it isn't paid by the due date, the app will lock again
            until this installment is settled.</p>
         <p style="color:#64748b;font-size:13px">If you've already paid, you can ignore this email once it's approved.</p>

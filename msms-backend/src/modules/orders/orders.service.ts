@@ -1,27 +1,30 @@
 import { prisma } from '../../config/db';
 import { sendAdminNewOrderEmail, sendOrderReceivedEmail } from '../../utils/email';
 
-const PLAN_PRICES: Record<string, number> = { SIMPLE: 25000, PRO: 95000 };
+// SmartShop is a single flat-priced product — Rs 45,000 one-time, matching
+// the 3×15,000 installment total in licenseInstallments.service.ts. The
+// two-tier SIMPLE/PRO pricing this replaced was inconsistent across the
+// website, this file, and the installment plan (three different numbers) —
+// existing SIMPLE/PRO shops from before this change keep working unchanged
+// (Shop.plan/LicenseKey.plan/requirePlan('PRO') gating is untouched), this
+// only affects what NEW orders charge and which plan they activate.
+export const SMARTSHOP_PRICE = 45000;
 
 export async function createOrder(data: {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
-  plan: string;
   transactionId: string;
   screenshotUrl: string;
   notes?: string;
 }) {
-  const plan = data.plan.toUpperCase();
-  if (!PLAN_PRICES[plan]) throw new Error('Invalid plan. Choose SIMPLE or PRO.');
-
   const order = await prisma.order.create({
     data: {
       customerName:  data.customerName.trim(),
       customerEmail: data.customerEmail.trim().toLowerCase(),
       customerPhone: data.customerPhone.trim(),
-      plan,
-      amount:        PLAN_PRICES[plan],
+      plan:          'PRO', // internal label meaning "fully paid" — keeps every existing requirePlan('PRO') gate working unchanged
+      amount:        SMARTSHOP_PRICE,
       transactionId: data.transactionId.trim(),
       screenshotUrl: data.screenshotUrl,
       notes:         data.notes?.trim() || null,
