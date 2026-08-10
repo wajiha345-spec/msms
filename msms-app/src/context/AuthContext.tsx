@@ -174,9 +174,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   // Converts the caller's existing (trial) shop to a paid plan in place —
-  // all data saved during the trial stays under the same shopId.
+  // all data saved during the trial stays under the same shopId. This is the
+  // first time a trial shop's device gets bound to a real license key.
   async function upgradeAccount(licenseKey: string) {
-    const res = await apiClient.post('/setup/upgrade', { licenseKey });
+    const res = await apiClient.post('/setup/upgrade', { licenseKey, deviceId: getDeviceId() });
     const { token: t, user: u } = res.data.data;
     applySession(t, u);
   }

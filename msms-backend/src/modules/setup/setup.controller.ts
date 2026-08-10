@@ -88,7 +88,7 @@ export async function setupShop(req: Request, res: Response) {
 // customer saved during the trial (products, sales, etc.) stays exactly as is.
 export async function upgradeShop(req: AuthRequest, res: Response) {
   try {
-    const { licenseKey } = req.body;
+    const { licenseKey, deviceId } = req.body;
     if (!licenseKey) return fail(res, 'licenseKey is required');
 
     const license = await prisma.licenseKey.findUnique({ where: { key: licenseKey } });
@@ -106,7 +106,10 @@ export async function upgradeShop(req: AuthRequest, res: Response) {
       const shop = await tx.shop.findUniqueOrThrow({ where: { id: user.shopId } });
       await tx.licenseKey.update({
         where: { key: licenseKey },
-        data:  { isActivated: true, activatedAt: new Date(), shopName: shop.name },
+        // Same as setupShop — recorded for admin visibility, never enforced.
+        // This is the trial-to-paid conversion path, so it's the first time a
+        // trial shop's device gets bound to its (now real) license key.
+        data:  { isActivated: true, activatedAt: new Date(), shopName: shop.name, deviceId: deviceId?.trim() || null },
       });
       return shop;
     });

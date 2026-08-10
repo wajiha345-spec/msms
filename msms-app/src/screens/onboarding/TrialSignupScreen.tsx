@@ -65,7 +65,7 @@ export default function TrialSignupScreen() {
 
         <View style={styles.card}>
           <View style={styles.trialBadge}>
-            <Text style={styles.trialBadgeText}>🎁 Free 5-Day Trial — All PRO Features</Text>
+            <Text style={styles.trialBadgeText}>🎁 Free 5-Day Trial — Every SmartShop Feature</Text>
           </View>
           <Text style={styles.cardTitle}>Start Your Free Trial</Text>
           <Text style={styles.cardSub}>
