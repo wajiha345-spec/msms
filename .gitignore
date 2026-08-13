@@ -9,6 +9,11 @@ msms-app/.expo/
 msms-app/android/
 msms-app/ios/
 msms-app/.env
+msms-app/release/
+
+# Root (npm --prefix scripts can leave stray artifacts here)
+/node_modules/
+/.expo/
 
 # Website
 msms-website/.env

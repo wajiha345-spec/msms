@@ -35,8 +35,8 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.card}>
-        <Text style={styles.title}>Mobile Shop</Text>
-        <Text style={styles.subtitle}>Management System</Text>
+        <Text style={styles.title}>SmartShop</Text>
+        <Text style={styles.subtitle}>Mobile Shop Management System</Text>
 
         <TextInput
           style={styles.input}

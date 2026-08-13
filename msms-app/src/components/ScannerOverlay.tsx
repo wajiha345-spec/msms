@@ -21,10 +21,19 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
-  StyleSheet, Modal, Vibration, Linking,
+  StyleSheet, Modal, Vibration, Linking, Platform,
 } from 'react-native';
 import { CameraView, useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
 import { colors } from '../theme/colors';
+
+// expo-camera's web implementation only decodes QR codes, not the
+// EAN/UPC/Code128/etc. barcode formats real products use (barcodeTypes
+// below) — a visible-but-broken camera option would be worse than none on
+// desktop. Manual entry is also the objectively correct desktop pattern:
+// USB/Bluetooth HID barcode scanners emulate a keyboard and type into
+// whatever TextInput has focus, which the manual mode below already
+// handles. Native Android/iOS camera scanning is completely unaffected.
+const IS_DESKTOP = Platform.OS === 'web';
 
 interface Props {
   visible:   boolean;
@@ -40,19 +49,20 @@ export default function ScannerOverlay({
   hint  = 'Point camera at barcode or QR code',
 }: Props) {
   const [permission, requestPermission] = useCameraPermissions();
-  const [manualMode, setManualMode]     = useState(false);
+  const [manualMode, setManualMode]     = useState(IS_DESKTOP);
   const [manualCode, setManualCode]     = useState('');
   const [scanning,   setScanning]       = useState(true);  // debounce flag
   const [feedback,   setFeedback]       = useState<string | null>(null);
   const manualRef = useRef<TextInput>(null);
 
-  // Request permission when overlay becomes visible
+  // Request permission when overlay becomes visible — skipped entirely on
+  // desktop, which never mounts the camera view at all (see IS_DESKTOP).
   useEffect(() => {
-    if (visible && !permission?.granted && permission?.canAskAgain !== false) {
+    if (visible && !IS_DESKTOP && !permission?.granted && permission?.canAskAgain !== false) {
       requestPermission();
     }
     if (visible) {
-      setManualMode(false);
+      setManualMode(IS_DESKTOP);
       setManualCode('');
       setFeedback(null);
       setScanning(true);
@@ -110,18 +120,25 @@ export default function ScannerOverlay({
             <Text style={styles.closeTxt}>✕ Cancel</Text>
           </TouchableOpacity>
           <Text style={styles.title}>{title}</Text>
-          <TouchableOpacity
-            onPress={() => setManualMode(m => !m)}
-            style={styles.modeBtn}
-          >
-            <Text style={styles.modeTxt}>
-              {manualMode ? '📷 Camera' : '⌨️ Type'}
-            </Text>
-          </TouchableOpacity>
+          {IS_DESKTOP ? (
+            <View style={styles.modeBtn} />
+          ) : (
+            <TouchableOpacity
+              onPress={() => setManualMode(m => !m)}
+              style={styles.modeBtn}
+            >
+              <Text style={styles.modeTxt}>
+                {manualMode ? '📷 Camera' : '⌨️ Type'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* ── Camera or manual ── */}
-        {!manualMode ? (
+        {/* Desktop never takes this branch — manualMode is always true and
+            locked there (IS_DESKTOP), so CameraView/permission UI below
+            structurally never mounts on web, not just visually hidden. */}
+        {!IS_DESKTOP && !manualMode ? (
           <View style={styles.cameraBox}>
             {!permission?.granted ? (
               /* ── Permission denied / not yet granted ── */

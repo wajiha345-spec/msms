@@ -4,8 +4,7 @@ import {
   TouchableOpacity, Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { File, Paths } from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
+import { writeBackupFile } from '../../utils/backupWriter';
 import { Button } from '../../components/Buttons';
 import { MetricTile } from '../../components/MetricTile';
 import { backupApi, BackupExport } from '../../api/backup';
@@ -22,25 +21,13 @@ export default function BackupScreen() {
       const res = await backupApi.export();
       const payload = res.data.data;
 
-      const filename = `msms-backup-${payload.shop.name.replace(/[^a-z0-9]+/gi, '-')}-${payload.exportedAt.slice(0, 10)}.json`;
-      const file = new File(Paths.document, filename);
-      if (file.exists) file.delete();
-      file.create();
-      file.write(JSON.stringify(payload, null, 2));
+      const filename = `smartshop-backup-${payload.shop.name.replace(/[^a-z0-9]+/gi, '-')}-${payload.exportedAt.slice(0, 10)}.json`;
+      const result = await writeBackupFile(filename, JSON.stringify(payload, null, 2));
 
       setLastExport(payload);
 
-      const canShare = await Sharing.isAvailableAsync();
-      if (canShare) {
-        await Sharing.shareAsync(file.uri, {
-          mimeType: 'application/json',
-          dialogTitle: 'Save or send your SmartShop backup',
-        });
-      } else {
-        Alert.alert(
-          'Backup Created ✓',
-          `Saved as ${filename} on this device. Sharing isn't available here — you can find it in the app's document storage.`
-        );
+      if (!result.shared) {
+        Alert.alert('Backup Created ✓', result.message);
       }
     } catch (e: any) {
       Alert.alert('Export Failed', e?.response?.data?.error || 'Something went wrong');

@@ -8,6 +8,7 @@ import {
 import { AuthProvider } from './src/context/AuthContext';
 import { SocketProvider } from './src/context/SocketContext';
 import RootNavigator from './src/navigation/RootNavigator';
+import AlertHost from './src/components/AlertHost';
 
 type ErrorBoundaryProps = {
   children: ReactNode;
@@ -96,6 +97,7 @@ export default function App() {
           <ErrorBoundary>
             <RootNavigator />
           </ErrorBoundary>
+          <AlertHost />
         </SocketProvider>
       </AuthProvider>
     </ErrorBoundary>

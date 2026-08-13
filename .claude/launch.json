@@ -4,7 +4,7 @@
     {
       "name": "msms-app-web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "msms-app", "run", "web", "--", "-c"],
+      "runtimeArgs": ["run", "web", "--prefix", "msms-app"],
       "port": 8081
     }
   ]

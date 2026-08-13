@@ -8,8 +8,9 @@ import {
   ActivityIndicator,
   Alert,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
+import { openUrl } from '../../utils/openUrl';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { salesApi, Sale } from '../../api/sales';
 import { Button } from '../../components/Buttons';
@@ -64,7 +65,7 @@ export default function SalesListScreen() {
 
     function openInvoice() {
       const url = invoicesApi.getUrl(item.id);
-      WebBrowser.openBrowserAsync(url).catch(() =>
+      openUrl(url).catch(() =>
         Alert.alert('Error', 'Could not open invoice. Make sure you are connected.')
       );
     }
@@ -111,6 +112,56 @@ export default function SalesListScreen() {
         <TouchableOpacity style={styles.invoiceBtn} onPress={openInvoice}>
           <Text style={styles.invoiceBtnText}>View Invoice</Text>
         </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // Desktop-only table row — same data/handlers as renderItem above, denser
+  // layout for a wide window instead of a stack of phone cards.
+  function renderDesktopItem({ item }: { item: Sale }) {
+    const date = new Date(item.createdAt);
+    const dateStr = date.toLocaleDateString('en-PK');
+    const timeStr = date.toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit' });
+
+    function openInvoice() {
+      const url = invoicesApi.getUrl(item.id);
+      openUrl(url).catch(() =>
+        Alert.alert('Error', 'Could not open invoice. Make sure you are connected.')
+      );
+    }
+
+    return (
+      <View style={styles.tableRow}>
+        <View style={styles.tableColInvoice}>
+          <Text style={styles.invoiceNo}>{item.invoiceNo}</Text>
+          <Text style={styles.tableMeta}>{dateStr} {timeStr}</Text>
+        </View>
+        <View style={styles.tableColProduct}>
+          <Text style={styles.productName} numberOfLines={1}>{item.product.name}</Text>
+          {item.customerName && <Text style={styles.customer}>{item.customerName}</Text>}
+        </View>
+        <Text style={styles.tableColQty}>{item.quantity}</Text>
+        <View style={styles.tableColAmount}>
+          <Text style={styles.amount}>Rs {item.totalAmount.toLocaleString()}</Text>
+          <Text style={[styles.profit, item.profit >= 0 ? { color: colors.success } : { color: colors.danger }]}>
+            Rs {item.profit.toLocaleString()}
+          </Text>
+        </View>
+        <TouchableOpacity style={styles.tableInvoiceBtn} onPress={openInvoice}>
+          <Text style={styles.invoiceBtnText}>View Invoice</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  function DesktopTableHeader() {
+    return (
+      <View style={styles.tableHeaderRow}>
+        <Text style={[styles.tableHeaderText, styles.tableColInvoice]}>Invoice</Text>
+        <Text style={[styles.tableHeaderText, styles.tableColProduct]}>Product</Text>
+        <Text style={[styles.tableHeaderText, styles.tableColQty]}>Qty</Text>
+        <Text style={[styles.tableHeaderText, styles.tableColAmount]}>Amount</Text>
+        <Text style={[styles.tableHeaderText, styles.tableInvoiceBtnHeader]}>Invoice</Text>
       </View>
     );
   }
@@ -167,8 +218,10 @@ export default function SalesListScreen() {
       <FlatList
         data={sales}
         keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.list}
+        renderItem={Platform.OS === 'web' ? renderDesktopItem : renderItem}
+        contentContainerStyle={Platform.OS === 'web' ? styles.tableList : styles.list}
+        ListHeaderComponent={Platform.OS === 'web' ? DesktopTableHeader : undefined}
+        stickyHeaderIndices={Platform.OS === 'web' ? [0] : undefined}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -252,4 +305,48 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     fontSize: 13,
   },
+
+  // Desktop table layout only (Platform.OS === 'web') — mobile keeps the
+  // card list above untouched.
+  tableList: { paddingHorizontal: 16, paddingBottom: 40 },
+  tableHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    backgroundColor: colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  tableHeaderText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  tableRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: colors.card,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  tableMeta: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
+  tableColInvoice: { flex: 1.2, paddingRight: 12 },
+  tableColProduct: { flex: 2, paddingRight: 12 },
+  tableColQty: { flex: 0.5, fontSize: 13, color: colors.text, textAlign: 'center' },
+  tableColAmount: { flex: 1.2, paddingRight: 12 },
+  tableInvoiceBtn: {
+    flex: 1.2,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.primary + '50',
+    backgroundColor: colors.primary + '10',
+    alignItems: 'center',
+  },
+  tableInvoiceBtnHeader: { flex: 1.2 },
 });

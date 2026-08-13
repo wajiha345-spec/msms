@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text } from 'react-native';
-import { createBottomTabNavigator }   from '@react-navigation/bottom-tabs';
+import { createBottomTabNavigator, type BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import DashboardScreen        from '../screens/dashboard/DashboardScreen';
@@ -219,14 +219,32 @@ function MoreStack() {
   );
 }
 
-export default function BottomTabs() {
+// Optional custom tabBar + tabBarPosition — both undefined on native/mobile,
+// where this renders identically to before (bottom-tabs defaults tabBar to
+// its own BottomTabBar and tabBarPosition to 'bottom'). The desktop shell
+// (DesktopShell.tsx, Platform.OS === 'web' only) passes a sidebar renderer
+// and tabBarPosition="left" instead, which bottom-tabs' own BottomTabView
+// already supports natively (flexDirection: 'row', tab bar placed before
+// the screen content) — no CSS overrides or duplicated screen lists needed.
+// Note: tabBarPosition is read from the focused route's descriptor
+// *options* (BottomTabView.js: `descriptors[focusedRouteKey].options`), not
+// from a bare Navigator prop — it has to be merged into screenOptions below,
+// not spread onto <Tab.Navigator> directly.
+type BottomTabsProps = {
+  tabBar?: (props: BottomTabBarProps) => React.ReactElement;
+  tabBarPosition?: 'bottom' | 'left';
+};
+
+export default function BottomTabs({ tabBar, tabBarPosition }: BottomTabsProps = {}) {
   return (
     <Tab.Navigator
+      tabBar={tabBar}
       screenOptions={({ navigation, route }) => ({
         headerShown:             false,
         tabBarActiveTintColor:   colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle:             { borderTopColor: colors.border },
+        ...(tabBarPosition ? { tabBarPosition } : null),
       })}
     >
       <Tab.Screen name="DashboardTab"  component={DashboardScreen}

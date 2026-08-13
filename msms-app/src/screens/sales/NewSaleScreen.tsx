@@ -4,7 +4,7 @@ import {
   TouchableOpacity, Alert, ActivityIndicator,
   KeyboardAvoidingView, Platform,
 } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
+import { openUrl } from '../../utils/openUrl';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Input }           from '../../components/Inputs';
 import { Button }          from '../../components/Buttons';
@@ -246,7 +246,7 @@ export default function NewSaleScreen() {
             text: 'View Invoice',
             onPress: async () => {
               // Opens as in-app browser overlay — app stays in foreground, no reload
-              await WebBrowser.openBrowserAsync(invoiceUrl);
+              await openUrl(invoiceUrl);
               navigation.goBack();
             },
           },
@@ -287,8 +287,38 @@ export default function NewSaleScreen() {
         hint="Point at barcode — tap ⌨️ Type for IMEI"
       />
 
-      <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+      {Platform.OS === 'web' ? (
+        <View style={styles.desktopRow}>
+          <ScrollView style={styles.desktopLeftCol} contentContainerStyle={styles.desktopColContent}>
+            {renderItemColumn()}
+          </ScrollView>
+          <ScrollView style={styles.desktopRightCol} contentContainerStyle={styles.desktopColContent}>
+            {renderCheckoutColumn()}
+          </ScrollView>
+        </View>
+      ) : (
+        <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+          {renderItemColumn()}
+          {renderCheckoutColumn()}
+        </ScrollView>
+      )}
+    </KeyboardAvoidingView>
+  );
 
+  // ── Column contents ──────────────────────────────────────────────────────
+  // Split into two logical groups — "what's being sold" (product/qty/price/
+  // discount/branch/IMEI) and "who's buying + payment" (summary, payment
+  // method, customer info, installment/guarantors, submit) — rendered as two
+  // side-by-side columns on desktop (Platform.OS === 'web') or stacked in a
+  // single scroll view on mobile, exactly as before. No handler, validation,
+  // or state logic differs between platforms; only this arrangement does.
+  // (This isn't a multi-item cart — the underlying API is one product per
+  // sale — so the split follows the screen's actual two concerns instead of
+  // inventing a cart UI the data model doesn't support.)
+
+  function renderItemColumn() {
+    return (
+      <>
         {/* ── Scan banner ── */}
         <TouchableOpacity
           style={styles.scanBanner}
@@ -350,7 +380,13 @@ export default function NewSaleScreen() {
         />
 
         <BranchPicker value={branch} onChange={setBranch} />
+      </>
+    );
+  }
 
+  function renderCheckoutColumn() {
+    return (
+      <>
         {/* Live transaction summary */}
         {product && qty > 0 && price > 0 && (
           <View style={styles.summaryBox}>
@@ -505,9 +541,9 @@ export default function NewSaleScreen() {
           style={{ marginTop: 8 }}
         />
         <View style={{ height: 40 }} />
-      </ScrollView>
-    </KeyboardAvoidingView>
-  );
+      </>
+    );
+  }
 }
 
 function SummaryRow({ label, value, bold }: {
@@ -544,6 +580,20 @@ const styles = StyleSheet.create({
   backBtn:      { color: colors.primary, fontSize: 15, fontWeight: '500', width: 60 },
   title:        { fontSize: 17, fontWeight: '700', color: colors.text },
   form:         { padding: 16 },
+
+  // Desktop split-pane layout only (Platform.OS === 'web') — mobile keeps
+  // the single scrolling form above untouched. Left column: what's being
+  // sold (product/qty/price/branch/IMEI). Right column: who's buying, how
+  // they're paying, and the submit action.
+  desktopRow: { flex: 1, flexDirection: 'row' },
+  desktopLeftCol: {
+    flex: 1,
+    maxWidth: 480,
+    borderRightWidth: 1,
+    borderRightColor: colors.border,
+  },
+  desktopRightCol: { flex: 1.2 },
+  desktopColContent: { padding: 24, paddingBottom: 60 },
   errorText:    { color: colors.danger, fontSize: 12, marginTop: -10, marginBottom: 10 },
   summaryBox: {
     backgroundColor: colors.card,

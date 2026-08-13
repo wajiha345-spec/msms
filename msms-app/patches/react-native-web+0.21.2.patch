@@ -1,0 +1,33 @@
+diff --git a/node_modules/react-native-web/dist/cjs/exports/Alert/index.js b/node_modules/react-native-web/dist/cjs/exports/Alert/index.js
+index e545d53..979769c 100644
+--- a/node_modules/react-native-web/dist/cjs/exports/Alert/index.js
++++ b/node_modules/react-native-web/dist/cjs/exports/Alert/index.js
+@@ -12,7 +12,10 @@ exports.default = void 0;
+  */
+ 
+ class Alert {
+-  static alert() {}
++  static alert(title, message, buttons, options) {
++    if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return;
++    window.dispatchEvent(new CustomEvent('rnw-alert', { detail: { title, message, buttons, options } }));
++  }
+ }
+ var _default = exports.default = Alert;
+ module.exports = exports.default;
+\ No newline at end of file
+diff --git a/node_modules/react-native-web/dist/exports/Alert/index.js b/node_modules/react-native-web/dist/exports/Alert/index.js
+index 705bda5..d5e40a4 100644
+--- a/node_modules/react-native-web/dist/exports/Alert/index.js
++++ b/node_modules/react-native-web/dist/exports/Alert/index.js
+@@ -8,6 +8,9 @@
+  */
+ 
+ class Alert {
+-  static alert() {}
++  static alert(title, message, buttons, options) {
++    if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return;
++    window.dispatchEvent(new CustomEvent('rnw-alert', { detail: { title, message, buttons, options } }));
++  }
+ }
+ export default Alert;
+\ No newline at end of file

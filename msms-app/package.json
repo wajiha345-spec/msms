@@ -6,7 +6,11 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "web:build": "expo export --platform web",
+    "electron:dev": "npm run web:build && electron electron/main.js",
+    "dist:win": "npm run web:build && electron-builder --win",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
@@ -34,9 +38,38 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
+    "electron": "^41.7.1",
+    "electron-builder": "^26.15.3",
+    "patch-package": "^8.0.1",
     "typescript": "~5.9.2"
   },
   "private": true,
+  "build": {
+    "appId": "com.smartshop.desktop",
+    "productName": "SmartShop",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "extraMetadata": {
+      "main": "electron/main.js"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "SmartShop"
+    }
+  },
   "expo": {
     "name": "msms-app",
     "slug": "msms-app",

@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Platform } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import LoginScreen  from '../screens/auth/LoginScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
@@ -10,7 +10,13 @@ import SetupScreen  from '../screens/onboarding/SetupScreen';
 import TrialSignupScreen  from '../screens/onboarding/TrialSignupScreen';
 import TrialExpiredScreen from '../screens/onboarding/TrialExpiredScreen';
 import BottomTabs   from './BottomTabs';
+import DesktopShell from './DesktopShell';
 import { colors }   from '../theme/colors';
+
+// Desktop (Electron/web) gets a sidebar shell instead of bottom tabs; native
+// Android/iOS render BottomTabs exactly as before. Decided once at module
+// load — Platform.OS doesn't change at runtime.
+const MainComponent = Platform.OS === 'web' ? DesktopShell : BottomTabs;
 
 const Stack = createNativeStackNavigator();
 
@@ -38,7 +44,7 @@ export default function RootNavigator() {
             <Stack.Screen name="TrialExpired" component={TrialExpiredScreen} />
           ) : (
             // Authenticated — show main app
-            <Stack.Screen name="Main" component={BottomTabs} />
+            <Stack.Screen name="Main" component={MainComponent} />
           )
         ) : isNewInstall ? (
           // Brand-new install with no account — let them choose Login / Create Account / Free Trial

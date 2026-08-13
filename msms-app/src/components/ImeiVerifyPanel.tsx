@@ -16,7 +16,7 @@ import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ActivityIndicator, TouchableOpacity,
 } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
+import { openUrl } from '../utils/openUrl';
 import { imeiVerifyApi, ImeiVerifyResult, PtaStatusCode } from '../api/imeiVerify';
 import { colors } from '../theme/colors';
 
@@ -172,7 +172,7 @@ export default function ImeiVerifyPanel({
         /* PTA API unavailable — show direct portal button instead */
         <TouchableOpacity
           style={styles.ptaPortalRow}
-          onPress={() => WebBrowser.openBrowserAsync(PTA_PORTAL_URL)}
+          onPress={() => openUrl(PTA_PORTAL_URL)}
           activeOpacity={0.75}
         >
           <View style={styles.ptaPortalLeft}>

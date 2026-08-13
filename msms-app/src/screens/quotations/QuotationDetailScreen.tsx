@@ -4,7 +4,7 @@ import {
   TouchableOpacity, Alert, ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
-import * as WebBrowser from 'expo-web-browser';
+import { openUrl } from '../../utils/openUrl';
 import { Button } from '../../components/Buttons';
 import { Badge } from '../../components/Badge';
 import { PaymentMethodPicker } from '../../components/PaymentMethodPicker';
@@ -44,7 +44,7 @@ export default function QuotationDetailScreen() {
 
   function openView() {
     const url = quotationsApi.getViewUrl(id);
-    WebBrowser.openBrowserAsync(url).catch(() =>
+    openUrl(url).catch(() =>
       Alert.alert('Error', 'Could not open quotation. Make sure you are connected.')
     );
   }

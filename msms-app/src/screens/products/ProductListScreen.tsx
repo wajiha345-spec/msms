@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
+  Platform,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { productsApi, Product } from "../../api/products";
@@ -148,6 +149,66 @@ export default function ProductListScreen() {
     );
   }
 
+  // Desktop-only: a table row instead of the mobile card. Shares every
+  // handler (navigate/edit/delete) with renderItem above — only the layout
+  // differs, since a dense table reads far better than a stack of phone
+  // cards once there's room for real columns.
+  function renderDesktopItem({ item }: { item: Product }) {
+    const stockBadge =
+      item.stock === 0 ? "danger" : item.stock <= 2 ? "warning" : "success";
+    return (
+      <TouchableOpacity
+        style={styles.tableRow}
+        onPress={() => navigation.navigate("ProductDetail", { id: item.id })}
+        activeOpacity={0.6}
+      >
+        <View style={styles.tableColName}>
+          <Text style={styles.productName} numberOfLines={1}>{item.name}</Text>
+          <Text style={styles.brand}>{item.brand}</Text>
+        </View>
+        <View style={styles.tableColSmall}>
+          <Badge
+            label={item.condition === "new" ? "New" : "Used"}
+            type={item.condition === "new" ? "info" : "warning"}
+          />
+        </View>
+        <View style={styles.tableColSmall}>
+          <Badge label={`Stock: ${item.stock}`} type={stockBadge} />
+        </View>
+        <View style={styles.tableColPrice}>
+          <Text style={styles.price}>Rs {item.salePrice.toLocaleString()}</Text>
+          <Text style={styles.cost}>Cost: Rs {item.purchasePrice.toLocaleString()}</Text>
+        </View>
+        <View style={styles.tableColActions}>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => navigation.navigate("AddProduct", { id: item.id })}
+          >
+            <Text style={styles.actionEdit}>✏️ Edit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => confirmDeleteFromList(item)}
+          >
+            <Text style={styles.actionDelete}>🗑 Delete</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    );
+  }
+
+  function DesktopTableHeader() {
+    return (
+      <View style={styles.tableHeaderRow}>
+        <Text style={[styles.tableHeaderText, styles.tableColName]}>Product</Text>
+        <Text style={[styles.tableHeaderText, styles.tableColSmall]}>Condition</Text>
+        <Text style={[styles.tableHeaderText, styles.tableColSmall]}>Stock</Text>
+        <Text style={[styles.tableHeaderText, styles.tableColPrice]}>Price</Text>
+        <Text style={[styles.tableHeaderText, styles.tableColActions]}>Actions</Text>
+      </View>
+    );
+  }
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -211,8 +272,10 @@ export default function ProductListScreen() {
       <FlatList
         data={products}
         keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.list}
+        renderItem={Platform.OS === "web" ? renderDesktopItem : renderItem}
+        contentContainerStyle={Platform.OS === "web" ? styles.tableList : styles.list}
+        ListHeaderComponent={Platform.OS === "web" ? DesktopTableHeader : undefined}
+        stickyHeaderIndices={Platform.OS === "web" ? [0] : undefined}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -320,4 +383,37 @@ const styles = StyleSheet.create({
   actionBtn: { paddingHorizontal: 4 },
   actionEdit: { fontSize: 13, color: colors.primary, fontWeight: "500" },
   actionDelete: { fontSize: 13, color: colors.danger, fontWeight: "500" },
+
+  // Desktop table layout only (Platform.OS === 'web') — mobile keeps the
+  // card list above untouched.
+  tableList: { paddingHorizontal: 16, paddingBottom: 40 },
+  tableHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    backgroundColor: colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  tableHeaderText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.textMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  tableRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: colors.card,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  tableColName: { flex: 3, paddingRight: 12 },
+  tableColSmall: { flex: 1, paddingRight: 12 },
+  tableColPrice: { flex: 1.4, paddingRight: 12 },
+  tableColActions: { flex: 1.6, flexDirection: "row", gap: 16 },
 });
