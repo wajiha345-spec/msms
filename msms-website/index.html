@@ -267,17 +267,33 @@
       gap: 10px;
     }
 
+    .trial-block { margin-bottom: 26px; }
+    .trial-label {
+      display: block;
+      font-size: 13px;
+      color: var(--text-muted, #64748b);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .trial-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
     .trial-link {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      margin-bottom: 26px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(19, 34, 53, 0.15);
       color: var(--brand-strong);
       font-weight: 700;
-      font-size: 15px;
+      font-size: 14px;
       text-decoration: none;
+      transition: border-color .15s, background .15s;
     }
-    .trial-link:hover { text-decoration: underline; }
+    .trial-link:hover { border-color: var(--brand-strong); background: rgba(37, 99, 235, 0.06); }
 
     .hero-chip {
       padding: 10px 14px;
@@ -1236,7 +1252,13 @@
       <button class="btn-primary" onclick="openModal()">Get SmartShop - Rs 45,000</button>
       <button class="btn-secondary" onclick="document.getElementById('plans').scrollIntoView({behavior:'smooth'})">See Full Details</button>
     </div>
-    <a class="trial-link" href="https://api.msms-app.site/api/download-trial">Or try free for 5 days, no card needed →</a>
+    <div class="trial-block">
+      <span class="trial-label">Or try free for 5 days, no card needed:</span>
+      <div class="trial-links">
+        <a class="trial-link" href="https://api.msms-app.site/api/download-trial?platform=android">📱 Android (.apk)</a>
+        <a class="trial-link" href="https://api.msms-app.site/api/download-trial?platform=desktop">🖥️ Windows (.exe)</a>
+      </div>
+    </div>
     <div class="hero-meta">
       <div class="hero-chip">One-time payment</div>
       <div class="hero-chip">Android 8.0+ &amp; Windows Desktop</div>

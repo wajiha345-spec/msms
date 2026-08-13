@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, Alert,
+  TouchableOpacity, Alert, ActivityIndicator,
   KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -12,11 +12,12 @@ import VariantPicker     from '../../components/VariantPicker';
 import { BranchPicker }  from '../../components/BranchPicker';
 import { SupplierPicker } from '../../components/SupplierPicker';
 import { PaymentMethodPicker } from '../../components/PaymentMethodPicker';
+import ScannerOverlay     from '../../components/ScannerOverlay';
 import { Product, productsApi } from '../../api/products';
 import { purchasesApi, SupplierContact }  from '../../api/purchases';
 import { Branch }        from '../../api/branches';
 import { PaymentFields } from '../../api/payment';
-import { formatPhone, formatDateInput, parseDDMMYYYY } from '../../utils/format';
+import { formatPhone, formatDateInput, parseDDMMYYYY, extractImei } from '../../utils/format';
 import { colors }        from '../../theme/colors';
 
 export default function NewPurchaseScreen() {
@@ -30,6 +31,12 @@ export default function NewPurchaseScreen() {
   const [manualName,    setManualName]    = useState('');
   const [manualBrand,   setManualBrand]   = useState('');
   const [manualSalePrice, setManualSalePrice] = useState('');
+  const [imei,          setImei]          = useState('');
+  const [barcode,       setBarcode]       = useState('');
+
+  // ── Scanner ────────────────────────────────────────────────────────────────
+  const [scannerOpen,   setScannerOpen]   = useState(false);
+  const [scanLoading,   setScanLoading]   = useState(false);
 
   // ── Shared fields ──────────────────────────────────────────────────────────
   const [quantity,      setQuantity]      = useState('1');
@@ -56,6 +63,8 @@ export default function NewPurchaseScreen() {
     setProduct(null);
     setManualName(prefill);
     setPurchasePrice('');
+    setImei('');
+    setBarcode('');
   }
 
   function clearManual() {
@@ -64,6 +73,64 @@ export default function NewPurchaseScreen() {
     setManualBrand('');
     setManualSalePrice('');
     setPurchasePrice('');
+    setImei('');
+    setBarcode('');
+  }
+
+  // ── Scanner handler ────────────────────────────────────────────────────────
+  // Mirrors NewSaleScreen's handleScanCode: try the raw decoded text against
+  // inventory first, retry with just the digits if a 15-digit IMEI run was
+  // embedded in decode noise, then either auto-select the matching existing
+  // product or — if this code isn't in inventory yet — drop into manual
+  // entry with whatever was captured prefilled, since a purchase is often
+  // how a brand-new unit's IMEI first enters the system.
+  async function handleScanCode(code: string) {
+    setScannerOpen(false);
+    setScanLoading(true);
+    const imeiMatch = extractImei(code);
+    try {
+      let res;
+      try {
+        res = await productsApi.scan(code);
+      } catch (e: any) {
+        if (e?.response?.status === 404 && imeiMatch && imeiMatch !== code.trim()) {
+          res = await productsApi.scan(imeiMatch);
+        } else {
+          throw e;
+        }
+      }
+      const p = res.data.data;
+      handleProductChange(p);
+      Alert.alert(
+        '✓ Product Found',
+        `${p.name} (${p.brand}) selected for this purchase.` +
+          (imeiMatch ? `\n\nIMEI captured: ${imeiMatch}` : ''),
+        [{ text: 'OK' }]
+      );
+    } catch (e: any) {
+      if (e?.response?.status === 404) {
+        // Not in inventory yet — switch to manual entry and prefill
+        // whatever we captured, so the user only has to fill in the rest.
+        handleManualEntry('');
+        if (imeiMatch) {
+          setImei(imeiMatch);
+          Alert.alert(
+            'New IMEI Scanned',
+            `IMEI captured: ${imeiMatch}\n\nThis isn't in inventory yet — fill in the product details below to add it.`,
+          );
+        } else {
+          setBarcode(code);
+          Alert.alert(
+            'New Barcode Scanned',
+            `Scanned "${code}" — this isn't in inventory yet. Fill in the product details below, or scan the IMEI barcode instead if this is a phone.`,
+          );
+        }
+      } else {
+        Alert.alert('Scan Error', e?.response?.data?.error ?? e?.message ?? 'Lookup failed');
+      }
+    } finally {
+      setScanLoading(false);
+    }
   }
 
   const qty   = Number(quantity)      || 0;
@@ -124,6 +191,8 @@ export default function NewPurchaseScreen() {
           brand:         manualBrand.trim() || 'Unknown',
           category:      'phone',
           condition:     'new',
+          imei:          imei.trim()    || undefined,
+          barcode:       barcode.trim() || undefined,
           purchasePrice: price,
           salePrice:     Number(manualSalePrice),
           stock:         0,
@@ -177,11 +246,50 @@ export default function NewPurchaseScreen() {
         <View style={{ width: 60 }} />
       </View>
 
+      {/* Scanner modal */}
+      <ScannerOverlay
+        visible={scannerOpen}
+        onScanned={handleScanCode}
+        onClose={() => setScannerOpen(false)}
+        title="Scan Barcode to Find Product"
+        hint="Point at barcode — tap ⌨️ Type for IMEI"
+      />
+
       <ScrollView
         contentContainerStyle={styles.form}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
+
+        {/* ── Scan banner ── */}
+        <TouchableOpacity
+          style={styles.scanBanner}
+          onPress={() => setScannerOpen(true)}
+          disabled={scanLoading}
+          activeOpacity={0.8}
+        >
+          {scanLoading ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={styles.scanBannerIcon}>📷</Text>
+          )}
+          <View style={{ flex: 1 }}>
+            <Text style={styles.scanBannerTitle}>
+              {scanLoading ? 'Looking up product…' : 'Scan barcode or type IMEI'}
+            </Text>
+            <Text style={styles.scanBannerSub}>
+              {scanLoading ? 'Please wait…' : 'Camera reads barcodes — use ⌨️ Type for IMEI'}
+            </Text>
+          </View>
+          {!scanLoading && <Text style={styles.scanBannerArrow}>›</Text>}
+        </TouchableOpacity>
+
+        {/* ── OR divider ── */}
+        <View style={styles.orRow}>
+          <View style={styles.orLine} />
+          <Text style={styles.orText}>or pick manually</Text>
+          <View style={styles.orLine} />
+        </View>
 
         {/* ── Product selection ── */}
         {!manualMode ? (
@@ -224,6 +332,24 @@ export default function NewPurchaseScreen() {
               onChangeText={setManualSalePrice}
               keyboardType="numeric"
               error={errors.manualSalePrice}
+            />
+            <Input
+              label="IMEI (optional)"
+              placeholder="15-digit number on the phone itself"
+              value={imei}
+              onChangeText={setImei}
+              keyboardType="numeric"
+              maxLength={15}
+              autoComplete="off"
+              importantForAutofill="no"
+              textContentType="none"
+            />
+            <Input
+              label="Box Barcode (optional)"
+              placeholder="EAN-13 on the product box"
+              value={barcode}
+              onChangeText={setBarcode}
+              autoCapitalize="none"
             />
             <Text style={styles.manualNote}>
               This product will be added to your inventory automatically.
@@ -407,4 +533,27 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase', letterSpacing: 0.5,
     marginBottom: 10, marginTop: 4,
   },
+
+  scanBanner: {
+    flexDirection:   'row',
+    alignItems:      'center',
+    gap:             12,
+    backgroundColor: colors.primary,
+    borderRadius:    14,
+    padding:         16,
+    marginBottom:    12,
+  },
+  scanBannerIcon:  { fontSize: 28 },
+  scanBannerTitle: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  scanBannerSub:   { color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 2 },
+  scanBannerArrow: { color: '#fff', fontSize: 22, fontWeight: '300' },
+
+  orRow: {
+    flexDirection:  'row',
+    alignItems:     'center',
+    marginBottom:   12,
+    gap:            8,
+  },
+  orLine: { flex: 1, height: 1, backgroundColor: colors.border },
+  orText: { fontSize: 12, color: colors.textMuted, fontWeight: '500' },
 });

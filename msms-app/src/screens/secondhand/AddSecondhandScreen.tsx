@@ -24,7 +24,7 @@ import { PaymentMethodPicker } from '../../components/PaymentMethodPicker';
 import { ImeiVerifyResult } from '../../api/imeiVerify';
 import { secondhandApi } from '../../api/secondhand';
 import { PaymentFields } from '../../api/payment';
-import { formatCnic, formatPhone } from '../../utils/format';
+import { formatCnic, formatPhone, extractImei } from '../../utils/format';
 import { colors } from '../../theme/colors';
 
 export default function AddSecondhandScreen() {
@@ -445,9 +445,13 @@ export default function AddSecondhandScreen() {
         visible={imeiScannerOpen}
         onScanned={(code) => {
           setImeiScannerOpen(false);
-          const isImei = /^\d{15}$/.test(code);
-          if (isImei) {
-            setImei(code);
+          // See extractImei — matches a 15-digit run anywhere in the
+          // decoded text rather than requiring an exact whole-string
+          // match, since some IMEI barcodes decode with a stray
+          // leading/trailing character.
+          const imeiMatch = extractImei(code);
+          if (imeiMatch) {
+            setImei(imeiMatch);
           } else {
             Alert.alert(
               'Not an IMEI',

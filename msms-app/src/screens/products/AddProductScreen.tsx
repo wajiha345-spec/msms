@@ -16,6 +16,7 @@ import ImeiVerifyPanel from '../../components/ImeiVerifyPanel';
 import { ImeiVerifyResult } from '../../api/imeiVerify';
 import { colors }         from '../../theme/colors';
 import { useAuth }        from '../../context/AuthContext';
+import { extractImei }    from '../../utils/format';
 
 export default function AddProductScreen() {
   const navigation = useNavigation<any>();
@@ -77,7 +78,7 @@ export default function AddProductScreen() {
   async function handleCatalogLink(code: string) {
     setScannerOpen(false);
     setLinkCatalogMode(false);
-    const isImei = /^\d{15}$/.test(code);
+    const isImei = extractImei(code) !== null;
     if (isImei) {
       Alert.alert(
         'That looks like an IMEI',
@@ -114,15 +115,31 @@ export default function AddProductScreen() {
     setScanLoading(true);
     setScanResult(null);
 
-    // IMEI detection rule: exactly 15 digits = GSMA IMEI standard.
-    // Barcodes on product boxes are EAN-13 (13 digits), UPC-A (12 digits),
-    // Code-128 (alphanumeric), etc. Only barcodes can be looked up in an
-    // external product database — IMEIs identify individual devices, not models.
-    const isImei = /^\d{15}$/.test(code);
+    // IMEI detection rule: a 15-digit run (GSMA IMEI standard) found
+    // anywhere in the decoded text — not required to be the *entire*
+    // string, since some IMEI barcodes decode with a stray leading/
+    // trailing character. Barcodes on product boxes are EAN-13 (13
+    // digits), UPC-A (12 digits), Code-128 (alphanumeric), etc. — those
+    // can be looked up in an external product database; IMEIs identify
+    // individual devices, not models.
+    const imeiMatch = extractImei(code);
+    const isImei = imeiMatch !== null;
 
     try {
       // ── Step 1: check our own inventory first ──────────────────────────────
-      const res = await productsApi.scan(code);
+      // Try the raw decoded text first; if that misses and we found an
+      // embedded 15-digit run, retry with just the clean digits — covers
+      // decode noise around an otherwise-correct IMEI.
+      let res;
+      try {
+        res = await productsApi.scan(code);
+      } catch (e: any) {
+        if (e?.response?.status === 404 && imeiMatch && imeiMatch !== code.trim()) {
+          res = await productsApi.scan(imeiMatch);
+        } else {
+          throw e;
+        }
+      }
       const p = res.data.data;
 
       // Product already exists in inventory → warn about duplicate
@@ -142,9 +159,9 @@ export default function AddProductScreen() {
     } catch (e: any) {
       if (e?.response?.status === 404) {
         // ── Step 2: not in our inventory — try external barcode database ──────
-        if (isImei) {
+        if (isImei && imeiMatch) {
           // IMEI scanned → fill field, ImeiVerifyPanel auto-fires to get brand+model
-          setImei(code);
+          setImei(imeiMatch);
           setScanResult('new');
         } else {
           // Product barcode scanned (EAN-13 / Code-128 non-IMEI)

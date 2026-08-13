@@ -20,7 +20,7 @@ import { Branch }          from '../../api/branches';
 import { Customer }        from '../../api/crm';
 import { invoicesApi }     from '../../api/invoices';
 import { PaymentFields }   from '../../api/payment';
-import { formatCnic, formatPhone, parseDDMMYYYY, formatDDMMYYYY } from '../../utils/format';
+import { formatCnic, formatPhone, parseDDMMYYYY, formatDDMMYYYY, extractImei } from '../../utils/format';
 import { colors }          from '../../theme/colors';
 
 const EMPTY_GUARANTOR: Guarantor = { name: '', cnic: '', phone: '' };
@@ -118,7 +118,26 @@ export default function NewSaleScreen() {
     setScannerOpen(false);
     setScanLoading(true);
     try {
-      const res = await productsApi.scan(code);
+      // IMEI detection rule: a 15-digit run (GSMA IMEI standard) found
+      // anywhere in the decoded text — not required to be the *entire*
+      // string, since some IMEI barcodes decode with a stray leading/
+      // trailing character. Anything with no 15-digit run at all is a
+      // plain product/box barcode (EAN-13, Code-128, etc.).
+      const imeiMatch = extractImei(code);
+
+      // Look up by the raw decoded text first; if that misses and we found
+      // an embedded 15-digit run, retry with just the clean digits — covers
+      // decode noise around an otherwise-correct IMEI.
+      let res;
+      try {
+        res = await productsApi.scan(code);
+      } catch (e: any) {
+        if (e?.response?.status === 404 && imeiMatch && imeiMatch !== code.trim()) {
+          res = await productsApi.scan(imeiMatch);
+        } else {
+          throw e;
+        }
+      }
       const p = res.data.data;
 
       if (p.stock <= 0) {
@@ -132,23 +151,23 @@ export default function NewSaleScreen() {
 
       // Auto-select product
       setProduct(p);
-      // IMEI detection rule: exactly 15 digits = GSMA IMEI standard.
-      // Anything else (EAN-13 = 13 digits, Code-128 = alphanumeric, etc.) is a barcode.
-      // The barcode identifies the *model* in inventory; the IMEI identifies *this unit*.
-      if (/^\d{15}$/.test(code)) {
-        setImei(code);
+      if (imeiMatch) {
+        setImei(imeiMatch);
         imeiLinkedToProductId.current = p.id;  // link so we can clear on product change
       }
       Alert.alert(
         '✓ Product Found',
-        `${p.name} (${p.brand})\nStock: ${p.stock} units\nSale Price: Rs ${p.salePrice.toLocaleString()}`,
+        `${p.name} (${p.brand})\nStock: ${p.stock} units\nSale Price: Rs ${p.salePrice.toLocaleString()}` +
+          (imeiMatch
+            ? `\n\nIMEI captured: ${imeiMatch}`
+            : `\n\nScanned "${code}" — this looks like a product barcode, not an IMEI. Scan the IMEI barcode too, or type it below, to link this specific unit.`),
         [{ text: 'OK' }]
       );
     } catch (e: any) {
       if (e?.response?.status === 404) {
         Alert.alert(
           '❌ Product Not Found',
-          'No product with this IMEI/barcode exists in inventory.\n\nAdd it first via the Products tab.',
+          `Scanned "${code}" — no product with this IMEI/barcode exists in inventory.\n\nAdd it first via the Products tab.`,
           [{ text: 'OK' }]
         );
       } else {

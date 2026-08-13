@@ -9,6 +9,17 @@ export function formatPhone(text: string): string {
   return text.replace(/\D/g, '').slice(0, 11);
 }
 
+// Extracts a 15-digit run (GSMA IMEI length) from a scanned barcode string,
+// rather than requiring the whole decoded string to be exactly 15 digits.
+// Some IMEI barcodes decode with a stray prefix/suffix character (a label
+// like "IMEI:", a trailing checksum digit the encoder embeds) that would
+// otherwise make an exact-match check silently misclassify it as a plain
+// product barcode. Returns null if no 15-digit run is present at all.
+export function extractImei(code: string): string | null {
+  const match = code.trim().match(/\d{15}/);
+  return match ? match[0] : null;
+}
+
 export function formatDateInput(text: string): string {
   const digits = text.replace(/\D/g, '').slice(0, 8);
   if (digits.length <= 2) return digits;

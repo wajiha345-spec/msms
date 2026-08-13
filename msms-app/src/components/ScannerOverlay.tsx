@@ -7,7 +7,10 @@
  *                  Users must type IMEIs via the "⌨️ Type" manual-entry mode.
  *
  * Works in two modes:
- *  1. Camera scan  — CameraView.onBarcodeScanned (barcodes + QR only)
+ *  1. Camera scan  — barcodes + QR only. Native uses expo-camera; desktop
+ *     uses WebBarcodeScanner (@zxing/browser) since expo-camera's own web
+ *     implementation only decodes QR, and this Electron build's Chromium
+ *     doesn't expose the native BarcodeDetector API either (checked).
  *  2. Manual entry — TextInput (IMEI, barcode, or USB/Bluetooth HID scanner)
  *
  * Props:
@@ -24,15 +27,9 @@ import {
   StyleSheet, Modal, Vibration, Linking, Platform,
 } from 'react-native';
 import { CameraView, useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
+import WebBarcodeScanner from './WebBarcodeScanner';
 import { colors } from '../theme/colors';
 
-// expo-camera's web implementation only decodes QR codes, not the
-// EAN/UPC/Code128/etc. barcode formats real products use (barcodeTypes
-// below) — a visible-but-broken camera option would be worse than none on
-// desktop. Manual entry is also the objectively correct desktop pattern:
-// USB/Bluetooth HID barcode scanners emulate a keyboard and type into
-// whatever TextInput has focus, which the manual mode below already
-// handles. Native Android/iOS camera scanning is completely unaffected.
 const IS_DESKTOP = Platform.OS === 'web';
 
 interface Props {
@@ -49,20 +46,21 @@ export default function ScannerOverlay({
   hint  = 'Point camera at barcode or QR code',
 }: Props) {
   const [permission, requestPermission] = useCameraPermissions();
-  const [manualMode, setManualMode]     = useState(IS_DESKTOP);
+  const [manualMode, setManualMode]     = useState(false);
   const [manualCode, setManualCode]     = useState('');
   const [scanning,   setScanning]       = useState(true);  // debounce flag
   const [feedback,   setFeedback]       = useState<string | null>(null);
   const manualRef = useRef<TextInput>(null);
 
-  // Request permission when overlay becomes visible — skipped entirely on
-  // desktop, which never mounts the camera view at all (see IS_DESKTOP).
+  // Request permission when overlay becomes visible — expo-camera's
+  // permission API is native-only; desktop's WebBarcodeScanner handles its
+  // own getUserMedia permission prompt internally.
   useEffect(() => {
     if (visible && !IS_DESKTOP && !permission?.granted && permission?.canAskAgain !== false) {
       requestPermission();
     }
     if (visible) {
-      setManualMode(IS_DESKTOP);
+      setManualMode(false);
       setManualCode('');
       setFeedback(null);
       setScanning(true);
@@ -120,25 +118,44 @@ export default function ScannerOverlay({
             <Text style={styles.closeTxt}>✕ Cancel</Text>
           </TouchableOpacity>
           <Text style={styles.title}>{title}</Text>
-          {IS_DESKTOP ? (
-            <View style={styles.modeBtn} />
-          ) : (
-            <TouchableOpacity
-              onPress={() => setManualMode(m => !m)}
-              style={styles.modeBtn}
-            >
-              <Text style={styles.modeTxt}>
-                {manualMode ? '📷 Camera' : '⌨️ Type'}
-              </Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            onPress={() => setManualMode(m => !m)}
+            style={styles.modeBtn}
+          >
+            <Text style={styles.modeTxt}>
+              {manualMode ? '📷 Camera' : '⌨️ Type'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* ── Camera or manual ── */}
-        {/* Desktop never takes this branch — manualMode is always true and
-            locked there (IS_DESKTOP), so CameraView/permission UI below
-            structurally never mounts on web, not just visually hidden. */}
-        {!IS_DESKTOP && !manualMode ? (
+        {!manualMode && IS_DESKTOP ? (
+          <View style={styles.cameraBox}>
+            <WebBarcodeScanner onScanned={handleScanned} scanning={scanning} />
+
+            {/* Scan frame overlay */}
+            <View style={styles.scanFrame}>
+              <View style={styles.frameTL} />
+              <View style={styles.frameTR} />
+              <View style={styles.frameBL} />
+              <View style={styles.frameBR} />
+            </View>
+
+            <Text style={styles.hint}>{hint}</Text>
+
+            <View style={styles.noteBox}>
+              <Text style={styles.noteText}>
+                📷 Camera reads barcodes only — tap <Text style={styles.noteHighlight}>⌨️ Type</Text> above to enter IMEI
+              </Text>
+            </View>
+
+            {feedback && (
+              <View style={styles.feedbackBox}>
+                <Text style={styles.feedbackTxt}>{feedback}</Text>
+              </View>
+            )}
+          </View>
+        ) : !manualMode ? (
           <View style={styles.cameraBox}>
             {!permission?.granted ? (
               /* ── Permission denied / not yet granted ── */
