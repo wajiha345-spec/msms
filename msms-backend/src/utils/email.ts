@@ -110,8 +110,20 @@ export async function sendLicenseEmail(customer: {
   email: string;
   plan: string;
   licenseKey: string;
+  platform?: string | null; // "android" | "desktop" | null (older orders placed before platform was captured)
 }) {
-  const downloadUrl = `${process.env.BACKEND_URL}/api/download/${customer.licenseKey}`;
+  // Known platform → link straight to that build, skipping the chooser page.
+  // Unknown (legacy orders with no platform on file) → base link, which
+  // licenses.controller.ts:downloadApp renders as a "pick your platform" page.
+  const platformSuffix = customer.platform === 'android' || customer.platform === 'desktop'
+    ? `?platform=${customer.platform}`
+    : '';
+  const downloadUrl = `${process.env.BACKEND_URL}/api/download/${customer.licenseKey}${platformSuffix}`;
+  const installStep = customer.platform === 'desktop'
+    ? 'Run the installer on your Windows PC'
+    : customer.platform === 'android'
+      ? 'Install the APK on your Android phone'
+      : 'Install it on your Android phone or Windows PC';
 
   await getResend().emails.send({
     from: FROM_SUPPORT,
@@ -130,7 +142,7 @@ export async function sendLicenseEmail(customer: {
         <h3>How to get started:</h3>
         <ol style="line-height:2">
           <li>Click the download button below to download the app</li>
-          <li>Install the APK on your Android phone</li>
+          <li>${installStep}</li>
           <li>Open the app and enter your license key</li>
           <li>Set your shop name, username, and password</li>
           <li>You're ready to go!</li>

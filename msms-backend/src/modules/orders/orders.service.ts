@@ -17,6 +17,7 @@ export async function createOrder(data: {
   transactionId: string;
   screenshotUrl: string;
   notes?: string;
+  platform: 'android' | 'desktop';
 }) {
   const order = await prisma.order.create({
     data: {
@@ -24,6 +25,7 @@ export async function createOrder(data: {
       customerEmail: data.customerEmail.trim().toLowerCase(),
       customerPhone: data.customerPhone.trim(),
       plan:          'PRO', // internal label meaning "fully paid" — keeps every existing requirePlan('PRO') gate working unchanged
+      platform:      data.platform,
       amount:        SMARTSHOP_PRICE,
       transactionId: data.transactionId.trim(),
       screenshotUrl: data.screenshotUrl,

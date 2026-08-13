@@ -73,7 +73,7 @@ export async function approveOrder(req: AdminRequest, res: Response) {
 
     let emailSent = false;
     try {
-      await sendLicenseEmail({ name: order.customerName, email: order.customerEmail, plan: order.plan, licenseKey: key });
+      await sendLicenseEmail({ name: order.customerName, email: order.customerEmail, plan: order.plan, licenseKey: key, platform: order.platform });
       emailSent = true;
     } catch (emailErr: any) {
       console.error('[Admin] License email failed for order', orderId, emailErr?.message);
@@ -129,7 +129,7 @@ export async function resendLicense(req: AdminRequest, res: Response) {
     const licenseKey = (order as any).licenseKey;
     if (!licenseKey) return fail(res, 'This order does not have a license key. This should not happen — please contact technical support.');
 
-    await sendLicenseEmail({ name: order.customerName, email: order.customerEmail, plan: order.plan, licenseKey: licenseKey.key });
+    await sendLicenseEmail({ name: order.customerName, email: order.customerEmail, plan: order.plan, licenseKey: licenseKey.key, platform: order.platform });
     return ok(res, { message: `License email resent to ${order.customerEmail}.` });
   } catch (e: any) {
     return fail(res, e.message);

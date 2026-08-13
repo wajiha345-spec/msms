@@ -232,6 +232,7 @@ model Order {
   customerEmail   String
   customerPhone   String
   plan            String      // "SIMPLE" | "PRO"
+  platform        String?     // "android" | "desktop" — which build the customer wants; null on orders placed before this field existed, which fall back to the platform-chooser download page
   amount          Int
   status          String      @default("PENDING") // "PENDING" | "PAID" | "CANCELLED" | "REJECTED"
   transactionId   String?

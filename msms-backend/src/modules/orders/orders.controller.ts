@@ -5,10 +5,13 @@ import { uploadToCloudinary } from '../../middleware/upload';
 
 export async function placeOrder(req: Request, res: Response) {
   try {
-    const { customerName, customerEmail, customerPhone, transactionId, notes } = req.body;
+    const { customerName, customerEmail, customerPhone, transactionId, notes, platform } = req.body;
 
     if (!customerName || !customerEmail || !customerPhone || !transactionId) {
       return fail(res, 'customerName, customerEmail, customerPhone, and transactionId are required');
+    }
+    if (platform !== 'android' && platform !== 'desktop') {
+      return fail(res, 'platform is required and must be "android" or "desktop"');
     }
 
     const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -32,7 +35,7 @@ export async function placeOrder(req: Request, res: Response) {
       return fail(res, 'Failed to upload screenshot. Please try again.');
     }
 
-    const order = await createOrder({ customerName, customerEmail, customerPhone, transactionId, screenshotUrl, notes });
+    const order = await createOrder({ customerName, customerEmail, customerPhone, transactionId, screenshotUrl, notes, platform });
     return ok(res, {
       orderId:  order.id,
       plan:     order.plan,
