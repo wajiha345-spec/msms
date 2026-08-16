@@ -91,7 +91,7 @@ export default function CashFlowScreen() {
             {report.categories.map((c) => (
               <MetricTile
                 key={c.category}
-                icon={c.net >= 0 ? '📥' : '📤'}
+                icon={c.net >= 0 ? 'arrow-down-circle-outline' : 'arrow-up-circle-outline'}
                 label={c.category}
                 value={`${c.net >= 0 ? '+' : ''}Rs ${c.net.toLocaleString()}`}
                 sub={`In Rs ${c.inflow.toLocaleString()} · Out Rs ${c.outflow.toLocaleString()}`}

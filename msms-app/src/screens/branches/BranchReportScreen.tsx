@@ -50,21 +50,21 @@ export default function BranchReportScreen() {
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.sectionLabel}>Sales</Text>
         <View style={styles.grid}>
-          <MetricTile icon="🧾" label="Sales" value={String(report.salesCount)} />
-          <MetricTile icon="💰" label="Revenue" value={`Rs ${report.totalRevenue.toLocaleString()}`} accent={colors.success} />
-          <MetricTile icon="📈" label="Profit" value={`Rs ${report.totalProfit.toLocaleString()}`} accent={colors.success} />
+          <MetricTile icon="receipt-outline" label="Sales" value={String(report.salesCount)} />
+          <MetricTile icon="cash-outline" label="Revenue" value={`Rs ${report.totalRevenue.toLocaleString()}`} accent={colors.success} />
+          <MetricTile icon="trending-up-outline" label="Profit" value={`Rs ${report.totalProfit.toLocaleString()}`} accent={colors.success} />
         </View>
 
         <Text style={styles.sectionLabel}>Purchases</Text>
         <View style={styles.grid}>
-          <MetricTile icon="📦" label="Purchases" value={String(report.purchasesCount)} />
-          <MetricTile icon="💸" label="Total Cost" value={`Rs ${report.totalPurchaseCost.toLocaleString()}`} accent={colors.danger} />
+          <MetricTile icon="cube-outline" label="Purchases" value={String(report.purchasesCount)} />
+          <MetricTile icon="arrow-down-circle-outline" label="Total Cost" value={`Rs ${report.totalPurchaseCost.toLocaleString()}`} accent={colors.danger} />
         </View>
 
         <Text style={styles.sectionLabel}>Inventory</Text>
         <View style={styles.grid}>
-          <MetricTile icon="🗂️" label="Products" value={String(report.productCount)} />
-          <MetricTile icon="📊" label="Total Stock" value={String(report.totalStock)} />
+          <MetricTile icon="layers-outline" label="Products" value={String(report.productCount)} />
+          <MetricTile icon="bar-chart-outline" label="Total Stock" value={String(report.totalStock)} />
         </View>
 
         <View style={{ height: 40 }} />

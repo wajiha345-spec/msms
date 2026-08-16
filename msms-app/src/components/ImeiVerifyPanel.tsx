@@ -34,19 +34,19 @@ type PanelState = 'idle' | 'loading' | 'done' | 'error';
 
 // ── PTA badge colours ────────────────────────────────────────────────────────
 const PTA_COLORS: Record<PtaStatusCode, { bg: string; text: string; border: string }> = {
-  compliant:       { bg: '#f0fdf4', text: '#166534', border: '#bbf7d0' },
-  provisional:     { bg: '#fffbeb', text: '#92400e', border: '#fde68a' },
-  non_compliant:   { bg: '#fff7ed', text: '#9a3412', border: '#fed7aa' },
-  not_registered:  { bg: '#fff7ed', text: '#9a3412', border: '#fed7aa' },
-  stolen:          { bg: '#fef2f2', text: '#991b1b', border: '#fecaca' },
-  blocked:         { bg: '#fef2f2', text: '#991b1b', border: '#fecaca' },
+  compliant:       { bg: '#EDE6FB', text: '#34208C', border: '#C9BEF2' },
+  provisional:     { bg: '#EDE6FB', text: '#34208C', border: '#C9BEF2' },
+  non_compliant:   { bg: '#EDE6FB', text: '#34208C', border: '#C9BEF2' },
+  not_registered:  { bg: '#EDE6FB', text: '#34208C', border: '#C9BEF2' },
+  stolen:          { bg: '#EDE6FB', text: '#34208C', border: '#C9BEF2' },
+  blocked:         { bg: '#EDE6FB', text: '#34208C', border: '#C9BEF2' },
   unknown:         { bg: '#f8fafc', text: '#64748b', border: '#e2e8f0' },
 };
 
 const RECOMMENDATION_META = {
-  accept:  { icon: '✅', text: 'Safe to accept',       bg: '#f0fdf4', border: '#bbf7d0', textColor: '#166534' },
-  caution: { icon: '⚠️', text: 'Proceed with caution', bg: '#fffbeb', border: '#fde68a', textColor: '#92400e' },
-  reject:  { icon: '🚫', text: 'DO NOT accept',         bg: '#fef2f2', border: '#fecaca', textColor: '#991b1b' },
+  accept:  { icon: '✅', text: 'Safe to accept',       bg: '#EDE6FB', border: '#C9BEF2', textColor: '#34208C' },
+  caution: { icon: '⚠️', text: 'Proceed with caution', bg: '#EDE6FB', border: '#C9BEF2', textColor: '#34208C' },
+  reject:  { icon: '🚫', text: 'DO NOT accept',         bg: '#EDE6FB', border: '#C9BEF2', textColor: '#34208C' },
 };
 
 export default function ImeiVerifyPanel({
@@ -237,11 +237,11 @@ const styles = StyleSheet.create({
   loadingText: { fontSize: 13, color: colors.textMuted },
 
   errorBox: {
-    backgroundColor: '#fff7ed', borderRadius: 10, padding: 12,
-    marginVertical: 8, borderWidth: 1, borderColor: '#fed7aa',
+    backgroundColor: '#EDE6FB', borderRadius: 10, padding: 12,
+    marginVertical: 8, borderWidth: 1, borderColor: '#C9BEF2',
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
-  errorText:  { fontSize: 12, color: '#9a3412', flex: 1 },
+  errorText:  { fontSize: 12, color: '#34208C', flex: 1 },
   retryLink:  { fontSize: 12, color: colors.primary, fontWeight: '700', marginLeft: 8 },
 
   panel: {
@@ -261,14 +261,14 @@ const styles = StyleSheet.create({
   deviceUnknown: { fontSize: 14, fontWeight: '600', color: colors.textMuted },
   deviceSub:     { fontSize: 11, color: colors.textMuted, marginTop: 2 },
   confidenceBadge: {
-    backgroundColor: '#dbeafe', borderRadius: 6,
+    backgroundColor: '#EDE6FB', borderRadius: 6,
     paddingHorizontal: 8, paddingVertical: 3,
   },
   confidenceBadgeLow: {
-    backgroundColor: '#fef9c3',
+    backgroundColor: '#EDE6FB',
   },
-  confidenceText: { fontSize: 10, fontWeight: '700', color: '#1d4ed8' },
-  confidenceTextLow: { color: '#854d0e' },
+  confidenceText: { fontSize: 10, fontWeight: '700', color: '#34208C' },
+  confidenceTextLow: { color: '#34208C' },
 
   // PTA — checked status row
   ptaRow: {
@@ -289,17 +289,17 @@ const styles = StyleSheet.create({
   ptaPortalLabel:   { fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, color: '#475569' },
   ptaPortalHint:    { fontSize: 12, color: '#64748b', marginTop: 2 },
   ptaPortalBtn: {
-    backgroundColor: '#1e40af', borderRadius: 8,
+    backgroundColor: '#34208C', borderRadius: 8,
     paddingHorizontal: 12, paddingVertical: 7, marginLeft: 10,
   },
   ptaPortalBtnText: { fontSize: 12, fontWeight: '700', color: '#fff' },
 
   // Warnings
   warnRow: {
-    backgroundColor: '#fffbeb', padding: 10,
-    borderTopWidth: 1, borderTopColor: '#fde68a',
+    backgroundColor: '#EDE6FB', padding: 10,
+    borderTopWidth: 1, borderTopColor: '#C9BEF2',
   },
-  warnText: { fontSize: 12, color: '#92400e' },
+  warnText: { fontSize: 12, color: '#34208C' },
 
   // Recommendation
   recBox: {
@@ -309,19 +309,19 @@ const styles = StyleSheet.create({
 
   // Override
   overrideBox: {
-    backgroundColor: '#fef2f2', padding: 14,
-    borderTopWidth: 1, borderTopColor: '#fecaca',
+    backgroundColor: '#EDE6FB', padding: 14,
+    borderTopWidth: 1, borderTopColor: '#C9BEF2',
     gap: 12,
   },
-  overrideWarning: { fontSize: 13, color: '#991b1b', lineHeight: 19 },
+  overrideWarning: { fontSize: 13, color: '#34208C', lineHeight: 19 },
   overrideCheckRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   checkbox: {
     width: 24, height: 24, borderRadius: 6,
-    borderWidth: 2, borderColor: '#991b1b',
+    borderWidth: 2, borderColor: '#34208C',
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: '#fff',
   },
-  checkboxChecked: { backgroundColor: '#991b1b' },
+  checkboxChecked: { backgroundColor: '#34208C' },
   checkmark:       { color: '#fff', fontSize: 14, fontWeight: '700' },
-  overrideCheckLabel: { flex: 1, fontSize: 13, color: '#991b1b', lineHeight: 19 },
+  overrideCheckLabel: { flex: 1, fontSize: 13, color: '#34208C', lineHeight: 19 },
 });

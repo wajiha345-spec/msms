@@ -5,6 +5,7 @@ import {
   ActivityIndicator, Alert
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { dashboardApi, DashboardData } from '../../api/dashboard';
 import { salesApi }  from '../../api/sales';
 import { MetricTile } from '../../components/MetricTile';
@@ -91,12 +92,12 @@ const simpleStyles = StyleSheet.create({
   salesArrow: { fontSize: 22, color: colors.textMuted },
   upgradeBanner: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 12,
-    backgroundColor: '#fffbeb', borderRadius: 14, padding: 16,
-    borderWidth: 1, borderColor: '#fde68a',
+    backgroundColor: '#EDE6FB', borderRadius: 14, padding: 16,
+    borderWidth: 1, borderColor: '#C9BEF2',
   },
   upgradeIcon:  { fontSize: 24 },
-  upgradeTitle: { fontSize: 14, fontWeight: '700', color: '#92400e', marginBottom: 4 },
-  upgradeSub:   { fontSize: 13, color: '#b45309', lineHeight: 19 },
+  upgradeTitle: { fontSize: 14, fontWeight: '700', color: '#34208C', marginBottom: 4 },
+  upgradeSub:   { fontSize: 13, color: '#34208C', lineHeight: 19 },
 });
 
 // ── Router: decides which screen to show ────────────────────────────────────
@@ -280,28 +281,28 @@ function ProDashboard() {
       <SectionLabel title="Today's Performance" />
       <View style={styles.tilesGrid}>
         <MetricTile
-          icon="💰"
+          icon="cash-outline"
           label="Sales"
           value={String(today?.salesCount ?? 0)}
           sub={`Rs ${(today?.revenue ?? 0).toLocaleString()} revenue`}
           accent={colors.primary}
         />
         <MetricTile
-          icon="📈"
+          icon="trending-up-outline"
           label="Profit"
           value={`Rs ${(today?.profit ?? 0).toLocaleString()}`}
           sub="After cost of goods"
           accent={colors.success}
         />
         <MetricTile
-          icon="🛒"
+          icon="cart-outline"
           label="Purchases"
           value={String(today?.purchasesCount ?? 0)}
           sub={`Rs ${(today?.cost ?? 0).toLocaleString()} spent`}
           accent={colors.warning}
         />
         <MetricTile
-          icon="💵"
+          icon="wallet-outline"
           label="Net Today"
           value={`Rs ${((today?.profit ?? 0) - (today?.cost ?? 0)).toLocaleString()}`}
           sub="Profit minus purchases"
@@ -316,19 +317,19 @@ function ProDashboard() {
       <SectionLabel title="Inventory" />
       <View style={styles.tilesGrid}>
         <MetricTile
-          icon="📦"
+          icon="cube-outline"
           label="Total Products"
           value={String(stock?.totalProducts ?? 0)}
-          accent={colors.info ?? '#3B82F6'}
+          accent={colors.info ?? '#4B2FC4'}
         />
         <MetricTile
-          icon="🆕"
+          icon="add-circle-outline"
           label="New In Stock"
           value={String(stock?.newStock ?? 0)}
           accent={colors.primary}
         />
         <MetricTile
-          icon="♻️"
+          icon="sync-outline"
           label="Secondhand"
           value={String(stock?.secondhandStock ?? 0)}
           sub="Available units"
@@ -389,27 +390,27 @@ function ProDashboard() {
       <SectionLabel title="Quick Actions" />
       <View style={styles.quickActions}>
         <QuickBtn
-          icon="💰"
+          icon="cash-outline"
           label="New Sale"
           color={colors.primary}
           onPress={() => navigation.navigate('SalesTab', { screen: 'NewSale' })}
         />
         <QuickBtn
-          icon="🛒"
+          icon="cart-outline"
           label="New Purchase"
           color={colors.warning}
           onPress={() => navigation.navigate('PurchasesTab', { screen: 'NewPurchase' })}
         />
         <QuickBtn
-          icon="📱"
+          icon="phone-portrait-outline"
           label="Add 2nd Hand"
-          color="#8B5CF6"
+          color="#4B2FC4"
           onPress={() => navigation.navigate('MoreTab', { screen: 'SecondhandList' })}
         />
         <QuickBtn
-          icon="🔍"
+          icon="search-outline"
           label="IMEI Search"
-          color="#06B6D4"
+          color="#4B2FC4"
           onPress={() => navigation.navigate('MoreTab', { screen: 'ImeiSearch' })}
         />
       </View>
@@ -437,7 +438,7 @@ function TrialBanner({ trialEndsAt }: { trialEndsAt: string }) {
 
   return (
     <View style={trialStyles.banner}>
-      <Text style={trialStyles.icon}>⏳</Text>
+      <Ionicons name="hourglass-outline" size={20} color={colors.primary} />
       <View style={{ flex: 1 }}>
         <Text style={trialStyles.title}>
           Free Trial — {timeLeftLabel}
@@ -455,15 +456,14 @@ const trialStyles = StyleSheet.create({
     flexDirection:     'row',
     alignItems:         'flex-start',
     gap:                10,
-    backgroundColor:    '#eff6ff',
+    backgroundColor:    '#EDE6FB',
     marginHorizontal:   16,
     marginTop:          12,
     borderRadius:       12,
     padding:            12,
     borderWidth:        1,
-    borderColor:        '#bfdbfe',
+    borderColor:        '#C9BEF2',
   },
-  icon:  { fontSize: 20 },
   title: { fontSize: 13, fontWeight: '700', color: colors.primary },
   sub:   { fontSize: 12, color: colors.primary, opacity: 0.8, marginTop: 2, lineHeight: 16 },
 });
@@ -489,7 +489,7 @@ const secStyles = StyleSheet.create({
 function QuickBtn({
   icon, label, color, onPress,
 }: {
-  icon: string; label: string; color: string; onPress: () => void;
+  icon: keyof typeof Ionicons.glyphMap; label: string; color: string; onPress: () => void;
 }) {
   return (
     <TouchableOpacity
@@ -497,7 +497,7 @@ function QuickBtn({
       onPress={onPress}
       activeOpacity={0.7}
     >
-      <Text style={quickStyles.icon}>{icon}</Text>
+      <Ionicons name={icon} size={22} color={color} style={quickStyles.icon} />
       <Text style={[quickStyles.label, { color }]}>{label}</Text>
     </TouchableOpacity>
   );
@@ -602,13 +602,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   alertCard: {
-    backgroundColor:  '#FEF2F2',
+    backgroundColor:  '#EDE6FB',
     marginHorizontal: 16,
     marginBottom:     8,
     borderRadius:     12,
     padding:          12,
     borderWidth:      1,
-    borderColor:      '#FECACA',
+    borderColor:      '#C9BEF2',
   },
   alertTopRow: {
     flexDirection:  'row',
@@ -638,9 +638,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical:   8,
     borderRadius:      8,
-    backgroundColor:   '#F0FDF4',
+    backgroundColor:   '#EDE6FB',
     borderWidth:       1,
-    borderColor:       '#BBF7D0',
+    borderColor:       '#C9BEF2',
   },
   markPaidBtnText: { fontSize: 12, fontWeight: '600', color: colors.success },
 });

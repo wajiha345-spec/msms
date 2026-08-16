@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
   closeTxt: { color: '#fff', fontSize: 15, fontWeight: '500' },
   title:    { color: '#fff', fontSize: 16, fontWeight: '700', textAlign: 'center', flex: 1 },
   modeBtn:  { minWidth: 80, alignItems: 'flex-end' },
-  modeTxt:  { color: '#facc15', fontSize: 13, fontWeight: '600' },
+  modeTxt:  { color: '#4B2FC4', fontSize: 13, fontWeight: '600' },
 
   /* Camera */
   cameraBox: { flex: 1, position: 'relative' },
@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)',
   },
-  permManualTxt: { color: '#facc15', fontSize: 14, fontWeight: '600' },
+  permManualTxt: { color: '#4B2FC4', fontSize: 14, fontWeight: '600' },
 
   /* Scan frame corners */
   scanFrame: {
@@ -355,13 +355,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   noteText:      { color: 'rgba(255,255,255,0.75)', fontSize: 12, textAlign: 'center', lineHeight: 18 },
-  noteHighlight: { color: '#facc15', fontWeight: '700' },
+  noteHighlight: { color: '#4B2FC4', fontWeight: '700' },
 
   feedbackBox: {
     position:          'absolute',
     top:               '50%',
     alignSelf:         'center',
-    backgroundColor:   'rgba(34,197,94,0.9)',
+    backgroundColor:   'rgba(75,47,196,0.9)',
     paddingHorizontal: 24,
     paddingVertical:   10,
     borderRadius:      12,

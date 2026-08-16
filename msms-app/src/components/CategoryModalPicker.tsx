@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: colors.border,
     backgroundColor: colors.card,
   },
-  rowSelected: { backgroundColor: '#EEF2FF' },
+  rowSelected: { backgroundColor: '#EDE6FB' },
   rowName:     { fontSize: 15, fontWeight: '500', color: colors.text },
 
   emptyBox:  { alignItems: 'center', marginTop: 40, gap: 6 },

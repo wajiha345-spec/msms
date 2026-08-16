@@ -8,18 +8,18 @@ interface BadgeProps {
 }
 
 const bgMap = {
-  success: '#D1FAE5',
-  warning: '#FEF3C7',
-  info:    '#DBEAFE',
-  danger:  '#FEE2E2',
+  success: '#C9BEF2',
+  warning: '#EDE6FB',
+  info:    '#EDE6FB',
+  danger:  '#EDE6FB',
   default: '#F3F4F6',
 };
 
 const textMap = {
-  success: '#065F46',
-  warning: '#92400E',
-  info:    '#1E40AF',
-  danger:  '#991B1B',
+  success: '#34208C',
+  warning: '#34208C',
+  info:    '#34208C',
+  danger:  '#34208C',
   default: '#374151',
 };
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator, type BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -249,21 +249,21 @@ export default function BottomTabs({ tabBar, tabBarPosition }: BottomTabsProps =
     >
       <Tab.Screen name="DashboardTab"  component={DashboardScreen}
         options={{ tabBarLabel: 'Dashboard',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>📊</Text> }} />
+          tabBarIcon: ({ color }) => <Ionicons name="grid-outline" size={20} color={color} /> }} />
       <Tab.Screen name="ProductsTab"   component={ProductsStack}
         options={{ tabBarLabel: 'Products',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>📦</Text> }} />
+          tabBarIcon: ({ color }) => <Ionicons name="cube-outline" size={20} color={color} /> }} />
       <Tab.Screen name="SalesTab"      component={SalesStack}
         options={{ tabBarLabel: 'Sales',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>💰</Text> }} />
+          tabBarIcon: ({ color }) => <Ionicons name="cash-outline" size={20} color={color} /> }} />
       <Tab.Screen name="PurchasesTab"  component={PurchasesStack}
         options={{ tabBarLabel: 'Purchases',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>🛒</Text> }} />
+          tabBarIcon: ({ color }) => <Ionicons name="cart-outline" size={20} color={color} /> }} />
       <Tab.Screen
         name="MoreTab"
         component={MoreStack}
         options={{ tabBarLabel: 'More',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>☰</Text> }}
+          tabBarIcon: ({ color }) => <Ionicons name="menu-outline" size={20} color={color} /> }}
         listeners={({ navigation }) => ({
           tabPress: (e) => {
             e.preventDefault();

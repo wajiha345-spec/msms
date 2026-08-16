@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card, borderRadius: 10, padding: 12,
     marginBottom: 8, borderWidth: 1, borderColor: colors.border,
   },
-  saleRowSelected: { borderColor: colors.primary, backgroundColor: '#EEF2FF' },
+  saleRowSelected: { borderColor: colors.primary, backgroundColor: '#EDE6FB' },
   saleInvoice: { fontSize: 14, fontWeight: '600', color: colors.text },
   saleMeta:    { fontSize: 11, color: colors.textMuted, marginTop: 2 },
   saleOutstanding: { fontSize: 14, fontWeight: '700', color: colors.danger },

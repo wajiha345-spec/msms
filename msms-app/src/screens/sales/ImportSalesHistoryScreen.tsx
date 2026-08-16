@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   TextInput, Alert, ActivityIndicator, FlatList,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { salesApi } from '../../api/sales';
 import { parseSalesHistoryCSV, SalesHistoryCsvRow } from '../../utils/salesHistoryCsvParser';
 import { parseDDMMYYYY } from '../../utils/format';
@@ -23,6 +23,22 @@ export default function ImportSalesHistoryScreen() {
   const [parseErrors, setParseErrors] = useState<string[]>([]);
   const [importing,   setImporting]   = useState(false);
   const [result,      setResult]      = useState<{ created: number; errors: any[] } | null>(null);
+
+  // Native-stack keeps this screen mounted (only hidden) once it's been
+  // visited rather than unmounting it, so local state from a previous
+  // import otherwise survives — reopening the screen after a successful
+  // import would immediately show the old "X sales imported!" success
+  // screen again, before anything was actually re-imported this time.
+  // Resetting on focus guarantees a fresh 'paste' step every time it opens.
+  useFocusEffect(
+    useCallback(() => {
+      setStep('paste');
+      setCsvText('');
+      setRows([]);
+      setParseErrors([]);
+      setResult(null);
+    }, [])
+  );
 
   function handlePreview() {
     if (!csvText.trim()) {
@@ -211,7 +227,7 @@ export default function ImportSalesHistoryScreen() {
 
           <TouchableOpacity
             style={[styles.primaryBtn, { marginTop: 24 }]}
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.navigate('SalesList')}
           >
             <Text style={styles.primaryBtnTxt}>Done →</Text>
           </TouchableOpacity>
@@ -234,18 +250,18 @@ const styles = StyleSheet.create({
   body:    { padding: 16, paddingBottom: 40 },
 
   infoBox: {
-    backgroundColor: '#eff6ff', borderRadius: 12, padding: 14,
-    borderWidth: 1, borderColor: '#bfdbfe', marginBottom: 12,
+    backgroundColor: '#EDE6FB', borderRadius: 12, padding: 14,
+    borderWidth: 1, borderColor: '#C9BEF2', marginBottom: 12,
   },
-  infoTitle: { fontSize: 14, fontWeight: '700', color: '#1e40af', marginBottom: 6 },
-  infoText:  { fontSize: 13, color: '#1e40af', lineHeight: 20 },
+  infoTitle: { fontSize: 14, fontWeight: '700', color: '#34208C', marginBottom: 6 },
+  infoText:  { fontSize: 13, color: '#34208C', lineHeight: 20 },
   mono:      { fontFamily: 'monospace', fontSize: 12 },
 
   noteBox: {
-    backgroundColor: '#fffbeb', borderRadius: 12, padding: 14,
-    borderWidth: 1, borderColor: '#fde68a', marginBottom: 16,
+    backgroundColor: '#EDE6FB', borderRadius: 12, padding: 14,
+    borderWidth: 1, borderColor: '#C9BEF2', marginBottom: 16,
   },
-  noteText: { fontSize: 12, color: '#92400e', lineHeight: 18 },
+  noteText: { fontSize: 12, color: '#34208C', lineHeight: 18 },
 
   label: { fontSize: 13, fontWeight: '600', color: colors.text, marginBottom: 6 },
 
@@ -309,8 +325,8 @@ const styles = StyleSheet.create({
   doneTitle: { fontSize: 22, fontWeight: '800', color: colors.text, marginBottom: 12, textAlign: 'center' },
   doneNote:  { fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 20, marginTop: 12 },
   doneErrors: {
-    backgroundColor: '#fef2f2', borderRadius: 10, padding: 14,
-    borderWidth: 1, borderColor: '#fecaca', width: '100%', marginTop: 4,
+    backgroundColor: '#EDE6FB', borderRadius: 10, padding: 14,
+    borderWidth: 1, borderColor: '#C9BEF2', width: '100%', marginTop: 4,
   },
   doneErrorTitle: { fontSize: 13, fontWeight: '700', color: colors.danger, marginBottom: 6 },
   doneErrorRow:   { fontSize: 12, color: colors.danger, marginBottom: 4, lineHeight: 18 },

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 
 interface MetricTileProps {
@@ -7,7 +8,7 @@ interface MetricTileProps {
   value:      string;
   sub?:       string;
   accent?:    string;
-  icon:       string;
+  icon:       keyof typeof Ionicons.glyphMap;
 }
 
 export function MetricTile({
@@ -16,7 +17,7 @@ export function MetricTile({
   return (
     <View style={[styles.tile, { borderTopColor: accent, borderTopWidth: 3 }]}>
       <View style={styles.top}>
-        <Text style={styles.icon}>{icon}</Text>
+        <Ionicons name={icon} size={20} color={accent} />
       </View>
       <Text style={[styles.value, { color: accent }]}>{value}</Text>
       <Text style={styles.label}>{label}</Text>

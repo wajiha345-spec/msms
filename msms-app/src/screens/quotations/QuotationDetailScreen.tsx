@@ -234,8 +234,8 @@ const styles = StyleSheet.create({
 
   warningText: {
     fontSize: 12, color: colors.warning, marginBottom: 14,
-    backgroundColor: '#fffbeb', padding: 10, borderRadius: 8,
-    borderWidth: 1, borderColor: '#fde68a',
+    backgroundColor: '#EDE6FB', padding: 10, borderRadius: 8,
+    borderWidth: 1, borderColor: '#C9BEF2',
   },
   paymentError: { color: colors.danger, fontSize: 12, marginTop: -4 },
 });

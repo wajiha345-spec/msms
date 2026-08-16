@@ -228,7 +228,6 @@ export default function NewSaleScreen() {
   }
 
   async function handleSubmit() {
-    console.log('[DEBUG] Record Sale tapped. paymentType state =', paymentType);
     if (!validate()) {
       return;
     }
@@ -236,7 +235,6 @@ export default function NewSaleScreen() {
     try {
       const isInstallment = paymentType === 'Installment';
       const dueDate = isInstallment ? parseDDMMYYYY(installmentDueDate) : null;
-      console.log('[DEBUG] Submitting sale. isInstallment =', isInstallment, 'dueDate =', dueDate);
 
       const sale = await salesApi.create({
         productId:     product!.id,
@@ -257,6 +255,14 @@ export default function NewSaleScreen() {
 
       const invoiceUrl = invoicesApi.getUrl(sale.data.data.id);
 
+      // navigation.goBack() is ambiguous here: NewSale is reachable both by
+      // drilling down from SalesListScreen (goBack correctly lands there)
+      // and via a direct jump from Dashboard's "New Sale" quick action
+      // (navigation.navigate('SalesTab', {screen: 'NewSale'})), which can
+      // leave goBack() with nothing to pop within the Sales stack and fall
+      // through to whatever tab was active before — Dashboard. Navigating
+      // to 'SalesList' explicitly always lands on the sales list (where the
+      // just-recorded sale shows up), regardless of how this screen was reached.
       Alert.alert(
         'Sale Recorded ✓',
         `Invoice: ${sale.data.data.invoiceNo}\nTotal: Rs ${sale.data.data.totalAmount.toLocaleString()}`,
@@ -266,10 +272,10 @@ export default function NewSaleScreen() {
             onPress: async () => {
               // Opens as in-app browser overlay — app stays in foreground, no reload
               await openUrl(invoiceUrl);
-              navigation.goBack();
+              navigation.navigate('SalesList');
             },
           },
-          { text: 'Close', onPress: () => navigation.goBack() },
+          { text: 'Close', onPress: () => navigation.navigate('SalesList') },
         ]
       );
     } catch (e: any) {

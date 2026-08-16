@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card, borderRadius: 10, padding: 12,
     marginBottom: 8, borderWidth: 1, borderColor: colors.border,
   },
-  purchaseRowSelected: { borderColor: colors.primary, backgroundColor: '#EEF2FF' },
+  purchaseRowSelected: { borderColor: colors.primary, backgroundColor: '#EDE6FB' },
   purchaseName: { fontSize: 14, fontWeight: '600', color: colors.text },
   purchaseMeta: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
   purchaseOutstanding: { fontSize: 14, fontWeight: '700', color: colors.danger },

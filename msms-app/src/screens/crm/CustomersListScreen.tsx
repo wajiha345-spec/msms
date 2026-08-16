@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
 
   followUpsLink: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#EEF2FF', paddingHorizontal: 16, paddingVertical: 12,
+    backgroundColor: '#EDE6FB', paddingHorizontal: 16, paddingVertical: 12,
     borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   followUpsLinkText: { fontSize: 13, fontWeight: '600', color: colors.primary },

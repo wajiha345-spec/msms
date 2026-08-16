@@ -55,7 +55,7 @@ export default function ExpenseReportScreen() {
           {summary.byCategory.map((row) => (
             <MetricTile
               key={row.categoryId}
-              icon="🧾"
+              icon="receipt-outline"
               label={row.categoryName}
               value={`Rs ${row.total.toLocaleString()}`}
               accent={colors.danger}

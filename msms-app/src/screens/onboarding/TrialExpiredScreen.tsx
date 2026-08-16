@@ -164,9 +164,9 @@ const styles = StyleSheet.create({
   cardSub:   { fontSize: 13, color: colors.textMuted, lineHeight: 19, marginBottom: 20 },
 
   lockBadge: {
-    backgroundColor: '#fef2f2', borderRadius: 8, paddingVertical: 7,
+    backgroundColor: '#EDE6FB', borderRadius: 8, paddingVertical: 7,
     paddingHorizontal: 12, alignSelf: 'flex-start', marginBottom: 16,
-    borderWidth: 1, borderColor: '#fecaca',
+    borderWidth: 1, borderColor: '#C9BEF2',
   },
   lockBadgeText: { fontSize: 13, fontWeight: '600', color: colors.danger },
 

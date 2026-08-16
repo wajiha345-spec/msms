@@ -179,13 +179,13 @@ const styles = StyleSheet.create({
   // Manual entry row
   manualRow: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    padding: 14, backgroundColor: '#f0f9ff',
-    borderBottomWidth: 1, borderBottomColor: '#bae6fd',
+    padding: 14, backgroundColor: '#EDE6FB',
+    borderBottomWidth: 1, borderBottomColor: '#C9BEF2',
   },
   manualIcon:  { fontSize: 22 },
-  manualTitle: { fontSize: 14, fontWeight: '600', color: '#0369a1' },
-  manualSub:   { fontSize: 12, color: '#0284c7', marginTop: 1 },
-  manualArrow: { fontSize: 20, color: '#0369a1' },
+  manualTitle: { fontSize: 14, fontWeight: '600', color: '#34208C' },
+  manualSub:   { fontSize: 12, color: '#4B2FC4', marginTop: 1 },
+  manualArrow: { fontSize: 20, color: '#34208C' },
 
   divider: { height: 1, backgroundColor: colors.border },
 
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: colors.border,
     backgroundColor: colors.card,
   },
-  productRowSelected: { backgroundColor: '#EEF2FF' },
+  productRowSelected: { backgroundColor: '#EDE6FB' },
   productRowName:     { fontSize: 15, fontWeight: '500', color: colors.text },
   productRowSub:      { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   productRowRight:    { marginLeft: 10 },

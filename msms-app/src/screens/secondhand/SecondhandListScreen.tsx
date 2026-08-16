@@ -100,7 +100,7 @@ export default function SecondhandListScreen() {
       <TouchableOpacity
         style={[
           styles.addBtn,
-          { backgroundColor: colors.info ?? "#3B82F6", marginRight: 8 },
+          { backgroundColor: colors.info ?? "#4B2FC4", marginRight: 8 },
         ]}
         onPress={() => navigation.navigate("ImeiSearch")}
       >

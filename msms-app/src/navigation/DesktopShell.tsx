@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
 import BottomTabs from './BottomTabs';
 import { desktopFeatureNavItems, desktopBusinessNavItems, type DesktopNavItem } from './desktopNavItems';
 import { useAuth } from '../context/AuthContext';
@@ -28,11 +29,11 @@ export default function DesktopShell() {
   );
 }
 
-const PRIMARY_TABS: { key: string; label: string; icon: string }[] = [
-  { key: 'DashboardTab', label: 'Dashboard', icon: '📊' },
-  { key: 'ProductsTab',  label: 'Products',  icon: '📦' },
-  { key: 'SalesTab',     label: 'Sales',     icon: '💰' },
-  { key: 'PurchasesTab', label: 'Purchases', icon: '🛒' },
+const PRIMARY_TABS: { key: string; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { key: 'DashboardTab', label: 'Dashboard', icon: 'grid-outline' },
+  { key: 'ProductsTab',  label: 'Products',  icon: 'cube-outline' },
+  { key: 'SalesTab',     label: 'Sales',     icon: 'cash-outline' },
+  { key: 'PurchasesTab', label: 'Purchases', icon: 'cart-outline' },
 ];
 
 // Screens that have an "add new" target reachable from the current
@@ -165,7 +166,7 @@ function DesktopSidebar({ state, navigation }: BottomTabBarProps) {
       </ScrollView>
 
       <TouchableOpacity style={styles.logoutRow} onPress={handleLogout} activeOpacity={0.7}>
-        <Text style={styles.logoutIcon}>🚪</Text>
+        <Ionicons name="log-out-outline" size={16} color={colors.danger} style={styles.logoutIcon} />
         <Text style={styles.logoutLabel}>Logout</Text>
       </TouchableOpacity>
     </View>
@@ -175,7 +176,7 @@ function DesktopSidebar({ state, navigation }: BottomTabBarProps) {
 function SidebarRow({
   icon, label, active, locked, badge, onPress,
 }: {
-  icon: string; label: string; active?: boolean; locked?: boolean; badge?: number; onPress: () => void;
+  icon: keyof typeof Ionicons.glyphMap; label: string; active?: boolean; locked?: boolean; badge?: number; onPress: () => void;
 }) {
   return (
     <TouchableOpacity
@@ -183,11 +184,16 @@ function SidebarRow({
       onPress={onPress}
       activeOpacity={0.7}
     >
-      <Text style={styles.rowIcon}>{icon}</Text>
+      <Ionicons
+        name={icon}
+        size={16}
+        color={active ? colors.primary : (locked ? colors.textMuted : colors.text)}
+        style={styles.rowIcon}
+      />
       <Text style={[styles.rowLabel, active && styles.rowLabelActive, locked && styles.rowLabelLocked]} numberOfLines={1}>
         {label}
       </Text>
-      {locked && <Text style={styles.lockIcon}>🔒</Text>}
+      {locked && <Ionicons name="lock-closed-outline" size={14} color={colors.textMuted} />}
       {!locked && !!badge && (
         <View style={styles.unreadBadge}><Text style={styles.unreadBadgeText}>{badge}</Text></View>
       )}
@@ -238,7 +244,6 @@ const styles = StyleSheet.create({
   rowLabel: { fontSize: 13, color: colors.text, flex: 1 },
   rowLabelActive: { color: colors.primary, fontWeight: '700' },
   rowLabelLocked: { color: colors.textMuted },
-  lockIcon: { fontSize: 12 },
   unreadBadge: {
     backgroundColor: colors.danger, borderRadius: 9,
     minWidth: 17, height: 17, paddingHorizontal: 4,

@@ -224,11 +224,11 @@ const styles = StyleSheet.create({
   body:    { padding: 16, paddingBottom: 40 },
 
   infoBox: {
-    backgroundColor: '#eff6ff', borderRadius: 12, padding: 14,
-    borderWidth: 1, borderColor: '#bfdbfe', marginBottom: 16,
+    backgroundColor: '#EDE6FB', borderRadius: 12, padding: 14,
+    borderWidth: 1, borderColor: '#C9BEF2', marginBottom: 16,
   },
-  infoTitle: { fontSize: 14, fontWeight: '700', color: '#1e40af', marginBottom: 6 },
-  infoText:  { fontSize: 13, color: '#1e40af', lineHeight: 20 },
+  infoTitle: { fontSize: 14, fontWeight: '700', color: '#34208C', marginBottom: 6 },
+  infoText:  { fontSize: 13, color: '#34208C', lineHeight: 20 },
   mono:      { fontFamily: 'monospace', fontSize: 12 },
 
   label: { fontSize: 13, fontWeight: '600', color: colors.text, marginBottom: 6 },
@@ -293,8 +293,8 @@ const styles = StyleSheet.create({
   doneTitle: { fontSize: 22, fontWeight: '800', color: colors.text, marginBottom: 12, textAlign: 'center' },
   doneNote:  { fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 20, marginTop: 12 },
   doneErrors: {
-    backgroundColor: '#fef2f2', borderRadius: 10, padding: 14,
-    borderWidth: 1, borderColor: '#fecaca', width: '100%', marginTop: 4,
+    backgroundColor: '#EDE6FB', borderRadius: 10, padding: 14,
+    borderWidth: 1, borderColor: '#C9BEF2', width: '100%', marginTop: 4,
   },
   doneErrorTitle: { fontSize: 13, fontWeight: '700', color: colors.danger, marginBottom: 6 },
   doneErrorRow:   { fontSize: 12, color: colors.danger, marginBottom: 4, lineHeight: 18 },

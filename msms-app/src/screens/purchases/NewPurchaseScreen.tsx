@@ -497,18 +497,18 @@ const styles = StyleSheet.create({
 
   // Manual entry card
   manualCard: {
-    backgroundColor: '#f0f9ff',
-    borderRadius: 12, borderWidth: 1, borderColor: '#bae6fd',
+    backgroundColor: '#EDE6FB',
+    borderRadius: 12, borderWidth: 1, borderColor: '#C9BEF2',
     padding: 14, marginBottom: 14,
   },
   manualCardHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     marginBottom: 12,
   },
-  manualCardTitle:  { fontSize: 14, fontWeight: '700', color: '#0369a1' },
+  manualCardTitle:  { fontSize: 14, fontWeight: '700', color: '#34208C' },
   manualCardSwitch: { fontSize: 13, color: colors.primary, fontWeight: '500' },
   manualNote: {
-    fontSize: 12, color: '#0284c7', fontStyle: 'italic', marginTop: 4,
+    fontSize: 12, color: '#4B2FC4', fontStyle: 'italic', marginTop: 4,
   },
 
   // Summary

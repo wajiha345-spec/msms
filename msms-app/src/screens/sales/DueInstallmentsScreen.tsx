@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card, borderRadius: 12, padding: 14,
     borderWidth: 1, borderColor: colors.border, marginBottom: 10,
   },
-  cardPaid: { backgroundColor: '#f0fdf4', borderColor: '#bbf7d0' },
+  cardPaid: { backgroundColor: '#EDE6FB', borderColor: '#C9BEF2' },
   customer: { fontSize: 14, fontWeight: '600', color: colors.text },
   meta:     { fontSize: 11, color: colors.textMuted, marginTop: 2 },
   textPaid: { textDecorationLine: 'line-through', color: colors.textMuted },

@@ -706,10 +706,10 @@ const cameraStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   blockedBanner: {
-    backgroundColor: '#fef2f2', borderRadius: 10, padding: 14, marginTop: 8,
-    borderWidth: 1, borderColor: '#fecaca',
+    backgroundColor: '#EDE6FB', borderRadius: 10, padding: 14, marginTop: 8,
+    borderWidth: 1, borderColor: '#C9BEF2',
   },
-  blockedText: { fontSize: 13, color: '#991b1b', lineHeight: 20 },
+  blockedText: { fontSize: 13, color: '#34208C', lineHeight: 20 },
   errorText: { color: colors.danger, fontSize: 12, marginTop: -10, marginBottom: 10 },
   header: {
     flexDirection: 'row',

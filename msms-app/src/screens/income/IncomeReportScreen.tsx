@@ -55,7 +55,7 @@ export default function IncomeReportScreen() {
           {summary.byCategory.map((row) => (
             <MetricTile
               key={row.categoryId}
-              icon="💵"
+              icon="wallet-outline"
               label={row.categoryName}
               value={`Rs ${row.total.toLocaleString()}`}
               accent={colors.success}

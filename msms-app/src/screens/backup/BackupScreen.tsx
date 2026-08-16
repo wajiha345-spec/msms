@@ -72,16 +72,16 @@ export default function BackupScreen() {
               {new Date(lastExport.exportedAt).toLocaleString()}
             </Text>
             <View style={styles.grid}>
-              <MetricTile icon="📦" label="Products"        value={String(lastExport.counts.products)} />
-              <MetricTile icon="🧾" label="Sales"            value={String(lastExport.counts.sales)} />
-              <MetricTile icon="🛒" label="Purchases"        value={String(lastExport.counts.purchases)} />
-              <MetricTile icon="📱" label="Secondhand"       value={String(lastExport.counts.secondhandRecords)} />
-              <MetricTile icon="🧑‍🤝‍🧑" label="Customers"       value={String(lastExport.counts.customers)} />
-              <MetricTile icon="📋" label="Quotations"       value={String(lastExport.counts.quotations)} />
-              <MetricTile icon="📥" label="Purchase Orders"  value={String(lastExport.counts.purchaseOrders)} />
-              <MetricTile icon="📤" label="Sales Orders"     value={String(lastExport.counts.salesOrders)} />
-              <MetricTile icon="🏬" label="Branches"         value={String(lastExport.counts.branches)} />
-              <MetricTile icon="👥" label="Team Members"     value={String(lastExport.counts.users)} />
+              <MetricTile icon="cube-outline"           label="Products"        value={String(lastExport.counts.products)} />
+              <MetricTile icon="receipt-outline"        label="Sales"            value={String(lastExport.counts.sales)} />
+              <MetricTile icon="cart-outline"           label="Purchases"        value={String(lastExport.counts.purchases)} />
+              <MetricTile icon="phone-portrait-outline" label="Secondhand"       value={String(lastExport.counts.secondhandRecords)} />
+              <MetricTile icon="people-outline"         label="Customers"       value={String(lastExport.counts.customers)} />
+              <MetricTile icon="clipboard-outline"      label="Quotations"       value={String(lastExport.counts.quotations)} />
+              <MetricTile icon="cloud-download-outline" label="Purchase Orders"  value={String(lastExport.counts.purchaseOrders)} />
+              <MetricTile icon="paper-plane-outline"    label="Sales Orders"     value={String(lastExport.counts.salesOrders)} />
+              <MetricTile icon="storefront-outline"     label="Branches"         value={String(lastExport.counts.branches)} />
+              <MetricTile icon="people-circle-outline"  label="Team Members"     value={String(lastExport.counts.users)} />
             </View>
           </>
         )}

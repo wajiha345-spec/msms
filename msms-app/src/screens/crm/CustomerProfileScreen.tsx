@@ -192,12 +192,12 @@ export default function CustomerProfileScreen() {
 
         <Text style={styles.sectionLabel}>Activity Summary</Text>
         <View style={styles.grid}>
-          <MetricTile icon="🧾" label="Sales" value={String(stats.salesCount)} />
-          <MetricTile icon="💰" label="Total Spent" value={`Rs ${stats.totalSpent.toLocaleString()}`} accent={colors.success} />
-          <MetricTile icon="⚠️" label="Outstanding" value={`Rs ${stats.outstanding.toLocaleString()}`} accent={stats.outstanding > 0 ? colors.danger : colors.success} />
-          <MetricTile icon="📋" label="Quotations" value={String(stats.quotationsCount)} />
-          <MetricTile icon="📤" label="Sales Orders" value={String(stats.salesOrdersCount)} />
-          <MetricTile icon="🗓️" label="Last Purchase" value={fmtDate(stats.lastPurchaseAt)} />
+          <MetricTile icon="receipt-outline" label="Sales" value={String(stats.salesCount)} />
+          <MetricTile icon="cash-outline" label="Total Spent" value={`Rs ${stats.totalSpent.toLocaleString()}`} accent={colors.success} />
+          <MetricTile icon="alert-circle-outline" label="Outstanding" value={`Rs ${stats.outstanding.toLocaleString()}`} accent={stats.outstanding > 0 ? colors.danger : colors.success} />
+          <MetricTile icon="clipboard-outline" label="Quotations" value={String(stats.quotationsCount)} />
+          <MetricTile icon="paper-plane-outline" label="Sales Orders" value={String(stats.salesOrdersCount)} />
+          <MetricTile icon="calendar-outline" label="Last Purchase" value={fmtDate(stats.lastPurchaseAt)} />
         </View>
 
         <View style={styles.timelineHeader}>

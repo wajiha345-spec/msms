@@ -72,12 +72,12 @@ export default function SalesSummaryScreen() {
       ) : (
         <ScrollView contentContainerStyle={styles.scroll}>
           <View style={styles.grid}>
-            <MetricTile icon="🧾" label="Sales"     value={String(summary.totals.salesCount)} />
-            <MetricTile icon="💰" label="Revenue"   value={`Rs ${summary.totals.revenue.toLocaleString()}`} accent={colors.success} />
-            <MetricTile icon="📈" label="Profit"    value={`Rs ${summary.totals.profit.toLocaleString()}`} accent={colors.success} />
-            <MetricTile icon="📦" label="Units Sold" value={String(summary.totals.unitsSold)} />
-            <MetricTile icon="🛒" label="Purchases" value={String(summary.totals.purchasesCount)} />
-            <MetricTile icon="💸" label="Cost"      value={`Rs ${summary.totals.cost.toLocaleString()}`} accent={colors.danger} />
+            <MetricTile icon="receipt-outline" label="Sales"     value={String(summary.totals.salesCount)} />
+            <MetricTile icon="cash-outline" label="Revenue"   value={`Rs ${summary.totals.revenue.toLocaleString()}`} accent={colors.success} />
+            <MetricTile icon="trending-up-outline" label="Profit"    value={`Rs ${summary.totals.profit.toLocaleString()}`} accent={colors.success} />
+            <MetricTile icon="cube-outline" label="Units Sold" value={String(summary.totals.unitsSold)} />
+            <MetricTile icon="cart-outline" label="Purchases" value={String(summary.totals.purchasesCount)} />
+            <MetricTile icon="arrow-down-circle-outline" label="Cost"      value={`Rs ${summary.totals.cost.toLocaleString()}`} accent={colors.danger} />
           </View>
 
           <Text style={styles.sectionLabel}>Top Products by Revenue</Text>

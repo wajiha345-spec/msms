@@ -518,26 +518,26 @@ const styles = StyleSheet.create({
   },
   scanBannerIcon:       { fontSize: 28 },
   scanBannerTitle:      { color: '#fff', fontSize: 15, fontWeight: '700' },
-  scanBannerTitleLocked:{ color: '#92400e', fontSize: 15, fontWeight: '700' },
+  scanBannerTitleLocked:{ color: '#34208C', fontSize: 15, fontWeight: '700' },
   scanBannerSub:        { color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 2 },
   scanBannerArrow:      { color: '#fff', fontSize: 22, fontWeight: '300' },
   scanBannerLocked: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: '#fffbeb', borderRadius: 14,
+    backgroundColor: '#EDE6FB', borderRadius: 14,
     padding: 16, marginBottom: 16,
-    borderWidth: 1, borderColor: '#fde68a',
+    borderWidth: 1, borderColor: '#C9BEF2',
   },
   proBadge: {
-    backgroundColor: '#f59e0b', color: '#fff', fontSize: 11,
+    backgroundColor: '#4B2FC4', color: '#fff', fontSize: 11,
     fontWeight: '800', paddingHorizontal: 8, paddingVertical: 3,
     borderRadius: 6, overflow: 'hidden',
   },
 
   badge: {
-    backgroundColor: '#f0fdf4', borderRadius: 8, padding: 10,
-    marginBottom: 14, borderWidth: 1, borderColor: '#bbf7d0',
+    backgroundColor: '#EDE6FB', borderRadius: 8, padding: 10,
+    marginBottom: 14, borderWidth: 1, borderColor: '#C9BEF2',
   },
-  badgeTxt: { color: '#166534', fontSize: 13, fontWeight: '600' },
+  badgeTxt: { color: '#34208C', fontSize: 13, fontWeight: '600' },
 
   fieldLabel:   { fontSize: 13, fontWeight: '500', color: colors.text, marginBottom: 8 },
   conditionRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
@@ -558,10 +558,10 @@ const styles = StyleSheet.create({
   switchHint: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
 
   profitBox: {
-    backgroundColor: '#F0FDF4', borderRadius: 10, padding: 14,
+    backgroundColor: '#EDE6FB', borderRadius: 10, padding: 14,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    marginBottom: 14, borderWidth: 1, borderColor: '#BBF7D0',
+    marginBottom: 14, borderWidth: 1, borderColor: '#C9BEF2',
   },
-  profitLabel: { fontSize: 13, color: '#166534', fontWeight: '500' },
+  profitLabel: { fontSize: 13, color: '#34208C', fontWeight: '500' },
   profitValue: { fontSize: 18, fontWeight: '700' },
 });
