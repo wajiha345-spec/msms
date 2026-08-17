@@ -54,7 +54,8 @@
             "allowBackup": false
           }
         }
-      ]
+      ],
+      "expo-font"
     ]
   }
 }
