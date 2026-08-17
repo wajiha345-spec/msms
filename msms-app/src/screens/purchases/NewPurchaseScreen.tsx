@@ -5,6 +5,7 @@ import {
   KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { Input }         from '../../components/Inputs';
 import { Button }        from '../../components/Buttons';
 import { ProductPicker } from '../../components/ProductPicker';
@@ -252,7 +253,7 @@ export default function NewPurchaseScreen() {
         onScanned={handleScanCode}
         onClose={() => setScannerOpen(false)}
         title="Scan Barcode to Find Product"
-        hint="Point at barcode — tap ⌨️ Type for IMEI"
+        hint="Point at barcode — tap Type for IMEI"
       />
 
       <ScrollView
@@ -271,14 +272,14 @@ export default function NewPurchaseScreen() {
           {scanLoading ? (
             <ActivityIndicator color="#fff" size="small" />
           ) : (
-            <Text style={styles.scanBannerIcon}>📷</Text>
+            <Ionicons name="camera-outline" size={24} color="#fff" style={styles.scanBannerIcon} />
           )}
           <View style={{ flex: 1 }}>
             <Text style={styles.scanBannerTitle}>
               {scanLoading ? 'Looking up product…' : 'Scan barcode or type IMEI'}
             </Text>
             <Text style={styles.scanBannerSub}>
-              {scanLoading ? 'Please wait…' : 'Camera reads barcodes — use ⌨️ Type for IMEI'}
+              {scanLoading ? 'Please wait…' : 'Camera reads barcodes — use Type for IMEI'}
             </Text>
           </View>
           {!scanLoading && <Text style={styles.scanBannerArrow}>›</Text>}
@@ -306,7 +307,10 @@ export default function NewPurchaseScreen() {
           /* ── Manual entry card ── */
           <View style={styles.manualCard}>
             <View style={styles.manualCardHeader}>
-              <Text style={styles.manualCardTitle}>✏️ Manual Entry</Text>
+              <View style={styles.manualCardTitleRow}>
+                <Ionicons name="create-outline" size={15} color="#34208C" />
+                <Text style={styles.manualCardTitle}>Manual Entry</Text>
+              </View>
               <TouchableOpacity onPress={clearManual}>
                 <Text style={styles.manualCardSwitch}>← Pick from list</Text>
               </TouchableOpacity>
@@ -505,6 +509,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     marginBottom: 12,
   },
+  manualCardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   manualCardTitle:  { fontSize: 14, fontWeight: '700', color: '#34208C' },
   manualCardSwitch: { fontSize: 13, color: colors.primary, fontWeight: '500' },
   manualNote: {
@@ -543,7 +548,7 @@ const styles = StyleSheet.create({
     padding:         16,
     marginBottom:    12,
   },
-  scanBannerIcon:  { fontSize: 28 },
+  scanBannerIcon:  {},
   scanBannerTitle: { color: '#fff', fontSize: 15, fontWeight: '700' },
   scanBannerSub:   { color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 2 },
   scanBannerArrow: { color: '#fff', fontSize: 22, fontWeight: '300' },

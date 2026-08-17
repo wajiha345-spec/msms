@@ -3,6 +3,7 @@ import {
   View, Text, TouchableOpacity, TextInput, FlatList,
   Modal, StyleSheet, ActivityIndicator
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { crmApi, Customer } from '../api/crm';
 import { colors } from '../theme/colors';
 
@@ -46,7 +47,8 @@ export function CustomerPicker({ onChange, label = 'Select from Customers' }: Cu
   return (
     <>
       <TouchableOpacity style={styles.trigger} onPress={openPicker}>
-        <Text style={styles.triggerText}>👤 {label}</Text>
+        <Ionicons name="person-outline" size={13} color={colors.primary} />
+        <Text style={styles.triggerText}>{label}</Text>
       </TouchableOpacity>
 
       <Modal visible={open} animationType="slide" presentationStyle="pageSheet">
@@ -102,6 +104,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start', marginBottom: 10,
     paddingHorizontal: 12, paddingVertical: 8,
     borderRadius: 8, borderWidth: 1, borderColor: colors.primary,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
   },
   triggerText: { color: colors.primary, fontWeight: '600', fontSize: 13 },
 

@@ -5,6 +5,7 @@ import {
   KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { Input }          from '../../components/Inputs';
 import { Button }         from '../../components/Buttons';
 import ScannerOverlay     from '../../components/ScannerOverlay';
@@ -96,7 +97,7 @@ export default function AddProductScreen() {
           category: savedProduct.category,
         });
         Alert.alert(
-          '✅ Linked to Catalog',
+          'Linked to Catalog',
           `"${savedProduct.name}" is now saved in the shared catalog.\nNext time anyone scans this barcode it will auto-fill instantly.`,
           [{ text: 'Done', onPress: () => navigation.goBack() }]
         );
@@ -145,7 +146,7 @@ export default function AddProductScreen() {
       // Product already exists in inventory → warn about duplicate
       setScanResult('found');
       Alert.alert(
-        '⚠️ Already in Inventory',
+        'Already in Inventory',
         `"${p.name}" (${p.brand}) already exists with this ${isImei ? 'IMEI' : 'barcode'}.\n\nStock: ${p.stock} units`,
         [
           {
@@ -244,7 +245,7 @@ export default function AddProductScreen() {
             category: payload.category ?? 'phone',
           });
           Alert.alert(
-            '✅ Product Saved!',
+            'Product Saved!',
             `"${payload.name}" added to inventory.\n\nWant to scan the barcode from the product box? This teaches the app to recognize this model — next time you scan it, name and brand fill automatically.`,
             [
               {
@@ -305,7 +306,7 @@ export default function AddProductScreen() {
             {scanLoading ? (
               <ActivityIndicator color="#fff" size="small" />
             ) : (
-              <Text style={styles.scanBannerIcon}>📷</Text>
+              <Ionicons name="camera-outline" size={24} color="#fff" style={styles.scanBannerIcon} />
             )}
             <View style={{ flex: 1 }}>
               <Text style={styles.scanBannerTitle}>
@@ -321,7 +322,7 @@ export default function AddProductScreen() {
         {/* IMEI scan locked for Simple plan */}
         {!isEdit && !isPro && (
           <View style={styles.scanBannerLocked}>
-            <Text style={styles.scanBannerIcon}>📷</Text>
+            <Ionicons name="camera-outline" size={24} color={colors.textMuted} style={styles.scanBannerIcon} />
             <View style={{ flex: 1 }}>
               <Text style={styles.scanBannerTitleLocked}>IMEI Scan — PRO Feature</Text>
               <Text style={styles.scanBannerSub}>Upgrade to PRO to scan IMEI and auto-fill product details.</Text>
@@ -362,8 +363,13 @@ export default function AddProductScreen() {
               style={[styles.condBtn, condition === c && styles.condBtnActive]}
               onPress={() => setCondition(c)}
             >
+              <Ionicons
+                name={c === 'new' ? 'sparkles-outline' : 'sync-outline'}
+                size={14}
+                color={condition === c ? '#fff' : colors.textMuted}
+              />
               <Text style={[styles.condBtnText, condition === c && styles.condBtnTextActive]}>
-                {c === 'new' ? '🆕  New' : '♻️  Used'}
+                {c === 'new' ? 'New' : 'Used'}
               </Text>
             </TouchableOpacity>
           ))}
@@ -493,7 +499,7 @@ export default function AddProductScreen() {
         title={linkCatalogMode ? 'Scan Product Box Barcode' : 'Scan Barcode to Check Inventory'}
         hint={linkCatalogMode
           ? 'Scan the EAN-13 barcode on the product box (not the IMEI)'
-          : 'Point at barcode — tap ⌨️ Type for IMEI'
+          : 'Point at barcode — tap Type for IMEI'
         }
       />
     </KeyboardAvoidingView>
@@ -516,7 +522,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary, borderRadius: 14,
     padding: 16, marginBottom: 16,
   },
-  scanBannerIcon:       { fontSize: 28 },
+  scanBannerIcon:       {},
   scanBannerTitle:      { color: '#fff', fontSize: 15, fontWeight: '700' },
   scanBannerTitleLocked:{ color: '#34208C', fontSize: 15, fontWeight: '700' },
   scanBannerSub:        { color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 2 },
@@ -545,6 +551,7 @@ const styles = StyleSheet.create({
     flex: 1, padding: 13, borderRadius: 10,
     borderWidth: 1, borderColor: colors.border,
     alignItems: 'center', backgroundColor: colors.card,
+    flexDirection: 'row', justifyContent: 'center', gap: 6,
   },
   condBtnActive:     { backgroundColor: colors.primary, borderColor: colors.primary },
   condBtnText:       { fontSize: 14, color: colors.textMuted, fontWeight: '500' },

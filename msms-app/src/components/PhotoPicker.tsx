@@ -4,6 +4,7 @@ import {
   Image, StyleSheet, Alert, ActivityIndicator
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 
 interface PhotoPickerProps {
@@ -68,7 +69,7 @@ export function PhotoPicker({ label, uri, onPick, onClear }: PhotoPickerProps) {
       'Choose photo source',
       [
         {
-          text: '📷  Camera',
+          text: 'Camera',
           onPress: async () => {
             setBusy(true);
             const picked = await requestAndLaunchCamera();
@@ -77,7 +78,7 @@ export function PhotoPicker({ label, uri, onPick, onClear }: PhotoPickerProps) {
           },
         },
         {
-          text: '🖼  Photo Library',
+          text: 'Photo Library',
           onPress: async () => {
             setBusy(true);
             const picked = await requestAndLaunchLibrary();
@@ -132,7 +133,7 @@ export function PhotoPicker({ label, uri, onPick, onClear }: PhotoPickerProps) {
             </>
           ) : (
             <>
-              <Text style={styles.emptyIcon}>📷</Text>
+              <Ionicons name="camera-outline" size={28} color={colors.textMuted} style={styles.emptyIcon} />
               <Text style={styles.emptyText}>Tap to add photo</Text>
               <Text style={styles.emptyHint}>Camera or photo library</Text>
             </>
@@ -156,7 +157,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   emptyBoxBusy: { opacity: 0.6 },
-  emptyIcon:    { fontSize: 28, marginBottom: 6 },
+  emptyIcon:    { marginBottom: 6 },
   emptyText:    { fontSize: 14, color: colors.textMuted, fontWeight: '500' },
   emptyHint:    { fontSize: 12, color: colors.textMuted, marginTop: 3 },
   busyText:     { fontSize: 13, color: colors.textMuted, marginTop: 8 },

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import { BarcodeFormat, DecodeHintType, NotFoundException } from '@zxing/library';
 import { colors } from '../theme/colors';
@@ -158,10 +159,10 @@ export default function WebBarcodeScanner({ onScanned, scanning }: Props) {
   if (status === 'denied') {
     return (
       <View style={styles.center}>
-        <Text style={styles.icon}>🚫</Text>
+        <Ionicons name="ban-outline" size={32} color={colors.textMuted} style={styles.icon} />
         <Text style={styles.title}>Camera access blocked</Text>
         <Text style={styles.text}>
-          Allow camera access for this app in Windows Settings, or use the ⌨️ Type option above.
+          Allow camera access for this app in Windows Settings, or use the Type option above.
         </Text>
       </View>
     );
@@ -170,10 +171,10 @@ export default function WebBarcodeScanner({ onScanned, scanning }: Props) {
   if (status === 'error') {
     return (
       <View style={styles.center}>
-        <Text style={styles.icon}>📷</Text>
+        <Ionicons name="camera-outline" size={32} color={colors.textMuted} style={styles.icon} />
         <Text style={styles.title}>Camera unavailable</Text>
         <Text style={styles.text}>{errorMessage}</Text>
-        <Text style={styles.text}>Use the ⌨️ Type option above instead.</Text>
+        <Text style={styles.text}>Use the Type option above instead.</Text>
       </View>
     );
   }
@@ -204,7 +205,7 @@ export default function WebBarcodeScanner({ onScanned, scanning }: Props) {
             style={[styles.captureBtn, capturing && styles.captureBtnDisabled]}
           >
             <Text style={styles.captureBtnText}>
-              {capturing ? 'Reading…' : '📸 IMEI not scanning? Tap to capture'}
+              {capturing ? 'Reading…' : 'IMEI not scanning? Tap to capture'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -225,7 +226,7 @@ const styles = StyleSheet.create({
     flex: 1, justifyContent: 'center', alignItems: 'center',
     gap: 10, paddingHorizontal: 32, backgroundColor: '#111',
   },
-  icon: { fontSize: 40 },
+  icon: { marginBottom: 4 },
   title: { color: '#fff', fontSize: 17, fontWeight: '700', textAlign: 'center' },
   text: { color: 'rgba(255,255,255,0.75)', fontSize: 13, textAlign: 'center', lineHeight: 19 },
   captureRow: {

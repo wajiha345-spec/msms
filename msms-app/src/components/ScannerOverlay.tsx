@@ -27,6 +27,7 @@ import {
   StyleSheet, Modal, Vibration, Linking, Platform,
 } from 'react-native';
 import { CameraView, useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
+import { Ionicons } from '@expo/vector-icons';
 import WebBarcodeScanner from './WebBarcodeScanner';
 import { colors } from '../theme/colors';
 
@@ -122,8 +123,9 @@ export default function ScannerOverlay({
             onPress={() => setManualMode(m => !m)}
             style={styles.modeBtn}
           >
+            <Ionicons name={manualMode ? 'camera-outline' : 'keypad-outline'} size={14} color="#4B2FC4" />
             <Text style={styles.modeTxt}>
-              {manualMode ? '📷 Camera' : '⌨️ Type'}
+              {manualMode ? 'Camera' : 'Type'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -144,8 +146,9 @@ export default function ScannerOverlay({
             <Text style={styles.hint}>{hint}</Text>
 
             <View style={styles.noteBox}>
+              <Ionicons name="camera-outline" size={13} color="rgba(255,255,255,0.75)" style={styles.noteIcon} />
               <Text style={styles.noteText}>
-                📷 Camera reads barcodes only — tap <Text style={styles.noteHighlight}>⌨️ Type</Text> above to enter IMEI
+                Camera reads barcodes only — tap <Text style={styles.noteHighlight}>Type</Text> above to enter IMEI
               </Text>
             </View>
 
@@ -160,9 +163,11 @@ export default function ScannerOverlay({
             {!permission?.granted ? (
               /* ── Permission denied / not yet granted ── */
               <View style={styles.permBox}>
-                <Text style={styles.permIcon}>
-                  {permDeniedPermanently ? '🚫' : '📷'}
-                </Text>
+                <Ionicons
+                  name={permDeniedPermanently ? 'ban-outline' : 'camera-outline'}
+                  size={48}
+                  color="#fff"
+                />
                 <Text style={styles.permTitle}>
                   {permDeniedPermanently
                     ? 'Camera access blocked'
@@ -195,7 +200,8 @@ export default function ScannerOverlay({
                   style={styles.permManualBtn}
                   onPress={() => setManualMode(true)}
                 >
-                  <Text style={styles.permManualTxt}>⌨️ Type IMEI or barcode instead</Text>
+                  <Ionicons name="keypad-outline" size={14} color="#4B2FC4" />
+                  <Text style={styles.permManualTxt}>Type IMEI or barcode instead</Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -225,8 +231,9 @@ export default function ScannerOverlay({
 
                 {/* Secondary note — honest about camera limitation */}
                 <View style={styles.noteBox}>
+                  <Ionicons name="camera-outline" size={13} color="rgba(255,255,255,0.75)" style={styles.noteIcon} />
                   <Text style={styles.noteText}>
-                    📷 Camera reads barcodes only — tap <Text style={styles.noteHighlight}>⌨️ Type</Text> above to enter IMEI
+                    Camera reads barcodes only — tap <Text style={styles.noteHighlight}>Type</Text> above to enter IMEI
                   </Text>
                 </View>
 
@@ -295,7 +302,7 @@ const styles = StyleSheet.create({
   closeBtn: { paddingVertical: 6, paddingHorizontal: 4, minWidth: 80 },
   closeTxt: { color: '#fff', fontSize: 15, fontWeight: '500' },
   title:    { color: '#fff', fontSize: 16, fontWeight: '700', textAlign: 'center', flex: 1 },
-  modeBtn:  { minWidth: 80, alignItems: 'flex-end' },
+  modeBtn:  { minWidth: 80, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4 },
   modeTxt:  { color: '#4B2FC4', fontSize: 13, fontWeight: '600' },
 
   /* Camera */
@@ -306,7 +313,6 @@ const styles = StyleSheet.create({
     flex: 1, justifyContent: 'center', alignItems: 'center',
     gap: 14, paddingHorizontal: 32, backgroundColor: '#111',
   },
-  permIcon:  { fontSize: 48 },
   permTitle: { color: '#fff', fontSize: 18, fontWeight: '700', textAlign: 'center' },
   permText:  { color: 'rgba(255,255,255,0.7)', fontSize: 14, textAlign: 'center', lineHeight: 20 },
   permBtn: {
@@ -320,6 +326,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12, paddingHorizontal: 20,
     borderRadius: 10,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)',
+    flexDirection: 'row', alignItems: 'center', gap: 6,
   },
   permManualTxt: { color: '#4B2FC4', fontSize: 14, fontWeight: '600' },
 
@@ -353,8 +360,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 12,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
   },
-  noteText:      { color: 'rgba(255,255,255,0.75)', fontSize: 12, textAlign: 'center', lineHeight: 18 },
+  noteIcon:      { flexShrink: 0 },
+  noteText:      { flexShrink: 1, color: 'rgba(255,255,255,0.75)', fontSize: 12, textAlign: 'center', lineHeight: 18 },
   noteHighlight: { color: '#4B2FC4', fontWeight: '700' },
 
   feedbackBox: {

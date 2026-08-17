@@ -4,6 +4,7 @@ import {
   RefreshControl, ActivityIndicator, TouchableOpacity, Alert, Linking,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import {
   notificationsApi, Notification, AttentionItems,
 } from '../../api/notifications';
@@ -14,12 +15,12 @@ import { colors } from '../../theme/colors';
 const WEBSITE_URL = process.env.EXPO_PUBLIC_PAYMENT_URL || 'https://msms-app.site';
 const WEBSITE_LABEL = WEBSITE_URL.replace(/^https?:\/\//, '');
 
-function typeIcon(type: string) {
-  if (type === 'LOW_STOCK')              return '📉';
-  if (type === 'SALE_RECORDED')          return '🧾';
-  if (type === 'PURCHASE_RECORDED')      return '📦';
-  if (type === 'PURCHASE_ORDER_RECEIVED') return '📥';
-  return '🔔';
+function typeIcon(type: string): keyof typeof Ionicons.glyphMap {
+  if (type === 'LOW_STOCK')              return 'trending-down-outline';
+  if (type === 'SALE_RECORDED')          return 'receipt-outline';
+  if (type === 'PURCHASE_RECORDED')      return 'cube-outline';
+  if (type === 'PURCHASE_ORDER_RECEIVED') return 'download-outline';
+  return 'notifications-outline';
 }
 
 function ordinal(n: number) {
@@ -142,7 +143,7 @@ export default function NotificationsScreen() {
                   onPress={() => navigation.navigate('CustomerStatement', { phone: it.customerPhone, name: it.customerName })}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.attentionIcon}>⏰</Text>
+                  <Ionicons name="alarm-outline" size={20} color={colors.primary} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.attentionTitle}>
                       {ordinal(it.installmentNumber)} installment overdue — {it.customerName || it.customerPhone}
@@ -162,7 +163,7 @@ export default function NotificationsScreen() {
                   onPress={() => navigation.navigate('CustomerStatement', { phone: it.customerPhone, name: it.customerName })}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.attentionIcon}>🔔</Text>
+                  <Ionicons name="notifications-outline" size={20} color={colors.primary} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.attentionTitle}>
                       {ordinal(it.installmentNumber)} installment due soon — {it.customerName || it.customerPhone}
@@ -181,7 +182,7 @@ export default function NotificationsScreen() {
                   onPress={() => Linking.openURL(WEBSITE_URL).catch(() => {})}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.attentionIcon}>💳</Text>
+                  <Ionicons name="card-outline" size={20} color={colors.primary} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.attentionTitle}>
                       License installment #{attention!.upcomingLicenseInstallment.installmentNumber} due soon
@@ -201,7 +202,7 @@ export default function NotificationsScreen() {
                   onPress={() => navigation.navigate('CustomerProfile', { id: it.customer.id })}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.attentionIcon}>📅</Text>
+                  <Ionicons name="calendar-outline" size={20} color={colors.primary} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.attentionTitle}>
                       Follow-up overdue — {it.customer.name}
@@ -226,7 +227,7 @@ export default function NotificationsScreen() {
             onPress={() => handleTapNotification(item)}
             activeOpacity={0.7}
           >
-            <Text style={styles.icon}>{typeIcon(item.type)}</Text>
+            <Ionicons name={typeIcon(item.type)} size={20} color={colors.primary} />
             <View style={{ flex: 1 }}>
               <Text style={styles.cardTitle}>{item.title}</Text>
               <Text style={styles.cardMessage}>{item.message}</Text>
@@ -273,7 +274,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#EDE6FB', borderRadius: 12, padding: 14,
     borderWidth: 1, borderColor: '#C9BEF2', marginBottom: 10,
   },
-  attentionIcon:  { fontSize: 20 },
   attentionTitle: { fontSize: 13, fontWeight: '600', color: colors.text },
   attentionSub:   { fontSize: 11, color: colors.textMuted, marginTop: 2 },
 
@@ -283,7 +283,6 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: colors.border, marginBottom: 10,
   },
   cardUnread:  { backgroundColor: '#EDE6FB', borderColor: colors.primary + '40' },
-  icon:        { fontSize: 20 },
   cardTitle:   { fontSize: 14, fontWeight: '600', color: colors.text },
   cardMessage: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   cardTime:    { fontSize: 10, color: colors.textMuted, marginTop: 4 },

@@ -4,6 +4,7 @@ import {
   TouchableOpacity, Alert, Linking,
   KeyboardAvoidingView, Platform,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Input } from '../../components/Inputs';
 import { Button } from '../../components/Buttons';
 import { useAuth } from '../../context/AuthContext';
@@ -72,7 +73,8 @@ export default function TrialExpiredScreen() {
         {isInstallmentOverdue && installmentPlan?.overdueInstallment ? (
           <View style={styles.card}>
             <View style={styles.lockBadge}>
-              <Text style={styles.lockBadgeText}>🔒 Installment Overdue</Text>
+              <Ionicons name="lock-closed-outline" size={13} color={colors.danger} />
+              <Text style={styles.lockBadgeText}>Installment Overdue</Text>
             </View>
             <Text style={styles.cardTitle}>
               Installment #{installmentPlan.overdueInstallment.installmentNumber} Is Overdue
@@ -89,7 +91,8 @@ export default function TrialExpiredScreen() {
           <>
             <View style={styles.card}>
               <View style={styles.lockBadge}>
-                <Text style={styles.lockBadgeText}>🔒 Trial Ended</Text>
+                <Ionicons name="lock-closed-outline" size={13} color={colors.danger} />
+                <Text style={styles.lockBadgeText}>Trial Ended</Text>
               </View>
               <Text style={styles.cardTitle}>Your 5-Day Trial Has Ended</Text>
               <Text style={styles.cardSub}>
@@ -120,7 +123,10 @@ export default function TrialExpiredScreen() {
 
             {awaitingFirstApproval ? (
               <View style={styles.installmentCard}>
-                <Text style={styles.installmentTitle}>⏳ Payment Under Review</Text>
+                <View style={styles.installmentTitleRow}>
+                  <Ionicons name="hourglass-outline" size={16} color={colors.text} />
+                  <Text style={styles.installmentTitle}>Payment Under Review</Text>
+                </View>
                 <Text style={styles.installmentSub}>
                   We received your first installment payment and are verifying it. You'll be unlocked
                   automatically as soon as it's approved — usually within a few hours.
@@ -167,6 +173,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#EDE6FB', borderRadius: 8, paddingVertical: 7,
     paddingHorizontal: 12, alignSelf: 'flex-start', marginBottom: 16,
     borderWidth: 1, borderColor: '#C9BEF2',
+    flexDirection: 'row', alignItems: 'center', gap: 6,
   },
   lockBadgeText: { fontSize: 13, fontWeight: '600', color: colors.danger },
 
@@ -178,6 +185,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card, borderRadius: 16, padding: 20,
     borderWidth: 1, borderColor: colors.border, marginBottom: 20,
   },
+  installmentTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   installmentTitle: { fontSize: 15, fontWeight: '700', color: colors.text, marginBottom: 6 },
   installmentSub:   { fontSize: 13, color: colors.textMuted, lineHeight: 19, marginBottom: 16 },
   installmentBtn: {

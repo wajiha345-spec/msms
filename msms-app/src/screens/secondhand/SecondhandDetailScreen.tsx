@@ -4,6 +4,7 @@ import {
   TouchableOpacity, ActivityIndicator, Alert, Linking
 } from 'react-native';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { secondhandApi, SecondhandRecord } from '../../api/secondhand';
 import { Badge }  from '../../components/Badge';
 import { Button } from '../../components/Buttons';
@@ -87,7 +88,8 @@ export default function SecondhandDetailScreen() {
             style={styles.callBtn}
             onPress={() => Linking.openURL(`tel:${record.sellerPhone}`)}
           >
-            <Text style={styles.callBtnText}>📞 Call Seller</Text>
+            <Ionicons name="call-outline" size={14} color={colors.success} />
+            <Text style={styles.callBtnText}>Call Seller</Text>
           </TouchableOpacity>
         </View>
 
@@ -193,6 +195,7 @@ const styles = StyleSheet.create({
     borderWidth:     1,
     borderColor:     '#C9BEF2',
     alignItems:      'center',
+    flexDirection:   'row', justifyContent: 'center', gap: 6,
   },
   callBtnText:  { color: colors.success, fontWeight: '600', fontSize: 14 },
   photosRow:    { flexDirection: 'row', gap: 10 },

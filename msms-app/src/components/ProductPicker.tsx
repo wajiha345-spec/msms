@@ -3,6 +3,7 @@ import {
   View, Text, TouchableOpacity, FlatList,
   TextInput, Modal, StyleSheet, ActivityIndicator
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { productsApi, Product } from '../api/products';
 import { Badge }  from './Badge';
 import { colors } from '../theme/colors';
@@ -84,7 +85,7 @@ export function ProductPicker({
           {/* Manual entry row — always visible at top */}
           {onManualEntry && (
             <TouchableOpacity style={styles.manualRow} onPress={handleManual}>
-              <Text style={styles.manualIcon}>✏️</Text>
+              <Ionicons name="create-outline" size={22} color={colors.primary} style={styles.manualIcon} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.manualTitle}>
                   {search.trim() ? `Add "${search.trim()}" manually` : 'Enter product manually'}
@@ -182,7 +183,7 @@ const styles = StyleSheet.create({
     padding: 14, backgroundColor: '#EDE6FB',
     borderBottomWidth: 1, borderBottomColor: '#C9BEF2',
   },
-  manualIcon:  { fontSize: 22 },
+  manualIcon:  {},
   manualTitle: { fontSize: 14, fontWeight: '600', color: '#34208C' },
   manualSub:   { fontSize: 12, color: '#4B2FC4', marginTop: 1 },
   manualArrow: { fontSize: 20, color: '#34208C' },

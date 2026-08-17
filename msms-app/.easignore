@@ -1,0 +1,52 @@
+# Once this file exists, EAS build stops falling back to .gitignore for
+# upload exclusions, so it needs to repeat those patterns plus the extra
+# local-only build artifacts that were bloating the upload archive (an
+# old 711MB archive included leftover Electron release folders and .apk
+# files that have nothing to do with an Android build).
+
+# dependencies (EAS installs these itself)
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+# generated native folders
+/ios
+/android
+
+# Electron desktop build output/artifacts (not part of an Android build)
+/release
+/release2
+/release_*
+*.apk
+*.exe

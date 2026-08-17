@@ -12,6 +12,7 @@ import {
   Platform,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
 import { productsApi, Product } from "../../api/products";
 import { Badge } from "../../components/Badge";
 import { colors } from "../../theme/colors";
@@ -135,14 +136,16 @@ export default function ProductListScreen() {
             onPress={() => navigation.navigate("AddProduct", { id: item.id })}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Text style={styles.actionEdit}>✏️ Edit</Text>
+            <Ionicons name="create-outline" size={13} color={colors.primary} />
+            <Text style={styles.actionEdit}>Edit</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionBtn}
             onPress={() => confirmDeleteFromList(item)}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Text style={styles.actionDelete}>🗑 Delete</Text>
+            <Ionicons name="trash-outline" size={13} color={colors.danger} />
+            <Text style={styles.actionDelete}>Delete</Text>
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -184,13 +187,15 @@ export default function ProductListScreen() {
             style={styles.actionBtn}
             onPress={() => navigation.navigate("AddProduct", { id: item.id })}
           >
-            <Text style={styles.actionEdit}>✏️ Edit</Text>
+            <Ionicons name="create-outline" size={13} color={colors.primary} />
+            <Text style={styles.actionEdit}>Edit</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionBtn}
             onPress={() => confirmDeleteFromList(item)}
           >
-            <Text style={styles.actionDelete}>🗑 Delete</Text>
+            <Ionicons name="trash-outline" size={13} color={colors.danger} />
+            <Text style={styles.actionDelete}>Delete</Text>
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -380,7 +385,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
-  actionBtn: { paddingHorizontal: 4 },
+  actionBtn: { paddingHorizontal: 4, flexDirection: "row", alignItems: "center", gap: 4 },
   actionEdit: { fontSize: 13, color: colors.primary, fontWeight: "500" },
   actionDelete: { fontSize: 13, color: colors.danger, fontWeight: "500" },
 

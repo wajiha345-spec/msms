@@ -10,6 +10,7 @@ import {
   Alert,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
 import { secondhandApi, SecondhandRecord } from "../../api/secondhand";
 import { Badge } from "../../components/Badge";
 import { colors } from "../../theme/colors";
@@ -65,7 +66,10 @@ export default function SecondhandListScreen() {
           </View>
         </View>
         <View style={styles.cardBottom}>
-          <Text style={styles.seller}>👤 {item.sellerName}</Text>
+          <View style={styles.sellerRow}>
+            <Ionicons name="person-outline" size={11} color={colors.textMuted} />
+            <Text style={styles.seller}>{item.sellerName}</Text>
+          </View>
           <Text style={styles.date}>
             {new Date(item.createdAt).toLocaleDateString("en-PK")}
           </Text>
@@ -104,7 +108,8 @@ export default function SecondhandListScreen() {
         ]}
         onPress={() => navigation.navigate("ImeiSearch")}
       >
-        <Text style={styles.addBtnText}>🔍 IMEI</Text>
+        <Ionicons name="search-outline" size={14} color="#fff" />
+        <Text style={styles.addBtnText}>IMEI</Text>
       </TouchableOpacity>
 
       {/* Filter tabs */}
@@ -177,6 +182,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
+    flexDirection: "row", alignItems: "center", gap: 5,
   },
   addBtnText: { color: "#fff", fontWeight: "600", fontSize: 14 },
   filterRow: {
@@ -221,6 +227,7 @@ const styles = StyleSheet.create({
   right: { alignItems: "flex-end", gap: 6 },
   price: { fontSize: 15, fontWeight: "700", color: colors.text },
   cardBottom: { flexDirection: "row", justifyContent: "space-between" },
+  sellerRow: { flexDirection: "row", alignItems: "center", gap: 4 },
   seller: { fontSize: 12, color: colors.textMuted },
   date: { fontSize: 12, color: colors.textMuted },
   empty: { alignItems: "center", paddingTop: 60 },

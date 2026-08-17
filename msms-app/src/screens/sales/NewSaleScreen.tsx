@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { openUrl } from '../../utils/openUrl';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { Input }           from '../../components/Inputs';
 import { Button }          from '../../components/Buttons';
 import { ProductPicker }   from '../../components/ProductPicker';
@@ -142,7 +143,7 @@ export default function NewSaleScreen() {
 
       if (p.stock <= 0) {
         Alert.alert(
-          '⚠️ Out of Stock',
+          'Out of Stock',
           `"${p.name}" (${p.brand}) was found but has 0 units in stock.`,
           [{ text: 'OK' }]
         );
@@ -166,7 +167,7 @@ export default function NewSaleScreen() {
     } catch (e: any) {
       if (e?.response?.status === 404) {
         Alert.alert(
-          '❌ Product Not Found',
+          'Product Not Found',
           `Scanned "${code}" — no product with this IMEI/barcode exists in inventory.\n\nAdd it first via the Products tab.`,
           [{ text: 'OK' }]
         );
@@ -309,7 +310,7 @@ export default function NewSaleScreen() {
         onScanned={handleScanCode}
         onClose={() => setScannerOpen(false)}
         title="Scan Barcode to Find Product"
-        hint="Point at barcode — tap ⌨️ Type for IMEI"
+        hint="Point at barcode — tap Type for IMEI"
       />
 
       {Platform.OS === 'web' ? (
@@ -354,14 +355,14 @@ export default function NewSaleScreen() {
           {scanLoading ? (
             <ActivityIndicator color="#fff" size="small" />
           ) : (
-            <Text style={styles.scanBannerIcon}>📷</Text>
+            <Ionicons name="camera-outline" size={24} color="#fff" style={styles.scanBannerIcon} />
           )}
           <View style={{ flex: 1 }}>
             <Text style={styles.scanBannerTitle}>
               {scanLoading ? 'Looking up product…' : 'Scan barcode or type IMEI'}
             </Text>
             <Text style={styles.scanBannerSub}>
-              {scanLoading ? 'Please wait…' : 'Camera reads barcodes — use ⌨️ Type for IMEI'}
+              {scanLoading ? 'Please wait…' : 'Camera reads barcodes — use Type for IMEI'}
             </Text>
           </View>
           {!scanLoading && <Text style={styles.scanBannerArrow}>›</Text>}
@@ -673,7 +674,7 @@ const styles = StyleSheet.create({
     padding:         16,
     marginBottom:    12,
   },
-  scanBannerIcon:  { fontSize: 28 },
+  scanBannerIcon:  {},
   scanBannerTitle: { color: '#fff', fontSize: 15, fontWeight: '700' },
   scanBannerSub:   { color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 2 },
   scanBannerArrow: { color: '#fff', fontSize: 22, fontWeight: '300' },

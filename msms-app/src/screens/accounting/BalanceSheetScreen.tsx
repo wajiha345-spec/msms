@@ -73,7 +73,7 @@ export default function BalanceSheetScreen() {
 
         <View style={[styles.statusStrip, { backgroundColor: sheet.isBalanced ? colors.success + '18' : colors.danger + '18' }]}>
           <Text style={[styles.statusText, { color: sheet.isBalanced ? colors.success : colors.danger }]}>
-            {sheet.isBalanced ? '✓ Assets = Liabilities + Equity' : '⚠ Balance sheet does not balance'}
+            {sheet.isBalanced ? '✓ Assets = Liabilities + Equity' : 'Balance sheet does not balance'}
           </Text>
         </View>
       </ScrollView>

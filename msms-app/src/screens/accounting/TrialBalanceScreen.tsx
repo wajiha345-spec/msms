@@ -84,7 +84,7 @@ export default function TrialBalanceScreen() {
 
       <View style={[styles.statusStrip, { backgroundColor: isBalanced ? colors.success + '18' : colors.danger + '18' }]}>
         <Text style={[styles.statusText, { color: isBalanced ? colors.success : colors.danger }]}>
-          {isBalanced ? '✓ Books are balanced' : '⚠ Books are not balanced'}
+          {isBalanced ? '✓ Books are balanced' : 'Books are not balanced'}
         </Text>
       </View>
     </View>

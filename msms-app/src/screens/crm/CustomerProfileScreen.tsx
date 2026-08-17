@@ -5,6 +5,7 @@ import {
   KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { Input }  from '../../components/Inputs';
 import { Button } from '../../components/Buttons';
 import { Badge }  from '../../components/Badge';
@@ -24,11 +25,11 @@ function statusBadgeType(status: string): 'success' | 'info' | 'warning' | 'defa
   return 'default';
 }
 
-function typeIcon(type: string) {
-  if (type === 'CALL')       return '📞';
-  if (type === 'VISIT')      return '🏬';
-  if (type === 'FOLLOW_UP')  return '⏰';
-  return '📝';
+function typeIcon(type: string): keyof typeof Ionicons.glyphMap {
+  if (type === 'CALL')       return 'call-outline';
+  if (type === 'VISIT')      return 'business-outline';
+  if (type === 'FOLLOW_UP')  return 'alarm-outline';
+  return 'create-outline';
 }
 
 function fmtDate(d: string | null | undefined) {
@@ -165,8 +166,18 @@ export default function CustomerProfileScreen() {
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.contactCard}>
           <Text style={styles.phone}>{customer.phone}</Text>
-          {customer.email && <Text style={styles.contactLine}>✉️ {customer.email}</Text>}
-          {customer.address && <Text style={styles.contactLine}>📍 {customer.address}</Text>}
+          {customer.email && (
+            <View style={styles.contactLineRow}>
+              <Ionicons name="mail-outline" size={12} color={colors.textMuted} />
+              <Text style={styles.contactLine}>{customer.email}</Text>
+            </View>
+          )}
+          {customer.address && (
+            <View style={styles.contactLineRow}>
+              <Ionicons name="location-outline" size={12} color={colors.textMuted} />
+              <Text style={styles.contactLine}>{customer.address}</Text>
+            </View>
+          )}
           {customer.tags.length > 0 && (
             <View style={styles.tagRow}>
               {customer.tags.map((t) => <Badge key={t} label={t} type="default" />)}
@@ -244,7 +255,7 @@ export default function CustomerProfileScreen() {
         {interactions.map((it) => (
           <View key={it.id} style={styles.interactionCard}>
             <View style={styles.interactionHeader}>
-              <Text style={styles.interactionIcon}>{typeIcon(it.type)}</Text>
+              <Ionicons name={typeIcon(it.type)} size={16} color={colors.primary} style={styles.interactionIcon} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.interactionText}>{it.text}</Text>
                 <Text style={styles.interactionMeta}>
@@ -295,7 +306,8 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: colors.border, marginBottom: 16,
   },
   phone:       { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 4 },
-  contactLine: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  contactLineRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  contactLine: { fontSize: 13, color: colors.textMuted },
   tagRow:      { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
 
   sectionLabel: {
@@ -317,7 +329,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: colors.border, marginBottom: 10,
   },
   interactionHeader: { flexDirection: 'row', gap: 10 },
-  interactionIcon:   { fontSize: 20 },
+  interactionIcon:   { marginTop: 2 },
   interactionText:   { fontSize: 14, color: colors.text, fontWeight: '500' },
   interactionMeta:   { fontSize: 11, color: colors.textMuted, marginTop: 4 },
   interactionActions: {

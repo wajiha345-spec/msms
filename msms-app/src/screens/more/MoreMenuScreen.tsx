@@ -83,7 +83,7 @@ export default function MoreMenuScreen() {
   function handleProFeature(name: string, navigate: () => void) {
     if (!isPro) {
       Alert.alert(
-        '⭐ PRO Feature',
+        'PRO Feature',
         `"${name}" is only available on the PRO plan.\n\nContact us to upgrade your license.`,
         [{ text: 'OK' }]
       );

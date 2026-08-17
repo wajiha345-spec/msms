@@ -4,6 +4,7 @@ import {
   RefreshControl, ActivityIndicator, Alert
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { purchasesApi, Purchase } from '../../api/purchases';
 import { Button } from '../../components/Buttons';
 import { useAuth } from '../../context/AuthContext';
@@ -16,7 +17,7 @@ export default function PurchasesListScreen() {
   if (!hasProAccess) {
     return (
       <View style={styles.proGate}>
-        <Text style={styles.proGateIcon}>🔒</Text>
+        <Ionicons name="lock-closed-outline" size={40} color={colors.textMuted} style={styles.proGateIcon} />
         <Text style={styles.proGateTitle}>PRO Feature</Text>
         <Text style={styles.proGateSub}>
           Purchase recording is available on the PRO plan.{'\n'}
@@ -52,7 +53,10 @@ export default function PurchasesListScreen() {
             <Text style={styles.productName}>{item.product.name}</Text>
             <Text style={styles.brand}>{item.product.brand}</Text>
             {item.supplierName && (
-              <Text style={styles.supplier}>🏪 {item.supplierName}</Text>
+              <View style={styles.supplierRow}>
+                <Ionicons name="storefront-outline" size={11} color={colors.textMuted} />
+                <Text style={styles.supplier}>{item.supplierName}</Text>
+              </View>
             )}
           </View>
           <View style={styles.right}>
@@ -173,7 +177,8 @@ const styles = StyleSheet.create({
   cardTop:     { flexDirection: 'row', marginBottom: 8 },
   productName: { fontSize: 15, fontWeight: '600', color: colors.text },
   brand:       { fontSize: 12, color: colors.textMuted, marginTop: 2 },
-  supplier:    { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+  supplierRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  supplier:    { fontSize: 12, color: colors.textMuted },
   right:       { alignItems: 'flex-end' },
   total:       { fontSize: 16, fontWeight: '700', color: colors.text },
   qty:         { fontSize: 12, color: colors.textMuted, marginTop: 2 },
@@ -183,7 +188,7 @@ const styles = StyleSheet.create({
   emptyText:   { fontSize: 16, color: colors.textMuted, fontWeight: '500' },
 
   proGate: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, backgroundColor: colors.background },
-  proGateIcon:  { fontSize: 48, marginBottom: 16 },
+  proGateIcon:  { marginBottom: 16 },
   proGateTitle: { fontSize: 20, fontWeight: '700', color: colors.text, marginBottom: 10 },
   proGateSub:   { fontSize: 14, color: colors.textMuted, textAlign: 'center', lineHeight: 22 },
 });

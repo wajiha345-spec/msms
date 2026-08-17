@@ -94,7 +94,7 @@ function DesktopSidebar({ state, navigation }: BottomTabBarProps) {
   function handleFeaturePress(item: DesktopNavItem) {
     if (!isPro) {
       Alert.alert(
-        '⭐ PRO Feature',
+        'PRO Feature',
         `"${item.label}" is only available on the PRO plan.\n\nContact us to upgrade your license.`,
         [{ text: 'OK' }]
       );

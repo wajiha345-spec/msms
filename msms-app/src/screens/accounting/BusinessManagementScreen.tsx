@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 
 interface MenuItemProps {
-  icon: string;
+  icon: keyof typeof Ionicons.glyphMap;
   label: string;
   subtitle: string;
   onPress: () => void;
@@ -13,7 +14,7 @@ interface MenuItemProps {
 function MenuItem({ icon, label, subtitle, onPress }: MenuItemProps) {
   return (
     <TouchableOpacity style={styles.item} onPress={onPress} activeOpacity={0.7}>
-      <Text style={styles.itemIcon}>{icon}</Text>
+      <Ionicons name={icon} size={22} color={colors.primary} style={styles.itemIcon} />
       <View style={styles.itemText}>
         <Text style={styles.itemLabel}>{label}</Text>
         <Text style={styles.itemSub}>{subtitle}</Text>
@@ -40,19 +41,19 @@ export default function BusinessManagementScreen() {
         <Text style={styles.sectionLabel}>Accounting</Text>
 
         <MenuItem
-          icon="📒"
+          icon="list-outline"
           label="Chart of Accounts"
           subtitle="View and manage your accounts"
           onPress={() => navigation.navigate('ChartOfAccounts')}
         />
         <MenuItem
-          icon="📝"
+          icon="create-outline"
           label="Journal Entries"
           subtitle="Record and review double-entry transactions"
           onPress={() => navigation.navigate('JournalEntries')}
         />
         <MenuItem
-          icon="⚖️"
+          icon="scale-outline"
           label="Trial Balance"
           subtitle="Debit/credit totals across all accounts"
           onPress={() => navigation.navigate('TrialBalance')}
@@ -61,25 +62,25 @@ export default function BusinessManagementScreen() {
         <Text style={styles.sectionLabel}>Reports</Text>
 
         <MenuItem
-          icon="📊"
+          icon="bar-chart-outline"
           label="Balance Sheet"
           subtitle="Assets, liabilities & equity as of today"
           onPress={() => navigation.navigate('BalanceSheet')}
         />
         <MenuItem
-          icon="📈"
+          icon="stats-chart-outline"
           label="Profit & Loss"
           subtitle="Income vs expense for a date range"
           onPress={() => navigation.navigate('ProfitLoss')}
         />
         <MenuItem
-          icon="💧"
+          icon="water-outline"
           label="Cash Flow"
           subtitle="Cash movement by category for a date range"
           onPress={() => navigation.navigate('CashFlow')}
         />
         <MenuItem
-          icon="🔒"
+          icon="lock-closed-outline"
           label="Closing Entry"
           subtitle="Close a period's income/expense into equity"
           onPress={() => navigation.navigate('ClosingEntry')}
@@ -114,7 +115,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card, borderRadius: 12, padding: 14,
     marginBottom: 10, borderWidth: 1, borderColor: colors.border,
   },
-  itemIcon:  { fontSize: 26, marginRight: 14 },
+  itemIcon:  { marginRight: 14 },
   itemText:  { flex: 1 },
   itemLabel: { fontSize: 15, fontWeight: '600', color: colors.text },
   itemSub:   { fontSize: 12, color: colors.textMuted, marginTop: 2 },

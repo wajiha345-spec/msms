@@ -4,6 +4,7 @@ import {
   TextInput, Alert, ActivityIndicator, FlatList,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { salesApi } from '../../api/sales';
 import { parseSalesHistoryCSV, SalesHistoryCsvRow } from '../../utils/salesHistoryCsvParser';
 import { parseDDMMYYYY } from '../../utils/format';
@@ -99,7 +100,10 @@ export default function ImportSalesHistoryScreen() {
       {step === 'paste' && (
         <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
           <View style={styles.infoBox}>
-            <Text style={styles.infoTitle}>📋 How to import</Text>
+            <View style={styles.infoTitleRow}>
+              <Ionicons name="list-outline" size={15} color="#34208C" />
+              <Text style={styles.infoTitle}>How to import</Text>
+            </View>
             <Text style={styles.infoText}>
               Use this to bring in past sales/customer records from a previous app or spreadsheet.{'\n\n'}
               1. Open Excel or Google Sheets{'\n'}
@@ -205,7 +209,7 @@ export default function ImportSalesHistoryScreen() {
       {/* ── Step 3: Done ── */}
       {step === 'done' && result && (
         <View style={styles.doneBox}>
-          <Text style={styles.doneIcon}>✅</Text>
+          <Ionicons name="checkmark-circle-outline" size={64} color={colors.primary} style={styles.doneIcon} />
           <Text style={styles.doneTitle}>{result.created} sales imported!</Text>
 
           {result.errors.length > 0 && (
@@ -253,7 +257,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#EDE6FB', borderRadius: 12, padding: 14,
     borderWidth: 1, borderColor: '#C9BEF2', marginBottom: 12,
   },
-  infoTitle: { fontSize: 14, fontWeight: '700', color: '#34208C', marginBottom: 6 },
+  infoTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
+  infoTitle: { fontSize: 14, fontWeight: '700', color: '#34208C' },
   infoText:  { fontSize: 13, color: '#34208C', lineHeight: 20 },
   mono:      { fontFamily: 'monospace', fontSize: 12 },
 
@@ -321,7 +326,7 @@ const styles = StyleSheet.create({
   doneBox: {
     flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32,
   },
-  doneIcon:  { fontSize: 64, marginBottom: 16 },
+  doneIcon:  { marginBottom: 16 },
   doneTitle: { fontSize: 22, fontWeight: '800', color: colors.text, marginBottom: 12, textAlign: 'center' },
   doneNote:  { fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 20, marginTop: 12 },
   doneErrors: {

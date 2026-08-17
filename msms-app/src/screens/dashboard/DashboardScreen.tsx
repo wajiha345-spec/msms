@@ -30,7 +30,7 @@ function SimpleHomeScreen({ user, logout }: { user: any; logout: () => void }) {
         <View style={styles.headerLeft}>
           <Image source={require('../../../assets/smartshop-mark.png')} style={styles.headerLogo} />
           <View>
-            <Text style={styles.greeting}>Hi, {user?.username} 👋</Text>
+            <Text style={styles.greeting}>Hi, {user?.username}</Text>
             <Text style={styles.liveText}>{user?.shopName}</Text>
           </View>
         </View>
@@ -44,7 +44,7 @@ function SimpleHomeScreen({ user, logout }: { user: any; logout: () => void }) {
           activeOpacity={0.85}
           onPress={() => navigation.navigate('SalesTab', { screen: 'NewSale' })}
         >
-          <Text style={simpleStyles.newSaleIcon}>💰</Text>
+          <Ionicons name="cash-outline" size={28} color="#fff" style={simpleStyles.newSaleIcon} />
           <Text style={simpleStyles.newSaleLabel}>New Sale</Text>
           <Text style={simpleStyles.newSaleArrow}>›</Text>
         </TouchableOpacity>
@@ -53,12 +53,12 @@ function SimpleHomeScreen({ user, logout }: { user: any; logout: () => void }) {
           activeOpacity={0.85}
           onPress={() => navigation.navigate('SalesTab', { screen: 'SalesList' })}
         >
-          <Text style={simpleStyles.salesIcon}>🧾</Text>
+          <Ionicons name="receipt-outline" size={24} color={colors.text} style={simpleStyles.salesIcon} />
           <Text style={simpleStyles.salesLabel}>View Sales &amp; Invoices</Text>
           <Text style={simpleStyles.salesArrow}>›</Text>
         </TouchableOpacity>
         <View style={simpleStyles.upgradeBanner}>
-          <Text style={simpleStyles.upgradeIcon}>⭐</Text>
+          <Ionicons name="star-outline" size={24} color="#34208C" style={simpleStyles.upgradeIcon} />
           <View style={{ flex: 1 }}>
             <Text style={simpleStyles.upgradeTitle}>Upgrade to PRO</Text>
             <Text style={simpleStyles.upgradeSub}>
@@ -78,7 +78,7 @@ const simpleStyles = StyleSheet.create({
     backgroundColor: colors.primary, borderRadius: 14,
     padding: 20, marginBottom: 12,
   },
-  newSaleIcon:  { fontSize: 28, marginRight: 14 },
+  newSaleIcon:  { marginRight: 14 },
   newSaleLabel: { flex: 1, fontSize: 17, fontWeight: '700', color: '#fff' },
   newSaleArrow: { fontSize: 24, color: 'rgba(255,255,255,0.7)' },
   salesBtn: {
@@ -87,7 +87,7 @@ const simpleStyles = StyleSheet.create({
     padding: 18, marginBottom: 20,
     borderWidth: 1, borderColor: colors.border,
   },
-  salesIcon:  { fontSize: 24, marginRight: 14 },
+  salesIcon:  { marginRight: 14 },
   salesLabel: { flex: 1, fontSize: 15, fontWeight: '600', color: colors.text },
   salesArrow: { fontSize: 22, color: colors.textMuted },
   upgradeBanner: {
@@ -95,7 +95,7 @@ const simpleStyles = StyleSheet.create({
     backgroundColor: '#EDE6FB', borderRadius: 14, padding: 16,
     borderWidth: 1, borderColor: '#C9BEF2',
   },
-  upgradeIcon:  { fontSize: 24 },
+  upgradeIcon:  {},
   upgradeTitle: { fontSize: 14, fontWeight: '700', color: '#34208C', marginBottom: 4 },
   upgradeSub:   { fontSize: 13, color: '#34208C', lineHeight: 19 },
 });
@@ -195,7 +195,7 @@ function ProDashboard() {
           <Image source={require('../../../assets/smartshop-mark.png')} style={styles.headerLogo} />
           <View>
             <Text style={styles.greeting}>
-              Good {getTimeOfDay()}, {user?.username} 👋
+              Good {getTimeOfDay()}, {user?.username}
             </Text>
             <View style={styles.liveRow}>
               <View style={[
@@ -231,7 +231,7 @@ function ProDashboard() {
       {/* ── Installment alerts ── */}
       {installmentAlerts.length > 0 && (
         <>
-          <SectionLabel title="⚠️ Installments Due" />
+          <SectionLabel title="Installments Due" icon="warning-outline" />
           {installmentAlerts.map((alert) => (
             <View key={alert.saleId} style={styles.alertCard}>
               <View style={styles.alertTopRow}>
@@ -363,7 +363,10 @@ function ProDashboard() {
               </Text>
               <Text style={styles.saleInvoice}>{sale.invoiceNo}</Text>
               {sale.customerName && (
-                <Text style={styles.saleCustomer}>👤 {sale.customerName}</Text>
+                <View style={styles.saleCustomerRow}>
+                  <Ionicons name="person-outline" size={11} color={colors.textMuted} />
+                  <Text style={styles.saleCustomer}>{sale.customerName}</Text>
+                </View>
               )}
             </View>
             <View style={styles.saleRight}>
@@ -468,21 +471,27 @@ const trialStyles = StyleSheet.create({
   sub:   { fontSize: 12, color: colors.primary, opacity: 0.8, marginTop: 2, lineHeight: 16 },
 });
 
-function SectionLabel({ title }: { title: string }) {
+function SectionLabel({ title, icon }: { title: string; icon?: keyof typeof Ionicons.glyphMap }) {
   return (
-    <Text style={secStyles.label}>{title}</Text>
+    <View style={secStyles.row}>
+      {icon && <Ionicons name={icon} size={13} color={colors.textMuted} />}
+      <Text style={secStyles.label}>{title}</Text>
+    </View>
   );
 }
 const secStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    marginBottom:  10,
+    marginTop:     20,
+    paddingHorizontal: 16,
+  },
   label: {
     fontSize:      13,
     fontWeight:    '600',
     color:         colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom:  10,
-    marginTop:     20,
-    paddingHorizontal: 16,
   },
 });
 
@@ -580,7 +589,8 @@ const styles = StyleSheet.create({
   saleLeft:    { flex: 1 },
   saleName:    { fontSize: 14, fontWeight: '600', color: colors.text },
   saleInvoice: { fontSize: 10, color: colors.textMuted, fontFamily: 'monospace', marginTop: 2 },
-  saleCustomer:{ fontSize: 11, color: colors.textMuted, marginTop: 2 },
+  saleCustomerRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 2 },
+  saleCustomer:{ fontSize: 11, color: colors.textMuted },
   saleRight:   { alignItems: 'flex-end', justifyContent: 'center' },
   saleAmount:  { fontSize: 14, fontWeight: '700', color: colors.text },
   saleProfit:  { fontSize: 12, fontWeight: '500', marginTop: 2 },

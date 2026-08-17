@@ -16,6 +16,7 @@ import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ActivityIndicator, TouchableOpacity,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { openUrl } from '../utils/openUrl';
 import { imeiVerifyApi, ImeiVerifyResult, PtaStatusCode } from '../api/imeiVerify';
 import { colors } from '../theme/colors';
@@ -43,10 +44,10 @@ const PTA_COLORS: Record<PtaStatusCode, { bg: string; text: string; border: stri
   unknown:         { bg: '#f8fafc', text: '#64748b', border: '#e2e8f0' },
 };
 
-const RECOMMENDATION_META = {
-  accept:  { icon: '✅', text: 'Safe to accept',       bg: '#EDE6FB', border: '#C9BEF2', textColor: '#34208C' },
-  caution: { icon: '⚠️', text: 'Proceed with caution', bg: '#EDE6FB', border: '#C9BEF2', textColor: '#34208C' },
-  reject:  { icon: '🚫', text: 'DO NOT accept',         bg: '#EDE6FB', border: '#C9BEF2', textColor: '#34208C' },
+const RECOMMENDATION_META: Record<string, { icon: keyof typeof Ionicons.glyphMap; text: string; bg: string; border: string; textColor: string }> = {
+  accept:  { icon: 'checkmark-circle-outline', text: 'Safe to accept',       bg: '#EDE6FB', border: '#C9BEF2', textColor: '#34208C' },
+  caution: { icon: 'warning-outline',          text: 'Proceed with caution', bg: '#EDE6FB', border: '#C9BEF2', textColor: '#34208C' },
+  reject:  { icon: 'ban-outline',              text: 'DO NOT accept',        bg: '#EDE6FB', border: '#C9BEF2', textColor: '#34208C' },
 };
 
 export default function ImeiVerifyPanel({
@@ -102,7 +103,8 @@ export default function ImeiVerifyPanel({
   if (state === 'error') {
     return (
       <View style={styles.errorBox}>
-        <Text style={styles.errorText}>⚠️ Verification service unavailable — proceed manually</Text>
+        <Ionicons name="warning-outline" size={14} color="#34208C" />
+        <Text style={styles.errorText}>Verification service unavailable — proceed manually</Text>
         <TouchableOpacity onPress={runCheck}>
           <Text style={styles.retryLink}>Retry</Text>
         </TouchableOpacity>
@@ -122,7 +124,7 @@ export default function ImeiVerifyPanel({
 
       {/* ── Device info row ── */}
       <View style={styles.deviceRow}>
-        <Text style={styles.deviceIcon}>📱</Text>
+        <Ionicons name="phone-portrait-outline" size={26} color={colors.textMuted} />
         <View style={styles.deviceText}>
           {result.device.found ? (
             result.device.source === 'tac_prefix' ? (
@@ -188,15 +190,17 @@ export default function ImeiVerifyPanel({
       {/* ── IMEI validity warning ── */}
       {!result.isValid && (
         <View style={styles.warnRow}>
-          <Text style={styles.warnText}>⚠️ IMEI failed Luhn check — may be mis-typed</Text>
+          <Ionicons name="warning-outline" size={14} color="#34208C" />
+          <Text style={styles.warnText}>IMEI failed Luhn check — may be mis-typed</Text>
         </View>
       )}
 
       {/* ── Recommendation (secondhand mode only) ── */}
       {mode === 'secondhand' && (
         <View style={[styles.recBox, { backgroundColor: recMeta.bg, borderColor: recMeta.border }]}>
+          <Ionicons name={recMeta.icon} size={18} color={recMeta.textColor} />
           <Text style={[styles.recText, { color: recMeta.textColor }]}>
-            {recMeta.icon}  {recMeta.text}
+            {recMeta.text}
           </Text>
         </View>
       )}
@@ -204,10 +208,13 @@ export default function ImeiVerifyPanel({
       {/* ── Override for blocked/stolen (secondhand mode) ── */}
       {mode === 'secondhand' && isRejected && (
         <View style={styles.overrideBox}>
-          <Text style={styles.overrideWarning}>
-            🚫  This device is {result.pta.status === 'stolen' ? 'reported stolen' : 'blocked by PTA'}.
-            Accepting stolen or blocked phones is illegal and can result in serious consequences.
-          </Text>
+          <View style={styles.overrideWarningRow}>
+            <Ionicons name="ban-outline" size={16} color="#34208C" style={styles.overrideWarningIcon} />
+            <Text style={styles.overrideWarning}>
+              This device is {result.pta.status === 'stolen' ? 'reported stolen' : 'blocked by PTA'}.
+              Accepting stolen or blocked phones is illegal and can result in serious consequences.
+            </Text>
+          </View>
           <TouchableOpacity
             style={styles.overrideCheckRow}
             onPress={() => setOverrideConfirmed(v => !v)}
@@ -239,7 +246,7 @@ const styles = StyleSheet.create({
   errorBox: {
     backgroundColor: '#EDE6FB', borderRadius: 10, padding: 12,
     marginVertical: 8, borderWidth: 1, borderColor: '#C9BEF2',
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8,
   },
   errorText:  { fontSize: 12, color: '#34208C', flex: 1 },
   retryLink:  { fontSize: 12, color: colors.primary, fontWeight: '700', marginLeft: 8 },
@@ -255,7 +262,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 10,
     backgroundColor: colors.card, padding: 14,
   },
-  deviceIcon:    { fontSize: 28 },
   deviceText:    { flex: 1 },
   deviceName:    { fontSize: 15, fontWeight: '700', color: colors.text },
   deviceUnknown: { fontSize: 14, fontWeight: '600', color: colors.textMuted },
@@ -298,12 +304,14 @@ const styles = StyleSheet.create({
   warnRow: {
     backgroundColor: '#EDE6FB', padding: 10,
     borderTopWidth: 1, borderTopColor: '#C9BEF2',
+    flexDirection: 'row', alignItems: 'center', gap: 8,
   },
   warnText: { fontSize: 12, color: '#34208C' },
 
   // Recommendation
   recBox: {
     padding: 12, borderTopWidth: 1, borderTopColor: '#e2e8f0',
+    flexDirection: 'row', alignItems: 'center', gap: 8,
   },
   recText: { fontSize: 14, fontWeight: '700' },
 
@@ -313,7 +321,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 1, borderTopColor: '#C9BEF2',
     gap: 12,
   },
-  overrideWarning: { fontSize: 13, color: '#34208C', lineHeight: 19 },
+  overrideWarningRow: { flexDirection: 'row', gap: 8 },
+  overrideWarningIcon: { marginTop: 2 },
+  overrideWarning: { flex: 1, fontSize: 13, color: '#34208C', lineHeight: 19 },
   overrideCheckRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   checkbox: {
     width: 24, height: 24, borderRadius: 6,

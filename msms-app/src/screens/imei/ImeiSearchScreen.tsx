@@ -4,6 +4,7 @@ import {
   StyleSheet, TouchableOpacity, ActivityIndicator, Alert
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { imeiApi, ImeiSearchResult } from '../../api/imei';
 import { Badge }  from '../../components/Badge';
 import { colors } from '../../theme/colors';
@@ -80,7 +81,7 @@ export default function ImeiSearchScreen() {
           {/* No results */}
           {!result.found && (
             <View style={styles.noResult}>
-              <Text style={styles.noResultIcon}>🔍</Text>
+              <Ionicons name="search-outline" size={40} color={colors.textMuted} style={styles.noResultIcon} />
               <Text style={styles.noResultText}>No records found</Text>
               <Text style={styles.noResultHint}>
                 No product, sale, or secondhand record matches "{result.query}"
@@ -128,7 +129,10 @@ export default function ImeiSearchScreen() {
                       <Text style={styles.resultName}>{s.invoiceNo}</Text>
                       <Text style={styles.resultSub}>{s.product.name}</Text>
                       {s.customerName && (
-                        <Text style={styles.resultSub}>👤 {s.customerName}</Text>
+                        <View style={styles.resultSubRow}>
+                          <Ionicons name="person-outline" size={11} color={colors.textMuted} />
+                          <Text style={styles.resultSub}>{s.customerName}</Text>
+                        </View>
                       )}
                     </View>
                     <View style={{ alignItems: 'flex-end' }}>
@@ -158,8 +162,14 @@ export default function ImeiSearchScreen() {
                     <View style={{ flex: 1 }}>
                       <Text style={styles.resultName}>{r.mobileName}</Text>
                       <Text style={styles.resultSub}>{r.brand}</Text>
-                      <Text style={styles.resultSub}>👤 {r.sellerName}</Text>
-                      <Text style={styles.resultSub}>🪪 {r.sellerCnic}</Text>
+                      <View style={styles.resultSubRow}>
+                        <Ionicons name="person-outline" size={11} color={colors.textMuted} />
+                        <Text style={styles.resultSub}>{r.sellerName}</Text>
+                      </View>
+                      <View style={styles.resultSubRow}>
+                        <Ionicons name="id-card-outline" size={11} color={colors.textMuted} />
+                        <Text style={styles.resultSub}>{r.sellerCnic}</Text>
+                      </View>
                     </View>
                     <View style={{ alignItems: 'flex-end', gap: 4 }}>
                       <Badge
@@ -183,7 +193,7 @@ export default function ImeiSearchScreen() {
       {/* Initial state */}
       {!searched && (
         <View style={styles.hint}>
-          <Text style={styles.hintIcon}>📱</Text>
+          <Ionicons name="phone-portrait-outline" size={48} color={colors.textMuted} style={styles.hintIcon} />
           <Text style={styles.hintText}>Search any IMEI number</Text>
           <Text style={styles.hintSub}>
             Enter the full 15-digit IMEI or just the last 4 digits.
@@ -263,6 +273,7 @@ const styles = StyleSheet.create({
   },
   resultTop:    { flexDirection: 'row', marginBottom: 4 },
   resultName:   { fontSize: 14, fontWeight: '600', color: colors.text },
+  resultSubRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   resultSub:    { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   imei:         { fontSize: 11, color: colors.textMuted, fontFamily: 'monospace', marginTop: 2 },
   amount:       { fontSize: 14, fontWeight: '700', color: colors.text },
@@ -270,12 +281,12 @@ const styles = StyleSheet.create({
   tapHint:      { fontSize: 11, color: colors.primary, marginTop: 4 },
   loadingText:  { color: colors.textMuted, marginTop: 10, fontSize: 13 },
   noResult:     { alignItems: 'center', paddingTop: 40 },
-  noResultIcon: { fontSize: 40, marginBottom: 10 },
+  noResultIcon: { marginBottom: 10 },
   noResultText: { fontSize: 18, fontWeight: '600', color: colors.text },
   noResultHint: { fontSize: 13, color: colors.textMuted, textAlign: 'center',
                   marginTop: 6, paddingHorizontal: 20 },
   hint:         { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 30 },
-  hintIcon:     { fontSize: 48, marginBottom: 14 },
+  hintIcon:     { marginBottom: 14 },
   hintText:     { fontSize: 18, fontWeight: '600', color: colors.text, marginBottom: 8 },
   hintSub: {
     fontSize:   13, color: colors.textMuted, textAlign: 'center', lineHeight: 20,

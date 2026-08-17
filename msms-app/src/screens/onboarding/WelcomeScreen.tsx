@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 
 export default function WelcomeScreen() {
@@ -19,7 +20,10 @@ export default function WelcomeScreen() {
           onPress={() => navigation.navigate('TrialSignup')}
           activeOpacity={0.85}
         >
-          <Text style={styles.trialBtnText}>🎁 Try Free for 5 Days</Text>
+          <View style={styles.trialBtnTitleRow}>
+            <Ionicons name="gift-outline" size={16} color="#fff" />
+            <Text style={styles.trialBtnText}>Try Free for 5 Days</Text>
+          </View>
           <Text style={styles.trialBtnSub}>All PRO features, no license key needed</Text>
         </TouchableOpacity>
 
@@ -60,6 +64,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary, borderRadius: 14,
     paddingVertical: 18, paddingHorizontal: 20, alignItems: 'center',
   },
+  trialBtnTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   trialBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
   trialBtnSub:  { fontSize: 12, color: '#ffffffcc', marginTop: 4 },
 

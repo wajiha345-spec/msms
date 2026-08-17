@@ -12,6 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Input } from '../../components/Inputs';
@@ -251,7 +252,7 @@ export default function AddSecondhandScreen() {
           disabled={submitting || picking}
           activeOpacity={0.8}
         >
-          <Text style={styles.scanBannerIcon}>📷</Text>
+          <Ionicons name="camera-outline" size={22} color="#fff" style={styles.scanBannerIcon} />
           <View style={{ flex: 1 }}>
             <Text style={styles.scanBannerTitle}>Scan IMEI barcode on the phone</Text>
             <Text style={styles.scanBannerSub}>Point camera at the IMEI barcode · auto-fills + checks PTA</Text>
@@ -422,8 +423,9 @@ export default function AddSecondhandScreen() {
 
         {imeiBlocked && (
           <View style={styles.blockedBanner}>
+            <Ionicons name="ban-outline" size={16} color="#34208C" style={styles.blockedIcon} />
             <Text style={styles.blockedText}>
-              🚫 Cannot save — device is flagged blocked/stolen.{'\n'}
+              Cannot save — device is flagged blocked/stolen.{'\n'}
               Check the verification panel above and confirm override to proceed.
             </Text>
           </View>
@@ -708,8 +710,10 @@ const styles = StyleSheet.create({
   blockedBanner: {
     backgroundColor: '#EDE6FB', borderRadius: 10, padding: 14, marginTop: 8,
     borderWidth: 1, borderColor: '#C9BEF2',
+    flexDirection: 'row', gap: 8,
   },
-  blockedText: { fontSize: 13, color: '#34208C', lineHeight: 20 },
+  blockedIcon: { marginTop: 2 },
+  blockedText: { flex: 1, fontSize: 13, color: '#34208C', lineHeight: 20 },
   errorText: { color: colors.danger, fontSize: 12, marginTop: -10, marginBottom: 10 },
   header: {
     flexDirection: 'row',
@@ -732,7 +736,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary, borderRadius: 12,
     padding: 14, marginBottom: 14,
   },
-  scanBannerIcon:  { fontSize: 24 },
+  scanBannerIcon:  {},
   scanBannerTitle: { color: '#fff', fontSize: 15, fontWeight: '700' },
   scanBannerSub:   { color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2 },
   scanBannerArrow: { color: '#fff', fontSize: 22, fontWeight: '300' },

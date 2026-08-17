@@ -4,6 +4,7 @@ import {
   RefreshControl, ActivityIndicator, TouchableOpacity, Alert,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { crmApi, Customer } from '../../api/crm';
 import { Badge } from '../../components/Badge';
 import { colors } from '../../theme/colors';
@@ -108,7 +109,10 @@ export default function CustomersListScreen() {
       </View>
 
       <TouchableOpacity style={styles.followUpsLink} onPress={() => navigation.navigate('FollowUps')}>
-        <Text style={styles.followUpsLinkText}>📅 View upcoming follow-ups</Text>
+        <View style={styles.followUpsLinkLeft}>
+          <Ionicons name="calendar-outline" size={14} color={colors.primary} />
+          <Text style={styles.followUpsLinkText}>View upcoming follow-ups</Text>
+        </View>
         <Text style={styles.followUpsArrow}>›</Text>
       </TouchableOpacity>
 
@@ -169,6 +173,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#EDE6FB', paddingHorizontal: 16, paddingVertical: 12,
     borderBottomWidth: 1, borderBottomColor: colors.border,
   },
+  followUpsLinkLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   followUpsLinkText: { fontSize: 13, fontWeight: '600', color: colors.primary },
   followUpsArrow:     { fontSize: 18, color: colors.primary },
 

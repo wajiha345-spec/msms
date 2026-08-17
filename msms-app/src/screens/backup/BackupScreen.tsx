@@ -4,6 +4,7 @@ import {
   TouchableOpacity, Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { writeBackupFile } from '../../utils/backupWriter';
 import { Button } from '../../components/Buttons';
 import { MetricTile } from '../../components/MetricTile';
@@ -48,7 +49,7 @@ export default function BackupScreen() {
 
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.introBox}>
-          <Text style={styles.introIcon}>💾</Text>
+          <Ionicons name="save-outline" size={40} color={colors.primary} style={styles.introIcon} />
           <Text style={styles.introTitle}>Export all your shop data</Text>
           <Text style={styles.introText}>
             Creates a single JSON file with every product, sale, purchase,
@@ -109,7 +110,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', marginBottom: 20,
     borderWidth: 1, borderColor: colors.border,
   },
-  introIcon:  { fontSize: 32, marginBottom: 10 },
+  introIcon:  { marginBottom: 10 },
   introTitle: { fontSize: 15, fontWeight: '700', color: colors.text, marginBottom: 8, textAlign: 'center' },
   introText:  { fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 19 },
 

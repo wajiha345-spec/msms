@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 
 interface MenuItemProps {
-  icon: string;
+  icon: keyof typeof Ionicons.glyphMap;
   label: string;
   subtitle: string;
   onPress: () => void;
@@ -13,7 +14,7 @@ interface MenuItemProps {
 function MenuItem({ icon, label, subtitle, onPress }: MenuItemProps) {
   return (
     <TouchableOpacity style={styles.item} onPress={onPress} activeOpacity={0.7}>
-      <Text style={styles.itemIcon}>{icon}</Text>
+      <Ionicons name={icon} size={22} color={colors.primary} style={styles.itemIcon} />
       <View style={styles.itemText}>
         <Text style={styles.itemLabel}>{label}</Text>
         <Text style={styles.itemSub}>{subtitle}</Text>
@@ -39,7 +40,7 @@ export default function ReportsHubScreen() {
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.sectionLabel}>Sales & Profit</Text>
         <MenuItem
-          icon="📈"
+          icon="trending-up-outline"
           label="Sales & Profit Summary"
           subtitle="Revenue, profit and top products for any date range"
           onPress={() => navigation.navigate('SalesSummary')}
@@ -47,25 +48,25 @@ export default function ReportsHubScreen() {
 
         <Text style={styles.sectionLabel}>Financial Statements</Text>
         <MenuItem
-          icon="📊"
+          icon="bar-chart-outline"
           label="Balance Sheet"
           subtitle="Assets, liabilities & equity as of today"
           onPress={() => navigation.navigate('BalanceSheet')}
         />
         <MenuItem
-          icon="📈"
+          icon="stats-chart-outline"
           label="Profit & Loss"
           subtitle="Income vs expense for a date range"
           onPress={() => navigation.navigate('ProfitLoss')}
         />
         <MenuItem
-          icon="💧"
+          icon="water-outline"
           label="Cash Flow"
           subtitle="Cash movement by category for a date range"
           onPress={() => navigation.navigate('CashFlow')}
         />
         <MenuItem
-          icon="⚖️"
+          icon="scale-outline"
           label="Trial Balance"
           subtitle="Debit/credit totals across all accounts"
           onPress={() => navigation.navigate('TrialBalance')}
@@ -73,13 +74,13 @@ export default function ReportsHubScreen() {
 
         <Text style={styles.sectionLabel}>Expense & Income</Text>
         <MenuItem
-          icon="🧾"
+          icon="receipt-outline"
           label="Expense Report"
           subtitle="Spending broken down by category"
           onPress={() => navigation.navigate('ExpenseReport')}
         />
         <MenuItem
-          icon="💵"
+          icon="cash-outline"
           label="Income Report"
           subtitle="Earnings broken down by category"
           onPress={() => navigation.navigate('IncomeReport')}
@@ -87,13 +88,13 @@ export default function ReportsHubScreen() {
 
         <Text style={styles.sectionLabel}>Inventory</Text>
         <MenuItem
-          icon="📉"
+          icon="trending-down-outline"
           label="Low Stock"
           subtitle="Products at or below their reorder point"
           onPress={() => navigation.navigate('LowStock')}
         />
         <MenuItem
-          icon="🏬"
+          icon="business-outline"
           label="Branch Reports"
           subtitle="Sales, purchases & stock per branch"
           onPress={() => navigation.navigate('BranchesList')}
@@ -124,7 +125,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card, borderRadius: 12, padding: 14,
     marginBottom: 10, borderWidth: 1, borderColor: colors.border,
   },
-  itemIcon:  { fontSize: 26, marginRight: 14 },
+  itemIcon:  { marginRight: 14 },
   itemText:  { flex: 1 },
   itemLabel: { fontSize: 15, fontWeight: '600', color: colors.text },
   itemSub:   { fontSize: 12, color: colors.textMuted, marginTop: 2 },

@@ -4,6 +4,7 @@ import {
   TouchableOpacity, Alert, TextInput, ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { catalogApi, CatalogEntry } from '../../api/catalog';
 import { colors } from '../../theme/colors';
 
@@ -75,7 +76,7 @@ export default function CatalogScreen() {
         >
           {isDeleting
             ? <ActivityIndicator size="small" color={colors.danger} />
-            : <Text style={styles.deleteTxt}>🗑</Text>
+            : <Ionicons name="trash-outline" size={18} color={colors.danger} />
           }
         </TouchableOpacity>
       </View>
@@ -109,7 +110,7 @@ export default function CatalogScreen() {
         <ActivityIndicator style={{ marginTop: 40 }} color={colors.primary} />
       ) : entries.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyIcon}>📭</Text>
+          <Ionicons name="file-tray-outline" size={52} color={colors.textMuted} style={styles.emptyIcon} />
           <Text style={styles.emptyTitle}>Catalog is empty</Text>
           <Text style={styles.emptySub}>
             Products are added here automatically when you save a product with a barcode.
@@ -167,10 +168,9 @@ const styles = StyleSheet.create({
   sep:        { height: 8 },
 
   deleteBtn: { padding: 10 },
-  deleteTxt: { fontSize: 20 },
 
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
-  emptyIcon:  { fontSize: 52, marginBottom: 16 },
+  emptyIcon:  { marginBottom: 16 },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 8 },
   emptySub:   { fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 20 },
 });

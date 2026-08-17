@@ -5,6 +5,7 @@ import {
   KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { Input } from '../../components/Inputs';
 import { Button } from '../../components/Buttons';
 import { useAuth } from '../../context/AuthContext';
@@ -65,7 +66,8 @@ export default function TrialSignupScreen() {
 
         <View style={styles.card}>
           <View style={styles.trialBadge}>
-            <Text style={styles.trialBadgeText}>🎁 Free 5-Day Trial — Every SmartShop Feature</Text>
+            <Ionicons name="gift-outline" size={13} color={colors.primary} />
+            <Text style={styles.trialBadgeText}>Free 5-Day Trial — Every SmartShop Feature</Text>
           </View>
           <Text style={styles.cardTitle}>Start Your Free Trial</Text>
           <Text style={styles.cardSub}>
@@ -157,6 +159,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#EDE6FB', borderRadius: 8, paddingVertical: 7,
     paddingHorizontal: 12, alignSelf: 'flex-start', marginBottom: 16,
     borderWidth: 1, borderColor: '#C9BEF2',
+    flexDirection: 'row', alignItems: 'center', gap: 6,
   },
   trialBadgeText: { fontSize: 13, fontWeight: '600', color: colors.primary },
 
