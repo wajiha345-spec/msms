@@ -99,6 +99,7 @@ export async function getQuotationViewHandler(req: Request, res: Response) {
       })),
       totalAmount: quotation.items.reduce((sum, item) => sum + item.lineTotal, 0),
       createdBy:   quotation.createdBy.username,
+      shopName:    quotation.shop.name,
       notes:       quotation.notes ?? undefined,
       shopAddress: settings.shopAddress    ?? undefined,
       shopPhone:   settings.shopPhone      ?? undefined,

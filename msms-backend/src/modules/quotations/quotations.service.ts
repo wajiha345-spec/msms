@@ -45,6 +45,7 @@ interface CreateQuotationInput {
 const QUOTATION_INCLUDE = {
   items:     { include: { product: { select: { id: true, name: true, brand: true } } } },
   createdBy: { select: { username: true } },
+  shop:      { select: { name: true } },
 } as const;
 
 export async function listQuotations(shopId: string) {

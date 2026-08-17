@@ -15,6 +15,7 @@ interface InvoiceData {
   totalAmount:   number;
   profit:        number;
   soldBy:        string;
+  shopName:      string;
   shopAddress?:  string;
   shopPhone?:    string;
   footerNote?:   string;
@@ -42,21 +43,15 @@ export function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
       .fillColor('#FFFFFF')
       .fontSize(22)
       .font('Helvetica-Bold')
-      .text('MOBILE SHOP', margin, 28);
-
-    doc
-      .fillColor('#DDD6FE')
-      .fontSize(10)
-      .font('Helvetica')
-      .text('Management System', margin, 54);
+      .text(data.shopName, margin, 28, { width: pageW - margin * 2 - 110 });
 
     const contactLine = [data.shopAddress, data.shopPhone].filter(Boolean).join('  ·  ');
     if (contactLine) {
       doc
         .fillColor('#DDD6FE')
-        .fontSize(8)
+        .fontSize(9)
         .font('Helvetica')
-        .text(contactLine, margin, 68, { width: 220 });
+        .text(contactLine, margin, 56, { width: 220 });
     }
 
     doc
@@ -294,6 +289,7 @@ interface QuotationData {
   items:         QuotationPdfItem[];
   totalAmount:   number;
   createdBy:     string;
+  shopName:      string;
   notes?:        string;
   shopAddress?:  string;
   shopPhone?:    string;
@@ -324,21 +320,15 @@ export function generateQuotationPdf(data: QuotationData): Promise<Buffer> {
       .fillColor('#FFFFFF')
       .fontSize(22)
       .font('Helvetica-Bold')
-      .text('MOBILE SHOP', margin, 28);
-
-    doc
-      .fillColor('#DDD6FE')
-      .fontSize(10)
-      .font('Helvetica')
-      .text('Management System', margin, 54);
+      .text(data.shopName, margin, 28, { width: pageW - margin * 2 - 110 });
 
     const quoteContactLine = [data.shopAddress, data.shopPhone].filter(Boolean).join('  ·  ');
     if (quoteContactLine) {
       doc
         .fillColor('#DDD6FE')
-        .fontSize(8)
+        .fontSize(9)
         .font('Helvetica')
-        .text(quoteContactLine, margin, 68, { width: 220 });
+        .text(quoteContactLine, margin, 56, { width: 220 });
     }
 
     doc

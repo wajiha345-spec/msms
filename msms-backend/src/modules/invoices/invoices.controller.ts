@@ -19,6 +19,7 @@ export async function getInvoice(req: AuthRequest, res: Response) {
       include: {
         product: true,
         recordedBy: { select: { username: true } },
+        shop: { select: { name: true } },
       },
     });
 
@@ -41,6 +42,7 @@ export async function getInvoice(req: AuthRequest, res: Response) {
       totalAmount:   sale.totalAmount,
       profit:        sale.profit,
       soldBy:        sale.recordedBy.username,
+      shopName:      sale.shop.name,
       shopAddress:   settings.shopAddress    ?? undefined,
       shopPhone:     settings.shopPhone      ?? undefined,
       footerNote:    settings.invoiceFooterNote ?? undefined,
@@ -88,6 +90,7 @@ export async function getInvoice(req: AuthRequest, res: Response) {
     .card{background:#fff;border-radius:16px;margin:20px 16px;
           box-shadow:0 2px 12px rgba(0,0,0,.08);overflow:hidden}
     .inv-header{background:#0f766e;color:#fff;padding:24px 20px;text-align:center}
+    .inv-shop{font-size:15px;font-weight:700;margin-bottom:4px}
     .inv-title{font-size:22px;font-weight:800;letter-spacing:1px}
     .inv-no{font-size:13px;opacity:.85;margin-top:4px;font-family:monospace}
     .inv-date{font-size:12px;opacity:.7;margin-top:2px}
@@ -117,6 +120,7 @@ export async function getInvoice(req: AuthRequest, res: Response) {
 
   <div class="card">
     <div class="inv-header">
+      <div class="inv-shop">${sale.shop.name}</div>
       <div class="inv-title">SALES INVOICE</div>
       <div class="inv-no"># ${sale.invoiceNo}</div>
       <div class="inv-date">${date}</div>
